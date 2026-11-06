@@ -13,6 +13,12 @@ int device_nt_hash(char hash[33]) {
     strcpy(hash, "0123456789ABCDEF0123456789ABCDEF");
     return getenv("FAIL_HASH") ? -1 : 0;
 }
+int airport_account_nt_hash(const char *name, char hash[33], int *access) {
+    assert(!strcmp(name, "jtenniswood"));
+    *access = getenv("ACCOUNT_ACCESS") ? atoi(getenv("ACCOUNT_ACCESS")) : 0;
+    strcpy(hash, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+    return getenv("FAIL_ACCOUNT") ? -1 : 0;
+}
 int main(int argc, char **argv) {
     struct tc_samba_settings settings;
     struct tc_storage_snapshot storage;

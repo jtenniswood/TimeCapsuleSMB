@@ -35,7 +35,8 @@ int tc_runtime_config_load(struct tc_runtime_config *config) {
                                   {"DISKD_USE_VOLUME_MOUNT_POLL_SECONDS", "", 0},
                                   {"ATA_IDLE_SECONDS", "", 0},
                                   {"ATA_STANDBY", "", 0},
-                                  {"REQUIRE_SMB_SIGNING", "", 0}};
+                                  {"REQUIRE_SMB_SIGNING", "", 0},
+                                  {"SMB_AIRPORT_ACCOUNT", "", 0}};
     struct utsname system;
     memset(config, 0, sizeof(*config));
     if (config_read_snapshot(TC_FLASH_CONFIG_PATH, items, sizeof(items) / sizeof(items[0])))
@@ -64,6 +65,10 @@ int tc_runtime_config_load(struct tc_runtime_config *config) {
     config->mount_poll = number(&items[14], 3, 1, 60);
     config->ata_idle = number(&items[15], 300, 0, 86400);
     config->require_signing = boolean(&items[17], 0);
+    if (strlen(items[18].value) >= sizeof(config->smb_airport_account) ||
+        strspn(items[18].value, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-") !=
+        strlen(items[18].value)) return -1;
+    strcpy(config->smb_airport_account, items[18].value);
     if (items[16].present) {
         if (strlen(items[16].value) >= sizeof(config->ata_standby) ||
             strspn(items[16].value, "0123456789") != strlen(items[16].value))
@@ -93,6 +98,8 @@ int tc_samba_render(FILE *file, const struct tc_runtime_config *config,
             "    passdb backend = smbpasswd:" TC_RAM_ROOT "/private/smbpasswd\n"
             "    username map = " TC_RAM_ROOT "/private/username.map\n    dos charset = ASCII\n",
             identity->netbios, identity->server, config->browse_compatibility ? 0 : 2);
+    if (config->smb_airport_account[0])
+        fprintf(file, "    tc:airport account = %s\n", config->smb_airport_account);
     if (config->require_encryption)
         fputs("    server smb encrypt = required\n    server min protocol = SMB3_00\n    server max protocol "
               "= SMB3\n",
@@ -187,11 +194,13 @@ int tc_samba_render(FILE *file, const struct tc_runtime_config *config,
         char section[TC_SHARE_NAME_MAX];
         tc_share_section(section, share->name);
         fprintf(file,
-                "\n[%s]\n    path = %s\n    browseable = yes\n    read only = no\n"
+                "\n[%s]\n    path = %s\n    browseable = yes\n    read only = %s\n"
                 "    guest ok = no\n    valid users = root\n    veto files = /.samba4/.tc-xsym.*/\n"
                 "    delete veto files = yes\n"
                 "    vfs objects = catia fruit streams_xattr acl_xattr xattr_tdb%s\n",
-                section, share->path, config->aio_fork ? " aio_fork" : "");
+                section, share->path,
+                config->smb_airport_account[0] && config->smb_account_access == 1 ? "yes" : "no",
+                config->aio_fork ? " aio_fork" : "");
         /* Each helper holds up to an 8 MiB buffer. One Mac used at most two
          * helpers in benchmarks on both device families, and more were no
          * faster; two bound the memory to 16 MiB per client per mounted share. */

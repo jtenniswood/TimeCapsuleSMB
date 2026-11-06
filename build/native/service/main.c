@@ -1,4 +1,5 @@
 #include "service.h"
+#include "airport_account.h"
 #include <sys/param.h>
 #if defined(__NetBSD__) && !defined(TC_NATIVE_TEST)
 #include <sys/sysctl.h>
@@ -271,7 +272,7 @@ static int print_syscall_registers(int argc, char **argv) {
 }
 
 static void usage(void) {
-    fputs("Usage: service --print-nt-hash-from-stdin | --print-device-nt-hash | --print-samba-identity | --print-link-plan | --print-monotonic-ms | --print-mast [--timeout-seconds N] | --print-file-locks FILE... | --print-syscall-registers PID...\n", stderr);
+    fputs("Usage: service --print-nt-hash-from-stdin | --print-device-nt-hash | --print-airport-account-nt-hash NAME | --print-samba-identity | --print-link-plan | --print-monotonic-ms | --print-mast [--timeout-seconds N] | --print-file-locks FILE... | --print-syscall-registers PID...\n", stderr);
 }
 int tc_service_helper_main(int argc, char **argv) {
     const char *facts_file = NULL;
@@ -280,6 +281,17 @@ int tc_service_helper_main(int argc, char **argv) {
     int i;
 
     signal(SIGTERM, stop_acp); signal(SIGINT, stop_acp); signal(SIGPIPE, SIG_IGN);
+    if (argc >= 2 && !strcmp(argv[1], "--print-airport-account-nt-hash")) {
+        char hash[33];
+        int access, failed;
+        if (argc != 3 || !*argv[2] || strlen(argv[2]) > 63 ||
+            strspn(argv[2], "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-") != strlen(argv[2]))
+            return EXIT_USAGE;
+        if (airport_account_nt_hash(argv[2], hash, &access)) return 1;
+        failed = printf("%d %s\n", access, hash) < 0 || fflush(stdout) != 0;
+        memset(hash, 0, sizeof(hash));
+        return failed;
+    }
     if (argc >= 2 && !strcmp(argv[1], "--print-mast")) return print_mast_command(argc, argv);
     if (argc >= 2 && !strcmp(argv[1], "--print-file-locks")) return print_file_locks(argc, argv);
     if (argc >= 2 && !strcmp(argv[1], "--print-syscall-registers")) return print_syscall_registers(argc, argv);

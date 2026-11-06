@@ -1,5 +1,6 @@
 #include "staging.h"
 #include "../common/worker.h"
+#include "../service/airport_account.h"
 #include <sys/stat.h>
 #include <dirent.h>
 
@@ -92,7 +93,11 @@ int tc_samba_settings_read(struct tc_samba_settings *settings, const char *hostn
         fputs("settings: device identity unavailable\n", stderr);
         return -1;
     }
-    if (device_nt_hash(settings->nt_hash)) {
+    int auth_failed = settings->config.smb_airport_account[0]
+        ? airport_account_nt_hash(settings->config.smb_airport_account, settings->nt_hash,
+                                  &settings->config.smb_account_access)
+        : device_nt_hash(settings->nt_hash);
+    if (auth_failed) {
         fputs("settings: device authentication unavailable\n", stderr);
         return -1;
     }
@@ -415,7 +420,8 @@ int tc_samba_stage(const struct tc_storage_snapshot *storage, const struct tc_sa
     file = prepare_file(TC_RAM_ROOT "/private/smbpasswd");
     if (!file)
         goto out;
-    fprintf(file, "root:0:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX:%s:[U          ]:LCT-%08lX:\n", settings->nt_hash,
+    fprintf(file, "root:0:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX:%s:[%s]:LCT-%08lX:\n", settings->nt_hash,
+            config->smb_airport_account[0] && config->smb_account_access == 2 ? "DU         " : "U          ",
             (unsigned long)time(NULL));
     if (finish(file))
         goto out;

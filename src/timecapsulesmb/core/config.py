@@ -63,6 +63,7 @@ DEFAULTS = {
     "TC_FRUIT_METADATA_NETATALK": "true",
     "TC_VFS_AIO_FORK_DISABLED": "false",
     "TC_DEBUG_LOGGING": "false",
+    "TC_SMB_AIRPORT_ACCOUNT": "",
     "TC_ATA_IDLE_SECONDS": "300",
     "TC_ATA_STANDBY": "",
 }
@@ -81,6 +82,7 @@ ENV_FILE_KEYS = [
     "TC_FRUIT_METADATA_NETATALK",
     "TC_VFS_AIO_FORK_DISABLED",
     "TC_DEBUG_LOGGING",
+    "TC_SMB_AIRPORT_ACCOUNT",
     "TC_ATA_IDLE_SECONDS",
     "TC_ATA_STANDBY",
     "TC_CONFIGURE_ID",
@@ -459,6 +461,12 @@ def validate_ssh_opts(value: str, field_name: str) -> Optional[str]:
     return None
 
 
+def validate_smb_airport_account(value: str, field_name: str) -> Optional[str]:
+    if value and not re.fullmatch(r"[A-Za-z0-9_.-]{1,63}", value):
+        return f"{field_name} must be an AirPort account name of at most 63 letters, digits, dots, underscores or hyphens."
+    return None
+
+
 CONFIG_VALIDATORS: dict[str, Callable[[str, str], Optional[str]]] = {
     "TC_HOST": validate_ssh_target,
     "TC_SSH_OPTS": validate_ssh_opts,
@@ -473,6 +481,7 @@ CONFIG_VALIDATORS: dict[str, Callable[[str, str], Optional[str]]] = {
     "TC_FRUIT_METADATA_NETATALK": validate_bool,
     "TC_VFS_AIO_FORK_DISABLED": validate_bool,
     "TC_DEBUG_LOGGING": validate_bool,
+    "TC_SMB_AIRPORT_ACCOUNT": validate_smb_airport_account,
     "TC_ATA_IDLE_SECONDS": validate_unsigned_integer,
     "TC_ATA_STANDBY": validate_optional_unsigned_integer,
 }
@@ -498,6 +507,7 @@ CONFIGURE_VALIDATED_KEYS = (
     "TC_FRUIT_METADATA_NETATALK",
     "TC_VFS_AIO_FORK_DISABLED",
     "TC_DEBUG_LOGGING",
+    "TC_SMB_AIRPORT_ACCOUNT",
     "TC_ATA_IDLE_SECONDS",
     "TC_ATA_STANDBY",
 )
@@ -514,6 +524,7 @@ MANAGED_VALIDATED_KEYS = (
     "TC_FRUIT_METADATA_NETATALK",
     "TC_VFS_AIO_FORK_DISABLED",
     "TC_DEBUG_LOGGING",
+    "TC_SMB_AIRPORT_ACCOUNT",
     "TC_ATA_IDLE_SECONDS",
     "TC_ATA_STANDBY",
 )

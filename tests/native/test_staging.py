@@ -91,6 +91,29 @@ def test_reload_does_not_replace_running_images_and_discard_keeps_applied(stage)
     assert "log level = 10" in (root / "ram/etc/smb.conf").read_text()
 
 
+@pytest.mark.parametrize("access", [0, 1, 2])
+def test_selected_airport_account_sets_password_and_access_for_whole_share(stage, access):
+    root, payload, run = stage
+    (root / "runtime.conf").write_text("SMB_AIRPORT_ACCOUNT=jtenniswood\n")
+    result = run(ACCOUNT_ACCESS=str(access), FAIL_HASH="1")
+    assert result.returncode == 0, result.stderr
+    auth = (root / "ram/private/smbpasswd").read_text()
+    assert ":AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:" in auth
+    assert ("[DU         ]" in auth) == (access == 2)
+    conf = (root / "ram/etc/smb.conf").read_text()
+    assert f"read only = {'yes' if access == 1 else 'no'}" in conf
+    assert "path = " + str(root / "dk2/ShareRoot") in conf
+
+
+def test_unavailable_airport_account_never_falls_back_to_device_password(stage):
+    root, payload, run = stage
+    assert run().returncode == 0
+    before = (root / "ram/private/smbpasswd").read_bytes()
+    (root / "runtime.conf").write_text("SMB_AIRPORT_ACCOUNT=jtenniswood\n")
+    assert run("reload", FAIL_ACCOUNT="1").returncode != 0
+    assert (root / "ram/private/smbpasswd").read_bytes() == before
+
+
 @pytest.mark.parametrize("fault", ["unmounted", "readonly", "no_binary", "bad_auth", "symlink"])
 def test_failed_stage_keeps_applied_configuration_and_retries(stage, fault):
     root, payload, run = stage

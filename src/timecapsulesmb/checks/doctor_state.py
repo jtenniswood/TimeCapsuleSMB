@@ -108,7 +108,10 @@ class DoctorSink:
 class DoctorTarget:
     connection: SshConnection
     host: str
-    smb_password: str
+    smb_password: str = field(repr=False)
+    smb_account: str = ""
+    smb_read_only: bool = False
+    smb_password_available: bool = True
 
 
 @dataclass(frozen=True)

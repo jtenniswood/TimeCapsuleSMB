@@ -46,6 +46,33 @@ To check/change this:
 
 The current AirPort device password is the SMB password. If you change it in AirPort Utility, reboot the device so the managed runtime regenerates the RAM auth file.
 
+#### Can I use an AirPort disk-sharing account's password?
+
+Set `TC_SMB_AIRPORT_ACCOUNT=jtenniswood` in the CLI `.env` file, replacing
+`jtenniswood` with the account created in AirPort Utility, and deploy the updated
+runtime. An empty value restores the default device-password mode.
+
+This selects **one account's password for the whole SMB share**. Samba still
+accepts any username and accesses files as `root`; it does not provide separate
+passwords, private home folders or permissions for several users. Use this only
+when the selected account should access the complete exported share.
+
+The account's password stays in AirPort's configuration. Only its NT hash is
+staged in Samba's private RAM files, and the account name is saved in runtime
+configuration. Read-only accounts make every share read-only. Removing or
+disabling the selected account disables new SMB logins; an unavailable or
+malformed ACP response retains the last successfully applied configuration,
+without silently switching to the device password. Existing SMB sessions keep
+their access until disconnected. Changes are picked up by the manager's next
+settings poll, normally within 30 seconds.
+
+Checkup reads the selected password over SSH in memory and uses it for SMB
+checks. It continues to use the device password for SSH and administration, and
+skips write checks for a read-only account.
+
+The native `service` binary must be rebuilt from this version before this
+setting works; changing the `.env` alone cannot update an older installed binary.
+
 #### Do I need to keep the TimeCapsuleSMB python folder after setup?
 
 **Yes, it is recommended to keep the TimeCapsuleSMB folder** on your Mac for maintenance purposes, if you are using the python package. While you can delete it after initial setup, keeping it allows you to:  

@@ -53,6 +53,17 @@ discovery, under the NetBIOS name of the hostname it maps in `/etc/hosts`, not
 the one its settings read derived: the first read at boot runs before ACPd sets
 the hostname and falls back to `syNm`.
 
+`SMB_AIRPORT_ACCOUNT` optionally selects one `usrd.users` account as the shared
+SMB password source. `service/airport_account.c` uses `acp -q usrd`'s XML form,
+not the unescaped PrintFUtils strings, and the bounded lexer shared with MaSt.
+It decodes XML entities, preserves password whitespace, hashes without a shell
+or temporary file, and wipes plaintext buffers. AirPort access 0 permits writes,
+1 makes all exports read-only, and 2 or a deleted account disables Samba's root
+SMB entry. The manager's settings snapshots include the hash and access, so its
+normal poll republishes changes. An ACP failure never substitutes `syPW`.
+This intentionally retains the existing one-password, root-access model; it is
+not an implementation of independent AirPort users or private account folders.
+
 smbd and rsync are separate units (`service/manager.c` `struct unit`), each with
 its RAM image, staging job and publish, and both go through one pump
 (`pump_unit`) and one launch gate; `struct unit_kind` holds what differs.

@@ -92,6 +92,8 @@ struct tc_runtime_config {
     int debug, discovery_debug, advertise_afp;
     unsigned mount_attempts, mount_timeout, mount_poll, ata_idle;
     char ata_standby[32];
+    char smb_airport_account[64];
+    int smb_account_access;
 };
 int tc_runtime_config_load(struct tc_runtime_config *);
 /* Before every smbd start, raise sbmax/maxfiles without lowering larger

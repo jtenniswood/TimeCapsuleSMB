@@ -1840,6 +1840,7 @@ def render_flash_runtime_config(
         ("ATA_STANDBY", runtime_ata_standby),
         ("RSYNC_ENABLED", 1 if rsync_enabled else 0),
         ("SMBD_DEBUG_LOGGING", 1 if effective_debug_logging else 0),
+        ("SMB_AIRPORT_ACCOUNT", config.get("TC_SMB_AIRPORT_ACCOUNT", "")),
         ("MDNS_DEBUG_LOGGING", 1 if effective_debug_logging else 0),
     ]
     return "\n".join(_render_flash_config_assignment(key, value) for key, value in values) + "\n"
