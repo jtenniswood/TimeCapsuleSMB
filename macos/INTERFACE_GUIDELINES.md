@@ -43,6 +43,8 @@ Each editor pane has one job:
 - Base Station: edit the name, address and saved password. Keep advanced device
   settings grouped under one disclosure and save them with the bottom Update.
 
-Use SwiftUI's native TabView for pane navigation. Do not draw tab backgrounds,
-bevels, borders, labels or selection indicators. macOS owns their appearance,
-layout, focus and accessibility. Switching tabs must show one pane at a time.
+Use SwiftUI's native segmented Picker in the content area for pane navigation.
+Give every segment the same width and keep the entire control out of the window
+toolbar. Do not draw tab backgrounds, bevels, borders or selection indicators.
+Use a native GroupBox for the pane. macOS owns the controls' appearance, focus
+and accessibility. Switching tabs must show one pane at a time.

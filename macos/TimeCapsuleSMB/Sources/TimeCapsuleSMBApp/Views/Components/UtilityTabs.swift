@@ -1,20 +1,29 @@
 import SwiftUI
 
-/// Use the platform tab view without custom tab drawing or layout.
+/// Keep pane navigation in the content area using the standard Mac control.
+/// No toolbar tabs, custom drawing, backgrounds or selection overlays.
 struct UtilityTabs<Selection: Hashable, Content: View>: View {
     let tabs: [(id: Selection, title: String)]
     @Binding var selection: Selection
     @ViewBuilder let content: (Selection) -> Content
 
     var body: some View {
-        TabView(selection: $selection) {
-            ForEach(Array(tabs.enumerated()), id: \.offset) { _, tab in
-                content(tab.id)
-                    .tabItem { Text(tab.title) }
-                    .tag(tab.id)
+        VStack(spacing: 16) {
+            Picker(L10n.string("simple.device_settings"), selection: $selection) {
+                ForEach(Array(tabs.enumerated()), id: \.offset) { _, tab in
+                    Text(tab.title).tag(tab.id)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .controlSize(.regular)
+            .frame(width: CGFloat(tabs.count) * 120)
+
+            GroupBox {
+                content(selection)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             }
         }
-        .tabViewStyle(.automatic)
         .font(UtilityStyle.body)
     }
 }
