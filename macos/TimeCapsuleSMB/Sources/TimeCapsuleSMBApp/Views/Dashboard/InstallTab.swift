@@ -27,9 +27,14 @@ struct InstallTab: View {
                     }
                     if !firstInstall && !store.isBusy {
                         UtilityFormRow(title: L10n.string("dashboard.overview.installed_version")) {
-                            Text(DeviceDashboardHeaderPresentation.installedVersionValue(runtimeState: profile.runtimeState?.state,
-                                payload: DeviceDashboardHeaderPresentation.currentVersionPayload(
-                                    session.appStore.reachabilityStore.snapshot(for: profile), profile: profile)))
+                            let reachability = session.appStore.reachabilityStore
+                            let payload = DeviceDashboardHeaderPresentation.currentVersionPayload(reachability.snapshot(for: profile), profile: profile)
+                            if payload == nil && reachability.isRefreshing(profile: profile) {
+                                ProgressView().controlSize(.small)
+                            } else {
+                                Text(DeviceDashboardHeaderPresentation.installedVersionValue(runtimeState: profile.runtimeState?.state, payload: payload))
+                                    .textSelection(.enabled)
+                            }
                         }
                     }
                     if !store.isBusy {
@@ -76,11 +81,21 @@ struct InstallTab: View {
             .frame(maxWidth: 560, alignment: .leading)
             .frame(maxWidth: .infinity, alignment: .top)
         }
+        .task(id: InstalledVersionRefresh(profileID: profile.id, finishedAt: profile.lastDeployState?.finishedAt, deviceBusy: isDeviceBusy)) {
+            guard !isDeviceBusy else { return }
+            await session.refreshInstalledVersion(profile: profile)
+        }
     }
 
     private func perform(_ action: InstallUserAction) {
         session.performInstallAction(action, profile: profile, showDiagnostics: showDiagnostics)
     }
+}
+
+private struct InstalledVersionRefresh: Equatable {
+    let profileID: DeviceProfile.ID
+    let finishedAt: Date?
+    let deviceBusy: Bool
 }
 
 private struct InstallExecutionOptionsView: View {

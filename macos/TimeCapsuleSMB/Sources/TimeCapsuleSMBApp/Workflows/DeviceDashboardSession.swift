@@ -98,6 +98,12 @@ final class DeviceDashboardSession: ObservableObject, Identifiable {
     /// switches to another device.
     func refreshDeviceStatus(profile: DeviceProfile) async {
         refreshSSHAccessStatus(profile: profile)
+        await refreshInstalledVersion(profile: profile)
+    }
+
+    /// Sharing also checks on entry and after an update. Wait for the SSH
+    /// preflight, then reuse a current reading or start one read-only check.
+    func refreshInstalledVersion(profile: DeviceProfile) async {
         let sshCheck = appStore.operationCoordinator.lane(for: .deviceWorkflow(profile.id, .sshStatus))
         for await isRunning in sshCheck.backend.$isRunning.values where !isRunning {
             break

@@ -93,9 +93,7 @@ struct DeviceDashboardHeaderPresentation: Equatable {
     /// which then reads as not checked until the next check.
     static func currentVersionPayload(_ snapshot: DeviceReachabilitySnapshot?, profile: DeviceProfile) -> ReachabilityPayload? {
         guard let snapshot else { return nil }
-        if let deploy = profile.lastDeployState, deploy.startedAt > snapshot.refreshedAt {
-            return nil
-        }
+        guard snapshot.reflectsLatestInstall(for: profile) else { return nil }
         return snapshot.payload
     }
 
@@ -114,7 +112,7 @@ struct DeviceDashboardHeaderPresentation: Equatable {
         case "outdated":
             return L10n.format("dashboard.overview.installed_version.outdated", tag, payload?.appReleaseTag ?? unknown)
         case "newer":
-            return L10n.string("dashboard.overview.installed_version.newer")
+            return payload?.installedReleaseTag ?? L10n.string("dashboard.overview.installed_version.newer")
         case "unknown":
             // No version in the device's config: an install from before
             // versions were recorded, or another one.
