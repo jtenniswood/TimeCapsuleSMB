@@ -35,7 +35,7 @@ struct TimeCapsuleSMBExecutable: App {
         Window("TimeCapsuleSMB", id: "main") {
             ContentView(application: application)
         }
-        .defaultSize(width: 900, height: 660)
+        .defaultSize(width: 800, height: 600)
         .commands {
             ApplicationCommands(application: application)
             CommandGroup(after: .appInfo) {

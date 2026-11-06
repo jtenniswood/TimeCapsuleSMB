@@ -212,7 +212,7 @@ final class PerAppLanguagePreferenceTests: XCTestCase {
         XCTAssertEqual(L10n.string("app_settings.language"), L10n.string("app_settings.language", language: withoutOurChoice))
     }
 
-    func testSettingsSaysWhenMenusFollowTheLanguage() async throws {
+    func testSettingsKeepsTheLanguageRelaunchNoticeInHelp() async throws {
         let fixture = try await AppViewFixture()
         let view = AppSettingsView(
             appStore: fixture.appStore,
@@ -223,7 +223,8 @@ final class PerAppLanguagePreferenceTests: XCTestCase {
 
         let texts = accessibleElements(view, size: CGSize(width: 900, height: 2400)).map(\.text)
 
-        XCTAssertTrue(texts.contains(L10n.string("app_settings.language_relaunch_notice")), "\(texts)")
+        XCTAssertFalse(texts.contains(L10n.string("app_settings.language_relaunch_notice")), "\(texts)")
+        XCTAssertTrue(texts.contains(L10n.string("app_settings.language")), "\(texts)")
     }
 
     private func makeAppStore(settingsURL: URL? = nil) async throws -> (AppStore, URL) {

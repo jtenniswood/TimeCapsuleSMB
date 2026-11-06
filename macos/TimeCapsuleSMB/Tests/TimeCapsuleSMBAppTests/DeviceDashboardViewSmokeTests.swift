@@ -287,16 +287,16 @@ final class DeviceDashboardViewSmokeTests: XCTestCase {
         await runQueuedStoreUpdates()
         // The boot hook's own options replace the other panels' Advanced Options.
         let texts = accessibleElements(in: host.contentView).map(\.text)
-        XCTAssertTrue(texts.contains("Apple Firmware Options"), "\(texts)")
+        XCTAssertTrue(texts.contains(L10n.string("utility.details")), "\(texts)")
         XCTAssertFalse(texts.contains("Advanced Options"), "\(texts)")
         XCTAssertEqual(isEnabled("Back Up and Inspect"), true)
-        XCTAssertEqual(isEnabled("Plan Patch"), false)
-        XCTAssertEqual(isEnabled("Write Patch"), false)
+        XCTAssertNil(isEnabled("Plan Patch"))
+        XCTAssertNil(isEnabled("Write Patch"))
 
         XCTAssertTrue(pressAccessibleControl(in: host.contentView, labeled: "Back Up and Inspect"))
         try await waitUntilStoreState { maintenance.bootHookStore.backup != nil && !maintenance.isBusy }
         try await waitUntilStoreState { isEnabled("Plan Patch") == true }
-        XCTAssertEqual(isEnabled("Write Patch"), false)
+        XCTAssertNil(isEnabled("Write Patch"))
 
         XCTAssertTrue(pressAccessibleControl(in: host.contentView, labeled: "Plan Patch"))
         try await waitUntilStoreState { maintenance.bootHookStore.plan != nil && !maintenance.isBusy }
@@ -325,7 +325,7 @@ final class DeviceDashboardViewSmokeTests: XCTestCase {
 
         XCTAssertTrue(pressAccessibleControl(in: host.contentView, labeled: L10n.string("simple.utilities")))
         await runQueuedStoreUpdates()
-        XCTAssertTrue(pressAccessibleControl(in: host.contentView, labeled: "Apple Firmware Options"))
+        XCTAssertTrue(pressAccessibleControl(in: host.contentView, labeled: L10n.string("utility.details")))
         try await waitUntilStoreState { enabledStates().count == 3 }
         XCTAssertEqual(enabledStates(), [true, true, true], "\(accessibleElements(in: host.contentView).map(\.text))")
 

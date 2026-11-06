@@ -11,59 +11,30 @@ struct BlockingProgressOverlay<Progress: BlockingProgressPresenting>: View {
 
     var body: some View {
         ZStack {
-            if !allowsBackgroundInteraction {
-                Color.clear
-                    .contentShape(Rectangle())
-                    .ignoresSafeArea()
+            if !allowsBackgroundInteraction { Color.clear.contentShape(Rectangle()).ignoresSafeArea() }
+            VStack(spacing: 16) {
+                ProgressView().controlSize(.regular)
+                Text(progress.title).font(UtilityStyle.body)
             }
-
-            VStack(spacing: 12) {
-                ProgressView()
-                    .controlSize(.large)
-                Text(progress.title)
-                    .font(UtilityStyle.heading)
-                Text(progress.message)
-                    .font(UtilityStyle.secondary)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text(progress.detail ?? "")
-                    .font(UtilityStyle.secondary)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.center)
-                    .frame(minHeight: 28, alignment: .top)
-                    .opacity(progress.detail?.isEmpty == false ? 1 : 0)
-            }
-            .padding(22)
-            .frame(width: 340)
-            .frame(minHeight: 176)
-            .background(.regularMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            .shadow(radius: 18)
+            .padding(24)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .allowsHitTesting(!allowsBackgroundInteraction)
-        .transition(.opacity)
     }
 }
 
-/// Progress stays in the page so its controls, warnings and Cancel remain clear.
+/// The transcript stays in Details; progress has one stable, readable line.
 struct InlineOperationProgress<Progress: BlockingProgressPresenting>: View {
     let progress: Progress
+    var title: String? = nil
+
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(spacing: 12) {
             ProgressView().controlSize(.small)
-            VStack(alignment: .leading, spacing: 5) {
-                Text(progress.title).fontWeight(.medium)
-                Text(progress.message).foregroundStyle(.secondary)
-                if let detail = progress.detail {
-                    Text(detail).font(UtilityStyle.secondary).foregroundStyle(.secondary)
-                }
-            }
+            Text(title ?? progress.title)
         }
-        .padding(16)
+        .font(UtilityStyle.body)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
+        .help(progress.message)
     }
 }

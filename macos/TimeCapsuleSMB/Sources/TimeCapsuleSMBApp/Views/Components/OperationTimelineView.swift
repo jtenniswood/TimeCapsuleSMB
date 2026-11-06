@@ -66,7 +66,7 @@ struct OperationTimelineRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 AnimatedProgressText(message: item.title, isRunning: item.state == .running && !hasDetail)
-                    .font(UtilityStyle.heading)
+                    .font(UtilityStyle.body)
                     .foregroundStyle(.primary)
                 if let detail = item.detail, !detail.isEmpty {
                     AnimatedProgressText(message: detail, isRunning: item.state == .running)
@@ -93,9 +93,6 @@ struct OperationTimelineRow: View {
             Spacer(minLength: 0)
         }
         .padding(.vertical, 5)
-        .padding(.horizontal, showsBackground ? 6 : 0)
-        .background(background)
-        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
         .contentShape(Rectangle())
         .animation(reduceMotion ? nil : .snappy(duration: 0.18), value: item.state)
         .accessibilityElement(children: .combine)
@@ -105,14 +102,4 @@ struct OperationTimelineRow: View {
         item.detail?.isEmpty == false
     }
 
-    @ViewBuilder
-    private var background: some View {
-        if showsBackground && item.state == .running {
-            OperationTimelineVisualStyle.color(for: item.state).opacity(0.10)
-        } else if showsBackground && item.state == .failed {
-            OperationTimelineVisualStyle.color(for: item.state).opacity(0.08)
-        } else {
-            Color.clear
-        }
-    }
 }

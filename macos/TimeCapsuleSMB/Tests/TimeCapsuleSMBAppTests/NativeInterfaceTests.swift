@@ -14,6 +14,10 @@ final class NativeInterfaceTests: XCTestCase {
         XCTAssertEqual(draft.address, "[2001:db8::24]")
         draft.address = "2001:db8::25"
         XCTAssertEqual(DeviceEndpointPolicy.rootSSHTarget(draft.host), "admin@2001:db8::25")
+        draft.host = "admin@[2001:db8::24]:2222"
+        XCTAssertEqual(draft.address, "[2001:db8::24]:2222")
+        draft.address = "[2001:db8::25]:2222"
+        XCTAssertEqual(draft.host, "admin@[2001:db8::25]:2222")
         draft.address = ""
         XCTAssertEqual(draft.host, "")
     }
@@ -81,6 +85,32 @@ final class NativeInterfaceTests: XCTestCase {
         XCTAssertTrue(pressAccessibleControl(in: host.contentView, labeled: L10n.string("action.cancel")))
         XCTAssertEqual(session.profileEditorStore.draft.displayName, profile.displayName)
         XCTAssertEqual(fixture.appStore.route, .allDevices)
+    }
+
+    func testFirmwareGuideRequiresBackupAndAMatchingPlanForEachWrite() async throws {
+        for mode in [FlashPlanMode.patch, .restore] {
+            let fixture = try BootHookTestFixture(responses: testBootHookResponses(plan: testBootHookPlanPayload(mode: mode)))
+            XCTAssertEqual(MaintenanceGuidePolicy.primaryAction(presentation: fixture.presentation), .backUpAndInspectFirmware)
+            XCTAssertFalse(fixture.presentation.isEnabled(.writePatch))
+            XCTAssertFalse(fixture.presentation.isEnabled(.writeRestore))
+            try await fixture.run(.backup)
+            XCTAssertEqual(MaintenanceGuidePolicy.primaryAction(presentation: fixture.presentation), .planPatch)
+            try await fixture.run(.plan(mode))
+            XCTAssertEqual(MaintenanceGuidePolicy.primaryAction(presentation: fixture.presentation), mode == .patch ? .writePatch : .writeRestore)
+        }
+    }
+
+    func testSupportExportHonorsTheDetailedLogsChoice() async throws {
+        let fixture = try await AppViewFixture()
+        for includeLogs in [false, true] {
+            var requested: Bool?
+            let view = AppDiagnosticsView(store: fixture.appStore.appReadinessStore, exportContext: { include in
+                requested = include
+                return fixture.appStore.diagnosticsExportContext(includeBackendEvents: include)
+            }, showBackendEvents: .constant(includeLogs))
+            _ = view.exportText()
+            XCTAssertEqual(requested, includeLogs)
+        }
     }
 
 }

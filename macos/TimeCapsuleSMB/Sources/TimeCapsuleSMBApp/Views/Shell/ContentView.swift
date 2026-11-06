@@ -78,7 +78,7 @@ public struct ContentView: View {
         }
         .frame(minWidth: 760, minHeight: 580)
         .background(Color(nsColor: .windowBackgroundColor))
-        .navigationTitle(appStore.selectedProfile?.title ?? "TimeCapsuleSMB")
+        .navigationTitle(appStore.route == .activity ? L10n.string("sidebar.activity") : appStore.selectedProfile?.title ?? "TimeCapsuleSMB")
         .font(UtilityStyle.body)
         .controlSize(.regular)
         .preferredColorScheme(appSettingsStore.settings.appearance == .system ? nil : appSettingsStore.settings.appearance.preferredColorScheme(systemColorScheme: .light))
@@ -121,11 +121,7 @@ public struct ContentView: View {
                 exportContext: { includeBackendEvents in
                     appStore.diagnosticsExportContext(includeBackendEvents: includeBackendEvents)
                 },
-                showBackendEvents: $diagnosticsShowBackendEvents,
-                helperPath: Binding(
-                    get: { appBackend.helperPath },
-                    set: { appBackend.helperPath = $0 }
-                )
+                showBackendEvents: $diagnosticsShowBackendEvents
             )
         }
         .confirmationDialog(

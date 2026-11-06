@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct DiskHealthView: View {
@@ -6,13 +7,6 @@ struct DiskHealthView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(L10n.string("disk_health.title"))
-                .font(UtilityStyle.heading)
-            if let checkedAt {
-                Text(L10n.format("disk_health.checked_at", checkedAt.formatted(date: .abbreviated, time: .shortened)))
-                    .font(UtilityStyle.secondary)
-                    .foregroundStyle(.secondary)
-            }
             if let report, report.error == nil {
                 if report.disks.isEmpty {
                     Text(L10n.string("disk_health.no_disks"))
@@ -22,15 +16,17 @@ struct DiskHealthView: View {
                     DiskSmartReadingsView(disk: disk)
                 }
             } else {
-                Text(L10n.string(report == nil || report?.error == "not_checked" ? "disk_health.not_checked" : "disk_health.unavailable"))
+                Text(L10n.string(report == nil || report?.error == "not_checked" ? "utility.status.unchecked" : "utility.disk.unavailable"))
                     .font(UtilityStyle.body)
                     .foregroundStyle(.secondary)
             }
+            if let checkedAt {
+                Text(L10n.format("disk_health.checked_at", checkedAt.formatted(date: .abbreviated, time: .shortened)))
+                    .font(UtilityStyle.secondary)
+                    .foregroundStyle(.secondary)
+            }
         }
-        .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.secondary.opacity(0.08))
-        .clipShape(RoundedRectangle(cornerRadius: 6))
     }
 }
 
@@ -38,39 +34,53 @@ private struct DiskSmartReadingsView: View {
     let disk: DiskHealthDisk
 
     private var statusKey: String {
-        if disk.reportsFailure { return "disk_health.failing" }
-        return disk.smartStatus == "verified" ? "disk_health.verified" : "disk_health.not_reported"
+        if disk.reportsFailure { return "utility.disk.failing" }
+        return disk.smartStatus == "verified" ? "utility.status.working" : "utility.status.unchecked"
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Label(disk.label, systemImage: disk.builtin ? "internaldrive" : "externaldrive")
-                    .font(UtilityStyle.heading)
+            HStack(spacing: 16) {
+                if let artwork = DiskArtwork.image {
+                    Image(nsImage: artwork).resizable().scaledToFit().frame(width: 48, height: 48)
+                        .accessibilityHidden(true)
+                } else {
+                    Image(systemName: disk.builtin ? "internaldrive" : "externaldrive")
+                        .font(.system(size: 32)).foregroundStyle(.secondary).accessibilityHidden(true)
+                }
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(disk.label).font(UtilityStyle.heading)
+                    Label(L10n.string(statusKey), systemImage: disk.reportsFailure ? "exclamationmark.triangle" :
+                        disk.smartStatus == "verified" ? "checkmark.circle" : "questionmark.circle")
+                        .foregroundStyle(.secondary)
+                }
                 Spacer()
-                Label(L10n.string(statusKey), systemImage: disk.reportsFailure ? "exclamationmark.triangle" :
-                    disk.smartStatus == "verified" ? "checkmark.circle" : "questionmark.circle")
-                    .font(UtilityStyle.secondary)
-                    .foregroundStyle(disk.reportsFailure ? Color.orange : Color.secondary)
+                if let temperature = disk.temperatureCelsius {
+                    Text(temperature).foregroundStyle(.secondary)
+                        .help(L10n.string("disk_health.temperature"))
+                }
             }
             if disk.reportsFailure {
-                Text(L10n.string("disk_health.failure_advice"))
+                Text(L10n.string("utility.disk.failure_advice"))
                     .font(UtilityStyle.body)
             }
             ForEach(Array(disk.partitions.enumerated()), id: \.offset) { _, partition in
                 if let total = DiskHealthPartition.bytes(partition.sizeMiB),
                    let free = DiskHealthPartition.bytes(partition.freeMiB) {
-                    Text(L10n.format("disk_health.space", partition.name, free, total))
-                        .font(UtilityStyle.secondary)
-                        .foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(L10n.format("disk_health.space", partition.name, free, total))
+                            .font(UtilityStyle.secondary).foregroundStyle(.secondary)
+                        if let size = partition.sizeMiB, size > 0, let available = partition.freeMiB, available >= 0 {
+                            ProgressView(value: Double(size - min(size, available)), total: Double(size))
+                                .tint(.accentColor)
+                                .accessibilityLabel(partition.name)
+                        }
+                    }
+
                 }
             }
             if disk.details.state == "available" {
-                if let temperature = disk.temperatureCelsius {
-                    LabeledContent(L10n.string("disk_health.temperature"), value: temperature)
-                        .font(UtilityStyle.secondary).foregroundStyle(.secondary)
-                }
-                DisclosureGroup(L10n.string("simple.technical_details")) {
+                DisclosureGroup(L10n.string("utility.details")) {
                     SummaryGrid(rows: [
                         (L10n.string("disk_health.temperature"), disk.temperatureCelsius ?? L10n.string("value.unknown")),
                         (L10n.string("disk_health.power_on_hours"), disk.metric(9, named: "Power-on hours count") ?? L10n.string("value.unknown")),
@@ -101,11 +111,12 @@ private struct DiskSmartReadingsView: View {
                         .font(UtilityStyle.secondary)
                         .foregroundStyle(.secondary)
                 }
-            } else {
-                Text(L10n.string("disk_health.details_unavailable"))
-                    .font(UtilityStyle.secondary)
-                    .foregroundStyle(.secondary)
             }
         }
     }
+}
+
+private enum DiskArtwork {
+    static let image = NSImage(contentsOfFile:
+        "/System/Applications/Utilities/AirPort Utility.app/Contents/Resources/AirDisk.icns")
 }

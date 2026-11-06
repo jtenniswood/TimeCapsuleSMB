@@ -20,7 +20,7 @@ struct OverviewTab: View {
                             DeviceStatusLight(status: summary.displayStatus)
                             Text(summary.displayStatus.title)
                         }
-                        Text(profile.connectionTarget).foregroundStyle(.secondary)
+                        Text(DeviceEndpointPolicy.hostComponent(profile.connectionTarget) ?? profile.displayTarget).foregroundStyle(.secondary)
                     }
                     Spacer(minLength: 0)
                 }

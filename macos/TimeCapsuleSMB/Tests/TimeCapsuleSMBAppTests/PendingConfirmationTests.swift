@@ -252,9 +252,9 @@ final class PendingConfirmationTests: XCTestCase {
 
         let confirmation = try XCTUnwrap(PendingConfirmation(confirmationEvent: event, originalParams: [:]))
 
-        XCTAssertEqual(confirmation.title, "Install / Update Samba and Reboot?")
-        XCTAssertEqual(confirmation.message, "Install or update Samba and reboot this Time Capsule?")
-        XCTAssertEqual(confirmation.actionTitle, "Install / Update Samba and Reboot")
+        XCTAssertEqual(confirmation.title, "Set Up File Sharing?")
+        XCTAssertEqual(confirmation.message, "Install or update file sharing on Time Capsule? Your AirPort will restart.")
+        XCTAssertEqual(confirmation.actionTitle, "Set Up File Sharing")
     }
 
     func testPendingConfirmationUsesLocalizedConfigureEnableSSHCopy() throws {
@@ -275,12 +275,13 @@ final class PendingConfirmationTests: XCTestCase {
 
         let confirmation = try XCTUnwrap(PendingConfirmation(confirmationEvent: event, originalParams: [:]))
 
-        XCTAssertEqual(confirmation.title, "Enable SSH And Reboot?")
+        XCTAssertEqual(confirmation.title, "Allow Connection?")
         XCTAssertEqual(
             confirmation.message,
-            "SSH is closed on Office Capsule. Enable SSH using AirPort ACP and reboot this AirPort device?"
+            "Allow this app to manage Office Capsule? Your AirPort will restart."
         )
-        XCTAssertEqual(confirmation.actionTitle, "Enable SSH and Reboot")
+        XCTAssertEqual(confirmation.actionTitle, "Allow Connection")
+        XCTAssertFalse(confirmation.isDestructive)
     }
 
     func testPendingConfirmationUsesLocalizedActivationCopy() throws {
@@ -301,9 +302,9 @@ final class PendingConfirmationTests: XCTestCase {
 
         let confirmation = try XCTUnwrap(PendingConfirmation(confirmationEvent: event, originalParams: [:]))
 
-        XCTAssertEqual(confirmation.title, "Install / Update Samba and Reboot?")
-        XCTAssertEqual(confirmation.message, "Install or update Samba and reboot this Time Capsule?")
-        XCTAssertEqual(confirmation.actionTitle, "Install / Update Samba and Reboot")
+        XCTAssertEqual(confirmation.title, "Set Up File Sharing?")
+        XCTAssertEqual(confirmation.message, "Install or update file sharing on Time Capsule? Your AirPort will restart.")
+        XCTAssertEqual(confirmation.actionTitle, "Set Up File Sharing")
     }
 
     func testPendingConfirmationUsesRestoreWriteRebootCopy() throws {
@@ -333,6 +334,7 @@ final class PendingConfirmationTests: XCTestCase {
             "Restore Apple stock firmware to the primary firmware bank on 10.0.0.2 and reboot after validation?"
         )
         XCTAssertEqual(confirmation.actionTitle, "Write Firmware")
+        XCTAssertTrue(confirmation.isDestructive)
     }
 
     func testPendingConfirmationUsesLocalizedNoWaitDeployCopy() throws {
@@ -353,12 +355,12 @@ final class PendingConfirmationTests: XCTestCase {
 
         let confirmation = try XCTUnwrap(PendingConfirmation(confirmationEvent: event, originalParams: [:]))
 
-        XCTAssertEqual(confirmation.title, "Install / Update Samba and Request NetBSD 4 Reboot?")
+        XCTAssertEqual(confirmation.title, "Set Up File Sharing?")
         XCTAssertEqual(
             confirmation.message,
-            "Install or update Samba on this Time Capsule, request reboot, and return immediately without starting Samba after SSH returns?"
+            "Install or update file sharing on Time Capsule? Your AirPort will restart. This app won't wait for the restart to finish. Start file sharing manually after your AirPort restarts."
         )
-        XCTAssertEqual(confirmation.actionTitle, "Install / Update Samba and Request Reboot")
+        XCTAssertEqual(confirmation.actionTitle, "Set Up File Sharing")
     }
 
     func testPendingConfirmationUsesLocalizedQuestionForUninstallWithoutReboot() throws {

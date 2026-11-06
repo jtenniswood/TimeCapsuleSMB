@@ -12,14 +12,9 @@ struct MaintenanceTab: View {
         let presentation = MaintenanceDashboardPresentation(store: store, profile: profile)
 
         ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                Text(L10n.string("simple.tab.disks"))
-                    .font(UtilityStyle.title)
-
+            VStack(alignment: .leading, spacing: UtilityStyle.sectionSpacing) {
                 DiskHealthView(report: profile.lastCheckup?.diskHealth, checkedAt: profile.lastCheckup?.checkedAt)
                 HStack {
-                    Text(L10n.string("simple.disk.refresh_message"))
-                        .font(UtilityStyle.secondary).foregroundStyle(.secondary)
                     Spacer()
                     Button(L10n.string("simple.disk.refresh")) {
                         session.runCheckup(profile: profile)
@@ -29,9 +24,16 @@ struct MaintenanceTab: View {
                     .disabled(session.appStore.operationCoordinator.isDeviceBusy(profile))
                 }
                 DisclosureGroup(L10n.string("simple.utilities"), isExpanded: $session.maintenanceUtilitiesExpanded) {
-                    MaintenanceCardsView(cards: presentation.cards) { workflow in
-                        store.selectedWorkflow = workflow
+                    UtilityFormRow(title: L10n.string("utility.tools.choose")) {
+                        Picker(L10n.string("utility.tools.choose"), selection: Binding(get: { presentation.detail.workflow }, set: { store.selectedWorkflow = $0 })) {
+                            ForEach(presentation.cards.map(\.workflow)) { workflow in
+                                Text(workflow.utilityTitle).tag(workflow)
+                            }
+                        }
+                        .labelsHidden()
+                        .disabled(store.isBusy)
                     }
+                    .padding(.vertical, 16)
 
                     MaintenanceDetailView(
                         presentation: presentation.detail,
@@ -88,63 +90,6 @@ struct MaintenanceTab: View {
     }
 }
 
-private struct MaintenanceCardsView: View {
-    let cards: [MaintenanceCardPresentation]
-    let select: (MaintenanceWorkflow) -> Void
-    // The tallest card's content: every card takes it as its minimum, so the
-    // cards stay even when one subtitle wraps further than the rest.
-    @State private var contentHeight: CGFloat = 0
-
-    var body: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 190), spacing: 10, alignment: .top)], alignment: .leading, spacing: 10) {
-            ForEach(cards) { card in
-                Button {
-                    select(card.workflow)
-                } label: {
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack {
-                            Text(card.title)
-                                .font(UtilityStyle.heading)
-                            Spacer()
-                            Image(systemName: card.isSelected ? "checkmark.circle.fill" : "circle")
-                        }
-                        // No line limit: longer translations need more lines
-                        // in four narrow columns than a fixed limit allows.
-                        Text(card.subtitle)
-                            .font(UtilityStyle.secondary)
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Text(card.stateTitle)
-                            .font(UtilityStyle.secondary.weight(.medium))
-                            .foregroundStyle(.secondary)
-                    }
-                    .background {
-                        GeometryReader { proxy in
-                            Color.clear.preference(key: MaintenanceCardHeightKey.self, value: proxy.size.height)
-                        }
-                    }
-                    .frame(maxWidth: .infinity, minHeight: max(92, contentHeight), alignment: .topLeading)
-                    .padding(10)
-                    .background(card.isSelected ? Color.accentColor.opacity(0.14) : Color.secondary.opacity(0.08))
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .onPreferenceChange(MaintenanceCardHeightKey.self) { height in
-            contentHeight = height
-        }
-    }
-}
-
-private struct MaintenanceCardHeightKey: PreferenceKey {
-    static let defaultValue: CGFloat = 0
-
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = max(value, nextValue())
-    }
-}
-
 private struct MaintenanceDetailView: View {
     let presentation: MaintenanceWorkflowDetailPresentation
     @ObservedObject var store: MaintenanceStore
@@ -153,75 +98,58 @@ private struct MaintenanceDetailView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(presentation.title)
-                        .font(UtilityStyle.heading)
-                    Text(presentation.subtitle)
-                        .font(UtilityStyle.secondary)
-                        .foregroundStyle(.secondary)
+            if presentation.isRunning {
+                HStack(spacing: 12) {
+                    ProgressView().controlSize(.small)
+                    Text(L10n.string("utility.status.working_on_device"))
                 }
-                Spacer()
-                Text(presentation.stateTitle)
-                    .font(UtilityStyle.secondary.weight(.medium))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 5)
-                    .background(.quaternary)
-                    .clipShape(Capsule())
+            } else if presentation.completion != nil || (presentation.workflow == .bootHook && store.bootHookStore.writeResult != nil) {
+                Label(L10n.string("action.done"), systemImage: "checkmark.circle")
             }
-
-            Label(presentation.risk, systemImage: "exclamationmark.triangle")
-                .font(UtilityStyle.secondary)
-                .foregroundStyle(.secondary)
-            AnimatedProgressText(message: presentation.statusMessage, isRunning: presentation.isRunning)
-                .font(UtilityStyle.body)
+            Text(L10n.string("utility.tools.\(presentation.workflow.rawValue).message"))
                 .foregroundStyle(.secondary)
 
             ForEach(presentation.warnings, id: \.self) { warning in
                 MaintenanceWarningLabel(text: warning)
             }
 
-            switch presentation.workflow {
-            case .fsck:
+            if presentation.workflow == .fsck, !store.fsckTargets.isEmpty {
                 FsckTargetListView(store: store)
-            case .bootHook:
-                DisclosureGroup {
-                    BootHookFirmwareOptionsView(store: store.bootHookStore, chooseFirmwareTemplate: chooseFirmwareTemplate)
-                } label: {
-                    Label(L10n.string("flash.options.apple_firmware"), systemImage: "gearshape")
-                        .font(UtilityStyle.heading)
-                }
-            case .sshAccess, .activate, .uninstall, .wipeDisk:
-                EmptyView()
             }
-
-            ForEach(presentation.actionRows, id: \.self) { row in
+            let primary = MaintenanceGuidePolicy.primaryAction(presentation: presentation)
+            if !presentation.isRunning {
+                MaintenanceActionButton(action: primary, title: primary.utilityTitle,
+                    isEnabled: presentation.isEnabled(primary), perform: performAction)
+            }
+            if let plan = presentation.plan {
+                ForEach(plan.warnings, id: \.self) { warning in MaintenanceWarningLabel(text: warning) }
+            }
+            if presentation.workflow == .wipeDisk, store.wipeDiskState == .succeeded,
+               store.wipeDiskResult?.offerInstall == true {
+                Button(L10n.string("simple.sharing.set_up")) { performAction(.installSMB) }
+                    .disabled(store.isBusy)
+            }
+            DashboardDisclosureSection(title: L10n.string("utility.details")) {
+                Text(presentation.statusMessage).font(UtilityStyle.secondary).foregroundStyle(.secondary)
+                if !presentation.bootHookRows.isEmpty { BootHookRowsView(rows: presentation.bootHookRows) }
+                if let plan = presentation.plan {
+                    SummaryGrid(rows: plan.rows.map { ($0.label, $0.value) })
+                }
+                if let completion = presentation.completion {
+                    SummaryGrid(rows: completion.rows.map { ($0.label, $0.value) })
+                }
+                if let timeline = presentation.timeline, !timeline.items.isEmpty {
+                    MaintenanceTimelineView(presentation: timeline)
+                }
                 WrappingHStack {
-                    ForEach(row) { action in
-                        MaintenanceActionButton(
-                            action: action,
-                            title: presentation.title(for: action),
-                            isEnabled: presentation.isEnabled(action),
-                            perform: performAction
-                        )
+                    ForEach(presentation.actionRows.flatMap { $0 }.filter { $0 != primary && $0 != .installSMB }) { action in
+                        MaintenanceActionButton(action: action, title: action.utilityTitle,
+                            isEnabled: presentation.isEnabled(action), perform: performAction)
                     }
                 }
-            }
-
-            if !presentation.bootHookRows.isEmpty {
-                BootHookRowsView(rows: presentation.bootHookRows)
-            }
-
-            if let timeline = presentation.timeline, !timeline.items.isEmpty {
-                MaintenanceTimelineView(presentation: timeline)
-            }
-
-            if let plan = presentation.plan {
-                MaintenancePlanView(presentation: plan)
-            }
-
-            if let completion = presentation.completion {
-                MaintenanceCompletionView(presentation: completion)
+                if presentation.workflow == .bootHook {
+                    BootHookFirmwareOptionsView(store: store.bootHookStore, chooseFirmwareTemplate: chooseFirmwareTemplate)
+                }
             }
 
             // Wipe Internal Disk mounts nothing and always restarts and waits;
@@ -230,9 +158,6 @@ private struct MaintenanceDetailView: View {
                 MaintenanceAdvancedOptionsView(workflow: presentation.workflow, store: store)
             }
         }
-        .padding(10)
-        .background(Color.secondary.opacity(0.06))
-        .clipShape(RoundedRectangle(cornerRadius: 6))
     }
 
 }
@@ -244,66 +169,27 @@ private struct MaintenanceActionButton: View {
     let perform: (MaintenanceUserAction) -> Void
 
     var body: some View {
-        if action.isCommitAction {
-            Button {
-                perform(action)
-            } label: {
-                Label(title, systemImage: action.systemImage)
-            }
-            .buttonStyle(.borderedProminent)
+        Button(title) { perform(action) }
             .disabled(!isEnabled)
-        } else {
-            Button {
-                perform(action)
-            } label: {
-                Label(title, systemImage: action.systemImage)
-            }
-            .buttonStyle(.bordered)
-            .disabled(!isEnabled)
-        }
     }
+
 }
 
 private struct FsckTargetListView: View {
     @ObservedObject var store: MaintenanceStore
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            if store.fsckTargets.isEmpty {
-                Text(L10n.string("maintenance.fsck.no_volumes"))
-                    .font(UtilityStyle.secondary)
-                    .foregroundStyle(.secondary)
-            } else {
+        UtilityFormRow(title: L10n.string("utility.disk.volume")) {
+            Picker(L10n.string("utility.disk.volume"), selection: $store.selectedFsckTargetID) {
                 ForEach(store.fsckTargets) { target in
-                    Button {
-                        store.selectedFsckTargetID = target.id
-                    } label: {
-                        HStack {
-                            Image(systemName: store.selectedFsckTargetID == target.id ? "checkmark.circle.fill" : "circle")
-                            Text(target.name ?? target.device)
-                            Text(target.mountpoint).foregroundStyle(.secondary)
-                        }
-                    }
-                    .buttonStyle(.plain)
+                    Text(target.name ?? target.device).tag(Optional(target.id))
                 }
             }
+            .labelsHidden()
+            .disabled(store.isBusy)
         }
     }
-}
 
-private struct MaintenancePlanView: View {
-    let presentation: MaintenancePlanPresentation
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(presentation.title)
-                .font(UtilityStyle.heading)
-            SummaryGrid(rows: presentation.rows.map { ($0.label, $0.value) })
-            ForEach(presentation.warnings, id: \.self) { warning in
-                MaintenanceWarningLabel(text: warning)
-            }
-        }
-    }
 }
 
 /// Lays out its views left to right and starts a new line when the next one
@@ -417,18 +303,6 @@ private struct BootHookFirmwareOptionsView: View {
         // A plan is made for these values; changing them mid-run would leave
         // the plan on screen without them.
         .disabled(store.isBusy)
-    }
-}
-
-private struct MaintenanceCompletionView: View {
-    let presentation: MaintenanceCompletionPresentation
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(presentation.title)
-                .font(UtilityStyle.heading)
-            SummaryGrid(rows: presentation.rows.map { ($0.label, $0.value) })
-        }
     }
 }
 

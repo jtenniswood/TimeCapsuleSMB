@@ -91,7 +91,7 @@ final class AddDeviceViewSmokeTests: XCTestCase {
         func rowsEnabled() -> [Bool] {
             accessibleElements(AddDeviceView(store: fixture.store), size: CGSize(width: 900, height: 700))
                 .filter { element in
-                    element.role == .button && ["Office Capsule,", "Den Capsule,"].contains { element.text.hasPrefix($0) }
+                    element.role == .staticText && ["Office Capsule", "Den Capsule"].contains(element.text)
                 }
                 .map(\.isEnabled)
         }

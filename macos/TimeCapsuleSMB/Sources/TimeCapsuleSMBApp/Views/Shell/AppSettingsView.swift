@@ -54,7 +54,7 @@ struct AppSettingsView: View {
                     Picker("", selection: $editor.draft.language) {
                         ForEach(AppLanguage.allCases) { Text($0.title).tag($0) }
                     }
-                    .labelsHidden().frame(width: 220)
+                    .labelsHidden().frame(width: 220, alignment: .leading)
                     .accessibilityLabel(L10n.string("app_settings.language"))
                     .help(L10n.string("app_settings.language_relaunch_notice"))
                     .id("language-\(appSettingsStore.settings.language.id)")
@@ -63,7 +63,7 @@ struct AppSettingsView: View {
                     Picker("", selection: $editor.draft.appearance) {
                         ForEach(AppAppearance.allCases) { Text($0.title).tag($0) }
                     }
-                    .labelsHidden().frame(width: 220).accessibilityLabel(L10n.string("app_settings.appearance"))
+                    .labelsHidden().frame(width: 220, alignment: .leading).accessibilityLabel(L10n.string("app_settings.appearance"))
                 }
             }
             VStack(alignment: .leading, spacing: 12) {

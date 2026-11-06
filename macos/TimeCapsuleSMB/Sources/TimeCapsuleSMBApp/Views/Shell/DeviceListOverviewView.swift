@@ -233,7 +233,7 @@ struct DeviceQuickInfoView: View {
             Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 8) {
                 GridRow {
                     Text(L10n.string("simple.address")).foregroundStyle(.secondary)
-                    Text(profile.connectionTarget).textSelection(.enabled)
+                    Text(DeviceEndpointPolicy.hostComponent(profile.connectionTarget) ?? profile.displayTarget).textSelection(.enabled)
                 }
             }
             .font(UtilityStyle.body)
