@@ -121,8 +121,7 @@ final class LiveHostedView {
             defer: false
         )
         window.isReleasedWhenClosed = false
-        window.contentViewController = NSHostingController(rootView: view)
-        window.contentView = window.contentViewController!.view
+        window.contentView = NSHostingView(rootView: view)
     }
 
     var contentView: NSView {
@@ -147,8 +146,7 @@ struct AccessibleElement: Equatable {
 func accessibleElements<V: View>(_ view: V, size: CGSize = CGSize(width: 1200, height: 800)) -> [AccessibleElement] {
     let window = NSWindow(contentRect: CGRect(origin: .zero, size: size), styleMask: [.titled], backing: .buffered, defer: false)
     window.isReleasedWhenClosed = false
-    window.contentViewController = NSHostingController(rootView: view)
-        window.contentView = window.contentViewController!.view
+    window.contentView = NSHostingView(rootView: view)
     defer { window.close() }
     return accessibleElements(in: window.contentView!)
 }
