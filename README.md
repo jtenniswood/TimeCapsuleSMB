@@ -21,7 +21,7 @@ The "Install" or `deploy` script will install files in `/mnt/Flash` on the Time 
 
 NetBSD 6 devices automatically startup on boot. **Older NetBSD 4 devices can flash the firmware (to add a boot hook) to allow it to automatically start Samba on reboot**. If you do not flash the boot hook, then Samba will not start automatically on an older Time Capsule! You can also choose to do a manual `activate` after every reboot to start Samba, if you do not want to flash the firmware.
 
-The default authentication model accepts any user as the username, and the Samba password is the current Time Capsule device password. The runtime reads the live AirPort configuration and generates the Samba password file in RAM. Guest access is disabled. To use a named AirPort disk-sharing account's password for the whole SMB share, see [selected AirPort account passwords](FAQ.md#can-i-use-an-airport-disk-sharing-accounts-password).
+The default authentication model accepts any user as the username, and the Samba password is the current Time Capsule device password. The runtime reads the live AirPort configuration and generates the Samba password file in RAM. Guest access is disabled. To use a named AirPort disk-sharing account's password for the configured shared folders, see [selected AirPort account passwords](FAQ.md#can-i-use-an-airport-disk-sharing-accounts-password). Authentication does not change the folders exported by Samba; internal storage uses `ShareRoot` by default.
 
 AirPort Extreme devices are not officially supported. Unofficially, they work fine. Note that this is installed to the hard drive, so it will not work for an Airport Extreme without a hard drive (as there is not enough space to store the binaries on the flash memory).   
 

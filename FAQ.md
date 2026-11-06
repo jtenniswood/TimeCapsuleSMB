@@ -52,10 +52,15 @@ Set `TC_SMB_AIRPORT_ACCOUNT=jtenniswood` in the CLI `.env` file, replacing
 `jtenniswood` with the account created in AirPort Utility, and deploy the updated
 runtime. An empty value restores the default device-password mode.
 
-This selects **one account's password for the whole SMB share**. Samba still
+This selects **one account's password for the configured shared folders**. Samba still
 accepts any username and accesses files as `root`; it does not provide separate
 passwords, private home folders or permissions for several users. Use this only
-when the selected account should access the complete exported share.
+when the selected account should access the complete exported folder.
+
+Authentication does not expand a share to the disk root. Keep
+`TC_INTERNAL_SHARE_USE_DISK_ROOT=false` to export the internal disk's `ShareRoot`
+folder, which is the default. Account access applies within the configured
+share boundary.
 
 The account's password stays in AirPort's configuration. Only its NT hash is
 staged in Samba's private RAM files, and the account name is saved in runtime
