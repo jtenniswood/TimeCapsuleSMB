@@ -1461,8 +1461,12 @@ static int samba_may_stage(const struct manager *m) {
     return m->hostname[0] && !m->hostname_waiting;
 }
 static int samba_prepare(struct manager *m, long long now) {
-    /* A 15 MiB RAM disk cannot hold two smbd images: the old one stops first. */
-    if (m->samba_unit.how.copy) {
+    /* A 15 MiB RAM disk cannot hold two smbd images: the old one stops first.
+     * Changing authentication backends also drains the old sessions before
+     * publishing different credentials or username mapping. */
+    int auth_changed = m->have_applied &&
+        !!m->applied_settings.config.smb_airport_account[0] != !!m->settings.config.smb_airport_account[0];
+    if (m->samba_unit.how.copy || auth_changed) {
         stop_role(&m->smb, now, 1);
         if (m->smb.child.group)
             return 0;

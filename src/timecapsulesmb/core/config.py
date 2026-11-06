@@ -462,8 +462,8 @@ def validate_ssh_opts(value: str, field_name: str) -> Optional[str]:
 
 
 def validate_smb_airport_account(value: str, field_name: str) -> Optional[str]:
-    if value and not re.fullmatch(r"[A-Za-z0-9_.-]{1,63}", value):
-        return f"{field_name} must be an AirPort account name of at most 63 letters, digits, dots, underscores or hyphens."
+    if value and value != "*" and not re.fullmatch(r"[A-Za-z0-9_.-]{1,63}", value):
+        return f"{field_name} must be '*' for automatic selection, or an AirPort account name of at most 63 letters, digits, dots, underscores or hyphens."
     return None
 
 

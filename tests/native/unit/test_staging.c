@@ -13,10 +13,17 @@ int device_nt_hash(char hash[33]) {
     strcpy(hash, "0123456789ABCDEF0123456789ABCDEF");
     return getenv("FAIL_HASH") ? -1 : 0;
 }
-int airport_account_nt_hash(const char *name, char hash[33], int *access) {
-    assert(!strcmp(name, "jtenniswood"));
-    *access = getenv("ACCOUNT_ACCESS") ? atoi(getenv("ACCOUNT_ACCESS")) : 0;
-    strcpy(hash, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+int airport_accounts_nt_hashes(struct airport_accounts *out) {
+    memset(out, 0, sizeof(*out));
+    out->count = getenv("EMPTY_ACCOUNTS") ? 0 : 2;
+    strcpy(out->values[0].name, "jtenniswood");
+    strcpy(out->values[0].nt_hash, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+    out->values[0].userid = 65537;
+    out->values[0].access = getenv("ACCOUNT_ACCESS") ? atoi(getenv("ACCOUNT_ACCESS")) : 0;
+    strcpy(out->values[1].name, "Other % user");
+    strcpy(out->values[1].nt_hash, "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
+    out->values[1].userid = 65538;
+    out->values[1].access = 1;
     return getenv("FAIL_ACCOUNT") ? -1 : 0;
 }
 int main(int argc, char **argv) {
@@ -54,6 +61,8 @@ int main(int argc, char **argv) {
     memset(&result, 0x55, sizeof(result));
     if (getenv("BAD_HASH"))
         strcpy(settings.nt_hash, "not a hash");
+    if (getenv("BAD_ACCOUNT_HASH"))
+        strcpy(settings.config.smb_accounts.values[0].nt_hash, "not a hash");
     failed = rsync ? tc_rsync_stage(&storage, &how, &result) : tc_samba_stage(&storage, &settings, &how, &result);
     /* What the manager learns about the image, even from a failed run. */
     printf("copy=%d crc=%lld read=%lld missing=%d\n", result.copy, result.crc32, result.read, result.missing);

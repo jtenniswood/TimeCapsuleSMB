@@ -1950,6 +1950,7 @@ def _add_tunneled_authenticated_smb_results(
     connection: SshConnection,
     *,
     smb_password: str,
+    smb_username: str = DEFAULT_SAMBA_AUTH_USER,
     active_share_names: list[str],
     active_smb_conf_reason: str,
     debug_fields: dict[str, object] | None,
@@ -1976,7 +1977,7 @@ def _add_tunneled_authenticated_smb_results(
             remote_port=445,
         ):
             listing_result = _authenticated_smb_listing_with_doctor_retries(
-                DEFAULT_SAMBA_AUTH_USER,
+                smb_username,
                 smb_password,
                 "127.0.0.1",
                 port=local_port,
@@ -2021,7 +2022,7 @@ def _add_tunneled_authenticated_smb_results(
 
             file_ops_ok = True
             for result in check_authenticated_smb_file_ops_detailed(
-                DEFAULT_SAMBA_AUTH_USER,
+                smb_username,
                 smb_password,
                 "127.0.0.1",
                 share_name,
@@ -2068,6 +2069,7 @@ def _add_authenticated_smb_results(
     runtime_naming_identity: RuntimeNamingIdentityProbeResult | None,
     *,
     smb_password: str,
+    smb_username: str = DEFAULT_SAMBA_AUTH_USER,
     active_smb_conf: str | None,
     active_smb_conf_reason: str,
     direct_smb: DirectSmbState,
@@ -2098,7 +2100,7 @@ def _add_authenticated_smb_results(
         (
             family,
             _authenticated_smb_listing_with_doctor_retries(
-                DEFAULT_SAMBA_AUTH_USER,
+                smb_username,
                 smb_password,
                 targets,
                 port=445,
@@ -2145,6 +2147,7 @@ def _add_authenticated_smb_results(
             _add_lan_smb_file_ops_results(
                 listing_result,
                 smb_password=smb_password,
+                **({"smb_username": smb_username} if smb_username != DEFAULT_SAMBA_AUTH_USER else {}),
                 active_share_names=active_share_names,
                 active_smb_conf_reason=active_smb_conf_reason,
                 add_result=add_result,
@@ -2181,6 +2184,7 @@ def _add_lan_smb_file_ops_results(
     listing_result: CheckResult,
     *,
     smb_password: str,
+    smb_username: str = DEFAULT_SAMBA_AUTH_USER,
     active_share_names: list[str],
     active_smb_conf_reason: str,
     add_result: Callable[[CheckResult], None],
@@ -2202,7 +2206,7 @@ def _add_lan_smb_file_ops_results(
     if isinstance(smb_ip_address, str) and smb_ip_address:
         file_ops_kwargs["ip_address"] = smb_ip_address
     for result in check_authenticated_smb_file_ops_detailed(
-        DEFAULT_SAMBA_AUTH_USER,
+        smb_username,
         smb_password,
         smb_server,
         share_name,
@@ -2249,11 +2253,12 @@ def _build_doctor_target(inputs: DoctorInputs) -> DoctorTarget:
 
 def _doctor_select_smb_password(target: DoctorTarget, remote: RemoteAccess,
                                 smb_config: SmbConfigState, sink: DoctorSink) -> DoctorTarget:
-    match = re.search(r"^\s*tc:airport account\s*=\s*([A-Za-z0-9_.-]{1,63})\s*$",
+    match = re.search(r"^\s*tc:airport account\s*=\s*(\*|[A-Za-z0-9_.-]{1,63})\s*$",
                       smb_config.text or "", re.M)
-    if match is None:
+    account_backend = re.search(r"^\s*passdb backend\s*=\s*tc_airport:", smb_config.text or "", re.M)
+    if match is None and account_backend is None:
         return target
-    name = match.group(1)
+    name = match.group(1) if match else "*"
     target = replace(target, smb_account=name, smb_password="", smb_password_available=False)
     if not remote.remote_checks_enabled:
         sink.add(CheckResult("SKIP", "SMB account password could not be read because SSH checks are unavailable"))
@@ -2263,8 +2268,8 @@ def _doctor_select_smb_password(target: DoctorTarget, remote: RemoteAccess,
     except ValueError:
         sink.add(CheckResult("FAIL", "The selected AirPort sharing account is unavailable, disabled or invalid"))
         return target
-    sink.add(CheckResult("INFO", f"SMB uses the password of AirPort account {name}"))
-    return replace(target, smb_password=account.password, smb_read_only=account.read_only,
+    sink.add(CheckResult("INFO", f"SMB checks use AirPort account {account.name}"))
+    return replace(target, smb_account=account.name, smb_password=account.password, smb_read_only=account.read_only,
                    smb_password_available=True)
 
 
@@ -3911,7 +3916,8 @@ def _doctor_check_device_smb(
         # Without a process snapshot, retries could pile up stuck processes.
         retry_delays=() if processes.timed_out else DOCTOR_TRANSIENT_RETRY_DELAYS,
         password_matches=password_match is True or bool(target.smb_account),
-        **({"password_label": "AirPort account password", "read_only": target.smb_read_only}
+        **({"password_label": "AirPort account password", "read_only": target.smb_read_only,
+            "smb_username": target.smb_account}
            if target.smb_account else {}),
     )
 
@@ -3972,4 +3978,5 @@ def _doctor_check_authenticated_smb(
         add_result=sink.add,
         # Without a process snapshot, retries could pile up stuck processes.
         retry_delays=() if processes.timed_out else DOCTOR_TRANSIENT_RETRY_DELAYS,
+        **({"smb_username": target.smb_account} if target.smb_account else {}),
     )

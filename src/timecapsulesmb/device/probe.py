@@ -157,6 +157,10 @@ runtime_passdb_path() {{
             printf '%s\n' "${{passdb_backend#smbpasswd:}}"
             return 0
             ;;
+        tc_airport:*)
+            printf '%s\n' "${{passdb_backend#tc_airport:}}"
+            return 0
+            ;;
     esac
     return 1
 }}

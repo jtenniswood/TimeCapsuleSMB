@@ -1,4 +1,4 @@
-"""Read one shared password from AirPort without shell evaluation or fallback."""
+"""Read AirPort accounts without shell evaluation or a shared-password fallback."""
 import plistlib
 import subprocess
 
@@ -68,3 +68,78 @@ def test_malformed_truncated_or_ambiguous_xml_never_falls_back(account_reader, r
     result = read(account_reader, [], raw=raw)
     assert result.returncode != 0
     assert result.stdout == result.stderr == b""
+
+
+def account_set(binary, users, *, raw=None):
+    result = read(binary, users, name="--all", raw=raw)
+    rows = [line.split("\t") for line in result.stdout.decode().splitlines()]
+    return result, {name: (int(uid), int(access), nt_hash) for uid, access, name, nt_hash in rows}
+
+
+def test_every_account_has_its_own_password_and_permission(account_reader):
+    users = [
+        dict(name="writer", password="writer secret", fileSharingAccess=0),
+        dict(name="reader", password="reader secret", fileSharingAccess=1),
+        dict(name="denied", password="", fileSharingAccess=2),
+        dict(name='Café % "team"', password="utf8 😀", fileSharingAccess=0),
+    ]
+    result, accounts = account_set(account_reader, users)
+    assert result.returncode == 0, result.stderr
+    assert len(accounts) == len(users)
+    assert len({entry[0] for entry in accounts.values()}) == len(users)
+    for user in users:
+        uid, access, nt_hash = accounts[user["name"]]
+        assert 65536 <= uid <= 0x2000FFFF
+        assert access == user["fileSharingAccess"]
+        assert nt_hash == ("0" * 32 if access == 2 else MD4.new(user["password"].encode("utf-16-le")).hexdigest().upper())
+    assert result.stdout == account_set(account_reader, list(reversed(users)))[0].stdout
+
+
+def test_adding_removing_or_changing_passwords_preserves_other_identities(account_reader):
+    alice = dict(name="alice", password="first", fileSharingAccess=0)
+    bob = dict(name="bob", password="second", fileSharingAccess=1)
+    _, before = account_set(account_reader, [alice, bob])
+    _, after = account_set(account_reader, [dict(bob, password="new password")])
+    assert set(after) == {"bob"}
+    assert after["bob"][:2] == before["bob"][:2]
+    assert after["bob"][2] != before["bob"][2]
+    _, renamed = account_set(account_reader, [dict(bob, name="BOB")])
+    assert renamed["BOB"] == before["bob"]
+
+
+def test_empty_account_list_is_valid_and_enables_no_logins(account_reader):
+    result, accounts = account_set(account_reader, [])
+    assert result.returncode == 0 and accounts == {}
+
+
+@pytest.mark.parametrize("name", ["", "a:b", "a\nb", "a\rb", "a\tb", "a\\b", "a/b", "x" * 256])
+def test_unrepresentable_names_reject_the_whole_snapshot(account_reader, name):
+    result, accounts = account_set(account_reader, [
+        dict(name="valid", password="secret", fileSharingAccess=0),
+        dict(name=name, password="secret", fileSharingAccess=0),
+    ])
+    assert result.returncode != 0 and accounts == {} and result.stderr == b""
+
+
+def test_ambiguous_names_are_never_silently_merged(account_reader):
+    result, accounts = account_set(account_reader, [
+        dict(name="Alice", password="one", fileSharingAccess=0),
+        dict(name="alice", password="two", fileSharingAccess=1),
+    ])
+    assert result.returncode != 0 and accounts == {}
+
+
+def test_account_count_and_capture_are_bounded(account_reader):
+    users = [dict(name=f"user-{i}", password="secret", fileSharingAccess=0) for i in range(128)]
+    result, accounts = account_set(account_reader, users)
+    assert result.returncode == 0 and len(accounts) == 128
+    result, accounts = account_set(account_reader, users + [dict(name="extra", password="x", fileSharingAccess=0)])
+    assert result.returncode != 0 and accounts == {}
+    result, accounts = account_set(account_reader, [], raw=b" " * 262145)
+    assert result.returncode != 0 and accounts == {}
+
+
+def test_long_utf8_account_names_fit_the_password_database(account_reader):
+    name = "é" * 127 + "x"
+    result, accounts = account_set(account_reader, [dict(name=name, password="secret", fileSharingAccess=0)])
+    assert result.returncode == 0 and name in accounts

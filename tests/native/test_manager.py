@@ -173,6 +173,8 @@ if (root/'record-acp').exists():
         out.write(json.dumps(dict(kind='command',role='acp',pid=os.getpid(),ppid=os.getppid(),group=os.getpgrp(),key=key))+'\\n')
 if key=='syNm' and (root/'bad-name').exists():sys.exit(1)
 if key=='syPW' and (root/'bad-auth').exists():sys.exit(1)
+if key=='usrd':
+    sys.stdout.buffer.write((root/'accounts').read_bytes());sys.exit(0)
 if key=='MaSt':
     if (root/'slow-mast').exists():time.sleep(60)
     if (root/'bad-mast').exists():sys.exit(1)
@@ -230,7 +232,7 @@ def manager(manager_tools):
     else:hosts.unlink(missing_ok=True)
     for name in ('bad-mast','bad-name','bad-auth','name','slow-mast','no-listener','no-ipv6','diskd-absent','diskd-fail','record-acp','fail-claim','record-audit','record-fstat','smbd-hold','hold-activation',
                  'bufcache','bufcache.writes','bufcache.wakes','bufcache.tmp','bufcache.new','fork-fail','smbd-ignore-term','telemetry-hang',
-                 'report-hold','report-exit','titles','smbd-corrupt','smbd-exit-status','rsync-exit-status','discovery-exit-status'):
+                 'report-hold','report-exit','titles','smbd-corrupt','smbd-exit-status','rsync-exit-status','discovery-exit-status','accounts'):
         (root/name).unlink(missing_ok=True)
     (root/'wake').mkdir(exist_ok=True)
     (root/'procs').mkdir()
@@ -292,6 +294,56 @@ def manager(manager_tools):
 
 
 def started(role):return lambda events:any(e['kind']=='start' and e['role']==role for e in events)
+
+
+def test_airport_account_changes_reload_but_backend_changes_drain_old_sessions(manager):
+    root,start,events,wait,_,_=manager
+    process=start()
+    first=smbd_starts(wait(started('smbd')))[0]
+    users=[dict(name='writer',password='writer secret',fileSharingAccess=0),
+           dict(name='reader',password='reader secret',fileSharingAccess=1)]
+    (root/'accounts').write_bytes(plistlib.dumps(dict(users=users)))
+    (root/'config').write_text('TELEMETRY=0\nSMB_AIRPORT_ACCOUNT=*\n')
+    process.send_signal(signal.SIGHUP)
+    rows=wait(lambda rows:len(smbd_starts(rows))==2)
+    second=smbd_starts(rows)[-1]
+    assert second['pid']!=first['pid']
+    assert any(e['kind']=='stop' and e['pid']==first['pid'] and e['at']<second['at'] for e in rows)
+    conf=root/'ram/etc/smb.conf'
+    passwords=root/'ram/private/smbpasswd'
+    assert 'passdb backend = tc_airport:' in conf.read_text()
+    assert f'path = {root}/dk2/ShareRoot' in conf.read_text()
+    assert (root/'ram/private/username.map').read_bytes()==b''
+    before=passwords.read_bytes()
+    assert b':TCA-0:' in before and b':TCA-1:' in before
+
+    users[0]['password']='new secret'
+    users[1]['fileSharingAccess']=2
+    (root/'accounts').write_bytes(plistlib.dumps(dict(users=users)))
+    process.send_signal(signal.SIGHUP)
+    until(root,lambda:passwords.read_bytes()!=before)
+    assert b':TCA-2:' in passwords.read_bytes()
+    assert smbd_starts(events())[-1]['pid']==second['pid']
+
+    before=passwords.read_bytes()
+    (root/'accounts').write_bytes(b'private malformed credentials')
+    process.send_signal(signal.SIGHUP)
+    wait_log(root,'settings: device authentication unavailable')
+    assert passwords.read_bytes()==before
+    assert 'private malformed credentials' not in runtime_log(root)
+
+    (root/'accounts').write_bytes(plistlib.dumps(dict(users=[])))
+    process.send_signal(signal.SIGHUP)
+    until(root,lambda:passwords.read_bytes()==b'')
+    assert smbd_starts(events())[-1]['pid']==second['pid']
+
+    (root/'config').write_text('TELEMETRY=0\n')
+    process.send_signal(signal.SIGHUP)
+    rows=wait(lambda rows:len(smbd_starts(rows))==3)
+    third=smbd_starts(rows)[-1]
+    assert any(e['kind']=='stop' and e['pid']==second['pid'] and e['at']<third['at'] for e in rows)
+    assert 'passdb backend = smbpasswd:' in conf.read_text()
+    assert passwords.read_text().startswith('root:0:')
 
 
 def processes(root,name,ps_lines,live=False):

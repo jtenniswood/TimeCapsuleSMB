@@ -1,4 +1,6 @@
 import plistlib
+from contextlib import nullcontext
+from types import SimpleNamespace
 from unittest import mock
 
 import pytest
@@ -10,6 +12,8 @@ from timecapsulesmb.device.storage import PayloadHome
 from timecapsulesmb.transport.ssh import SshConnection
 from timecapsulesmb.checks.doctor_state import DoctorSink, DoctorTarget, RemoteAccess, SmbConfigState
 from timecapsulesmb.checks.doctor_steps import _doctor_select_smb_password
+from timecapsulesmb.checks import doctor_steps
+from timecapsulesmb.checks.models import CheckResult
 
 
 def test_selected_account_is_deployed_without_storing_its_password():
@@ -19,12 +23,12 @@ def test_selected_account_is_deployed_without_storing_its_password():
     assert "PASSWORD" not in text
 
 
-@pytest.mark.parametrize("name", ["", "jtenniswood", "a.b-c_d", "x" * 63])
+@pytest.mark.parametrize("name", ["", "*", "jtenniswood", "a.b-c_d", "x" * 63])
 def test_selected_account_names_are_validated(name):
     assert validate_smb_airport_account(name, "TC_SMB_AIRPORT_ACCOUNT") is None
 
 
-@pytest.mark.parametrize("name", ["*", "root\nother", "a:b", "x" * 64, "a b"])
+@pytest.mark.parametrize("name", ["**", "root\nother", "a:b", "x" * 64, "a b"])
 def test_unsafe_selected_account_names_are_rejected(name):
     assert validate_smb_airport_account(name, "TC_SMB_AIRPORT_ACCOUNT") is not None
 
@@ -73,3 +77,53 @@ def test_checkup_uses_the_active_selection_without_falling_back(available):
     assert "sharing-secret" not in repr(selected)
     assert "sharing-secret" not in repr(sink.results)
     assert "private malformed password" not in repr(sink.results)
+
+
+@pytest.mark.parametrize("writer", [True, False])
+def test_automatic_checkup_selection_uses_an_enabled_account(writer):
+    users = [dict(name="denied", password="denied secret", fileSharingAccess=2),
+             dict(name='Café % "reader"', password="reader secret", fileSharingAccess=1)]
+    if writer:
+        users.append(dict(name="writer", password="writer secret", fileSharingAccess=0))
+    raw = plistlib.dumps({"users": users})
+    target = DoctorTarget(SshConnection("root@192.0.2.1", "admin", ""), "192.0.2.1", "admin")
+    sink = DoctorSink(None, {})
+    with mock.patch("timecapsulesmb.device.airport_account.run_ssh_capture_bytes", return_value=raw):
+        selected = _doctor_select_smb_password(target, RemoteAccess(True, True, True, ""),
+                                              SmbConfigState("[global]\n tc:airport account = *\n", ""), sink)
+    assert selected.smb_password_available
+    assert selected.smb_account == ("writer" if writer else 'Café % "reader"')
+    assert selected.smb_password == ("writer secret" if writer else "reader secret")
+    assert selected.smb_read_only is not writer
+    assert "secret" not in repr(selected) + repr(sink.results)
+
+
+def test_tunnel_uses_the_account_username_for_listing_and_file_operations():
+    listing = CheckResult("PASS", "listed", {"server": "127.0.0.1"})
+    with mock.patch.object(doctor_steps, "ssh_local_forward", return_value=nullcontext()), \
+         mock.patch.object(doctor_steps, "find_free_local_port", return_value=12345), \
+         mock.patch.object(doctor_steps, "_authenticated_smb_listing_with_doctor_retries", return_value=listing) as list_shares, \
+         mock.patch.object(doctor_steps, "_select_smb_file_ops_share", return_value="Data"), \
+         mock.patch.object(doctor_steps, "check_authenticated_smb_file_ops_detailed", return_value=[]) as file_ops:
+        doctor_steps._add_tunneled_authenticated_smb_results(
+            mock.sentinel.connection, smb_password="account secret", smb_username="writer",
+            active_share_names=["Data"], active_smb_conf_reason="", debug_fields=None, add_result=lambda result: None,
+        )
+    assert list_shares.call_args.args[:2] == ("writer", "account secret")
+    assert file_ops.call_args.args[:2] == ("writer", "account secret")
+
+
+def test_lan_uses_the_account_username_for_listing_and_file_operations():
+    listing = CheckResult("PASS", "listed", {"server": "device.local"})
+    with mock.patch.object(doctor_steps, "_doctor_smb_client_targets", return_value=["device.local"]), \
+         mock.patch.object(doctor_steps, "_authenticated_smb_listing_with_doctor_retries", return_value=listing) as list_shares, \
+         mock.patch.object(doctor_steps, "_select_smb_file_ops_share", return_value="Data"), \
+         mock.patch.object(doctor_steps, "check_authenticated_smb_file_ops_detailed", return_value=[]) as file_ops:
+        doctor_steps._add_authenticated_smb_results(
+            AppConfig.from_values({}), None, None, smb_password="account secret", smb_username="writer",
+            active_smb_conf="[Data]\npath = /share\n", active_smb_conf_reason="",
+            direct_smb=SimpleNamespace(reachable_addresses=()), include_file_ops=True, device_smb_passed=False,
+            debug_fields=None, add_result=lambda result: None,
+        )
+    assert list_shares.call_args.args[:2] == ("writer", "account secret")
+    assert file_ops.call_args.args[:2] == ("writer", "account secret")

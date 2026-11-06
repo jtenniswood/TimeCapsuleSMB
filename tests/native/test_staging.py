@@ -92,7 +92,7 @@ def test_reload_does_not_replace_running_images_and_discard_keeps_applied(stage)
 
 
 @pytest.mark.parametrize("access", [0, 1, 2])
-def test_selected_airport_account_sets_password_and_access_for_whole_share(stage, access):
+def test_airport_accounts_keep_separate_passwords_and_access_inside_configured_folder(stage, access):
     root, payload, run = stage
     (root / "runtime.conf").write_text("SMB_AIRPORT_ACCOUNT=jtenniswood\n")
     result = run(ACCOUNT_ACCESS=str(access), FAIL_HASH="1")
@@ -101,8 +101,33 @@ def test_selected_airport_account_sets_password_and_access_for_whole_share(stage
     assert ":AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA:" in auth
     assert ("[DU         ]" in auth) == (access == 2)
     conf = (root / "ram/etc/smb.conf").read_text()
-    assert f"read only = {'yes' if access == 1 else 'no'}" in conf
+    assert "passdb backend = tc_airport:" in conf
+    assert f":TCA-{access}:" in auth.splitlines()[0]
+    assert ":TCA-1:" in auth.splitlines()[1]
+    assert ":BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB:" in auth
+    assert "jtenniswood:65537:" in auth and "Other % user:65538:" in auth
+    assert "    read only = no\n" in conf
+    assert "valid users = root" not in conf
+    assert "force user =" not in conf and "force group =" not in conf
+    assert (root / "ram/private/username.map").read_bytes() == b""
     assert "path = " + str(root / "dk2/ShareRoot") in conf
+
+
+def test_no_accounts_publishes_an_empty_database_without_a_device_password_fallback(stage):
+    root, payload, run = stage
+    (root / "runtime.conf").write_text("SMB_AIRPORT_ACCOUNT=jtenniswood\n")
+    assert run(EMPTY_ACCOUNTS="1", FAIL_HASH="1").returncode == 0
+    assert (root / "ram/private/smbpasswd").read_bytes() == b""
+    assert "passdb backend = tc_airport:" in (root / "ram/etc/smb.conf").read_text()
+
+
+def test_invalid_account_hash_cannot_replace_the_published_passwords(stage):
+    root, payload, run = stage
+    (root / "runtime.conf").write_text("SMB_AIRPORT_ACCOUNT=jtenniswood\n")
+    assert run().returncode == 0
+    before = (root / "ram/private/smbpasswd").read_bytes()
+    assert run("reload", BAD_ACCOUNT_HASH="1").returncode != 0
+    assert (root / "ram/private/smbpasswd").read_bytes() == before
 
 
 def test_unavailable_airport_account_never_falls_back_to_device_password(stage):

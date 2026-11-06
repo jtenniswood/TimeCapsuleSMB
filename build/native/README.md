@@ -53,16 +53,34 @@ discovery, under the NetBIOS name of the hostname it maps in `/etc/hosts`, not
 the one its settings read derived: the first read at boot runs before ACPd sets
 the hostname and falls back to `syNm`.
 
-`SMB_AIRPORT_ACCOUNT` optionally selects one `usrd.users` account as the shared
-SMB password source. `service/airport_account.c` uses `acp -q usrd`'s XML form,
-not the unescaped PrintFUtils strings, and the bounded lexer shared with MaSt.
-It decodes XML entities, preserves password whitespace, hashes without a shell
-or temporary file, and wipes plaintext buffers. AirPort access 0 permits writes,
-1 makes all exports read-only, and 2 or a deleted account disables Samba's root
-SMB entry. The manager's settings snapshots include the hash and access, so its
-normal poll republishes changes. An ACP failure never substitutes `syPW`.
-This intentionally retains the existing one-password, root-access model; it is
-not an implementation of independent AirPort users or private account folders.
+A nonempty `SMB_AIRPORT_ACCOUNT` enables all `usrd.users` accounts. `*` lets
+Checkup choose an enabled account; a name selects only the Checkup credential,
+not which accounts Samba accepts. `service/airport_account.c` uses `acp -q
+usrd`'s XML form and the bounded lexer shared with MaSt. It decodes XML entities,
+preserves password whitespace, hashes in memory without a shell or temporary
+file, and wipes plaintext buffers. Each account has a separate NT hash and
+stable numeric SMB identity. Ambiguous names, ID collisions, malformed snapshots
+and exceeded limits are rejected without publishing partial credentials.
+
+Patch 0086 registers `tc_airport`, an opt-in read-only passdb backend using the
+private RAM password file. It retains each account's name, hash and distinct
+SID while using root filesystem credentials required by the appliance kernel;
+it creates no operating-system or SSH users. Each record includes required
+`TCA-0`, `TCA-1` or `TCA-2` metadata for read/write, read-only or denied access.
+The same atomic record supplies both the password and the access verdict.
+Read-only accounts carry a reserved virtual group SID in their authenticated
+token, which the share-access check enforces even with root filesystem access.
+The username map is empty in account mode, and account names never become
+configuration directives. Older Samba binaries reject the unknown backend.
+
+The manager polls and publishes all accounts together, so additions, removals,
+password changes and access changes do not need per-user runtime configuration.
+An unavailable ACP snapshot retains the last applied settings and never
+substitutes `syPW`. Existing sessions retain their authenticated access until
+disconnected; switching authentication backends drains the previous sessions
+before publishing the new credentials. Share projection and paths are unchanged:
+account access is limited to the configured exports, with `ShareRoot` the default
+for internal storage. This does not create per-account home folders.
 
 smbd and rsync are separate units (`service/manager.c` `struct unit`), each with
 its RAM image, staging job and publish, and both go through one pump
