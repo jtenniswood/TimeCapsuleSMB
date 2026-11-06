@@ -18,7 +18,7 @@ struct SettingsTab: View {
                     DiagnosticsExportBuilder().build(context: appStore.diagnosticsExportContext(includeBackendEvents: true))
                 }
             )
-            DashboardDisclosureSection(title: L10n.string("profile_editor.details")) {
+            DashboardDisclosureSection(title: L10n.string("simple.technical_details")) {
                 SummaryGrid(rows: [
                     (L10n.string("advanced.profile_id"), profile.id),
                     (L10n.string("advanced.config"), profile.configPath),
@@ -26,8 +26,8 @@ struct SettingsTab: View {
                 ], valueLineLimit: nil)
                 .textSelection(.enabled)
                 .fixedSize(horizontal: false, vertical: true)
+                EventList(events: session.events)
             }
-            EventList(events: session.events)
         }
     }
 }
@@ -40,9 +40,6 @@ private struct DeviceProfileEditorView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(L10n.string("profile_editor.title"))
-                .font(.headline)
-
             Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
                 GridRow {
                     Text(L10n.string("profile_editor.display_name"))
@@ -51,7 +48,7 @@ private struct DeviceProfileEditorView: View {
                         .frame(maxWidth: 360)
                 }
                 GridRow {
-                    Text(L10n.string("dashboard.overview.host"))
+                    Text(L10n.string("simple.address"))
                         .foregroundStyle(.secondary)
                     TextField(L10n.string("dashboard.overview.host"), text: $store.draft.host)
                         .frame(maxWidth: 360)
@@ -100,8 +97,9 @@ private struct DeviceProfileEditorView: View {
                 }
                 .disabled(store.isRunning)
 
-                Label(store.state.title, systemImage: "circle")
-                    .foregroundStyle(.secondary)
+                if store.state != .clean && store.state != .saved {
+                    Text(store.state.title).foregroundStyle(.secondary)
+                }
             }
 
             ForEach(store.validationErrors, id: \.self) { validationError in

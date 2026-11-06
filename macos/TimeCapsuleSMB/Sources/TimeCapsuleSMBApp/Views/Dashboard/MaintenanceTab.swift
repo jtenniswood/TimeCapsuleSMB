@@ -13,23 +13,48 @@ struct MaintenanceTab: View {
 
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                Text(L10n.string("dashboard.tab.maintenance"))
+                Text(L10n.string("simple.tab.disks"))
                     .font(.title2.weight(.semibold))
 
-                MaintenanceCardsView(cards: presentation.cards) { workflow in
-                    store.selectedWorkflow = workflow
-                }
-
-                MaintenanceDetailView(
-                    presentation: presentation.detail,
-                    store: store,
-                    performAction: { action in
-                        session.performMaintenanceAction(action, profile: profile, showDiagnostics: showDiagnostics)
-                    },
-                    chooseFirmwareTemplate: {
-                        chooseFirmwareTemplate(store: store.bootHookStore)
+                DiskHealthView(report: profile.lastCheckup?.diskHealth, checkedAt: profile.lastCheckup?.checkedAt)
+                HStack {
+                    Text(L10n.string("simple.disk.refresh_message"))
+                        .font(.caption).foregroundStyle(.secondary)
+                    Spacer()
+                    Button(L10n.string("simple.disk.refresh")) {
+                        session.runCheckup(profile: profile)
+                        // Refresh readings without sending the user to a different page.
+                        if session.selectedTab == .checkup { session.selectedTab = .maintenance }
                     }
-                )
+                    .disabled(session.appStore.operationCoordinator.isDeviceBusy(profile))
+                }
+                DisclosureGroup(L10n.string("simple.utilities"), isExpanded: $session.maintenanceUtilitiesExpanded) {
+                    MaintenanceCardsView(cards: presentation.cards) { workflow in
+                        store.selectedWorkflow = workflow
+                    }
+
+                    MaintenanceDetailView(
+                        presentation: presentation.detail,
+                        store: store,
+                        performAction: { action in
+                            session.performMaintenanceAction(action, profile: profile, showDiagnostics: showDiagnostics)
+                        },
+                        chooseFirmwareTemplate: {
+                            chooseFirmwareTemplate(store: store.bootHookStore)
+                        }
+                    )
+                }
+                .onAppear {
+                    if presentation.detail.isRunning || presentation.detail.error != nil {
+                        session.maintenanceUtilitiesExpanded = true
+                    }
+                }
+                .onChange(of: presentation.detail.isRunning) { _, isRunning in
+                    if isRunning { session.maintenanceUtilitiesExpanded = true }
+                }
+                .onChange(of: presentation.detail.error) { _, error in
+                    if error != nil { session.maintenanceUtilitiesExpanded = true }
+                }
 
                 if let error = presentation.detail.error {
                     ErrorRecoveryView(

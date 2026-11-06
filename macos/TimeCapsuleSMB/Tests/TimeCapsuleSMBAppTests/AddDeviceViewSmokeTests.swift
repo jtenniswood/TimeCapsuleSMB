@@ -51,6 +51,7 @@ final class AddDeviceViewSmokeTests: XCTestCase {
         let selected = try XCTUnwrap(ready.store.selectedDevice)
         ready.store.select(selected)
         XCTAssertEqual(ready.store.state, .passwordEntry)
+        ready.store.continueToPassword()
         try assertRendersNonBlank(AddDeviceView(store: ready.store), size: CGSize(width: 900, height: 700))
     }
 
@@ -102,6 +103,7 @@ final class AddDeviceViewSmokeTests: XCTestCase {
         // Discovery is idle, so this is the failed add's helper.
         XCTAssertTrue(fixture.store.isRunning)
         XCTAssertFalse(fixture.store.isAdding)
+        fixture.store.returnToDeviceSelection()
         XCTAssertEqual(rowsEnabled(), [true, true])
 
         // The app refreshes discovery, as All Devices or a device page does.

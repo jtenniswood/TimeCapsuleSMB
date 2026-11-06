@@ -175,6 +175,7 @@ final class DeviceDashboardViewSmokeTests: XCTestCase {
         let idleProfile = try await idleFixture.saveProfile(id: "device-one")
         let idleSession = idleFixture.dashboardSession(for: idleProfile)
         idleSession.selectedTab = .maintenance
+        idleSession.maintenanceUtilitiesExpanded = true
         for workflow in MaintenanceWorkflowAvailability.workflows(for: idleProfile) {
             idleSession.maintenanceStore.selectedWorkflow = workflow
             try assertRendersNonBlank(dashboardView(fixture: idleFixture, profile: idleProfile, session: idleSession))
@@ -184,6 +185,7 @@ final class DeviceDashboardViewSmokeTests: XCTestCase {
         let netbsd4Profile = try await netbsd4.saveProfile(id: "netbsd4-device", payloadFamily: "netbsd4_samba4")
         let netbsd4Session = netbsd4.dashboardSession(for: netbsd4Profile)
         netbsd4Session.selectedTab = .maintenance
+        netbsd4Session.maintenanceUtilitiesExpanded = true
         for workflow in MaintenanceWorkflowAvailability.workflows(for: netbsd4Profile) {
             netbsd4Session.maintenanceStore.selectedWorkflow = workflow
             try assertRendersNonBlank(dashboardView(fixture: netbsd4, profile: netbsd4Profile, session: netbsd4Session))
@@ -281,6 +283,8 @@ final class DeviceDashboardViewSmokeTests: XCTestCase {
             accessibleElements(in: host.contentView).first { $0.text == label }?.isEnabled
         }
 
+        XCTAssertTrue(pressAccessibleControl(in: host.contentView, labeled: L10n.string("simple.utilities")))
+        await runQueuedStoreUpdates()
         // The boot hook's own options replace the other panels' Advanced Options.
         let texts = accessibleElements(in: host.contentView).map(\.text)
         XCTAssertTrue(texts.contains("Apple Firmware Options"), "\(texts)")
@@ -319,6 +323,8 @@ final class DeviceDashboardViewSmokeTests: XCTestCase {
             return accessibleElements(in: host.contentView).filter { fields.contains($0.text) }.map(\.isEnabled)
         }
 
+        XCTAssertTrue(pressAccessibleControl(in: host.contentView, labeled: L10n.string("simple.utilities")))
+        await runQueuedStoreUpdates()
         XCTAssertTrue(pressAccessibleControl(in: host.contentView, labeled: "Apple Firmware Options"))
         try await waitUntilStoreState { enabledStates().count == 3 }
         XCTAssertEqual(enabledStates(), [true, true, true], "\(accessibleElements(in: host.contentView).map(\.text))")

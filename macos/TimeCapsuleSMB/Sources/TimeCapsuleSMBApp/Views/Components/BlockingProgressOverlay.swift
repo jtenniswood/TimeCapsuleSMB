@@ -47,3 +47,23 @@ struct BlockingProgressOverlay<Progress: BlockingProgressPresenting>: View {
         .transition(.opacity)
     }
 }
+
+/// Progress stays in the page so its controls, warnings and Cancel remain clear.
+struct InlineOperationProgress<Progress: BlockingProgressPresenting>: View {
+    let progress: Progress
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            ProgressView().controlSize(.small)
+            VStack(alignment: .leading, spacing: 5) {
+                Text(progress.title).fontWeight(.medium)
+                Text(progress.message).foregroundStyle(.secondary)
+                if let detail = progress.detail {
+                    Text(detail).font(.caption).foregroundStyle(.secondary)
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
+    }
+}

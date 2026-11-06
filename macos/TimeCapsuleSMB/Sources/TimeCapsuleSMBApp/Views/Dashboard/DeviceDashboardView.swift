@@ -31,13 +31,16 @@ struct DeviceDashboardView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Picker("", selection: $session.selectedTab) {
+            Picker(L10n.string("simple.device_settings"), selection: $session.selectedTab) {
                 ForEach(DeviceDashboardTab.allCases) { tab in
                     Text(tab.title).tag(tab)
                 }
             }
             .pickerStyle(.segmented)
-            .padding()
+            .labelsHidden()
+            .frame(maxWidth: 680)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 18)
 
             Divider()
 
@@ -112,9 +115,14 @@ struct DeviceDashboardView: View {
                     }
                 }
             }
-            .padding()
+            .padding(24)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
+        .background(Color(nsColor: .controlBackgroundColor))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.quaternary))
+        .padding(.horizontal, 24)
+        .padding(.top, 12)
         // Keyed by device: switching straight from one device to another keeps
         // this view, so onAppear would not run for the second.
         .task(id: profile.id) {

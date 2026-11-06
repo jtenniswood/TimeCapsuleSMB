@@ -66,15 +66,20 @@ private struct DiskSmartReadingsView: View {
                 }
             }
             if disk.details.state == "available" {
-                SummaryGrid(rows: [
-                    (L10n.string("disk_health.temperature"), disk.temperatureCelsius ?? L10n.string("value.unknown")),
-                    (L10n.string("disk_health.power_on_hours"), disk.metric(9, named: "Power-on hours count") ?? L10n.string("value.unknown")),
-                    (L10n.string("disk_health.reallocated"), disk.metric(5, named: "Reallocated sector count") ?? L10n.string("value.unknown")),
-                    (L10n.string("disk_health.pending"), disk.metric(197, named: "Current pending sector") ?? L10n.string("value.unknown")),
-                    (L10n.string("disk_health.uncorrectable"), disk.metric(198, named: "Offline uncorrectable") ?? L10n.string("value.unknown")),
-                    (L10n.string("disk_health.crc_errors"), disk.metric(199, named: "Ultra DMA CRC error count") ?? L10n.string("value.unknown"))
-                ])
-                DisclosureGroup(L10n.string("disk_health.attributes")) {
+                if let temperature = disk.temperatureCelsius {
+                    LabeledContent(L10n.string("disk_health.temperature"), value: temperature)
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                DisclosureGroup(L10n.string("simple.technical_details")) {
+                    SummaryGrid(rows: [
+                        (L10n.string("disk_health.temperature"), disk.temperatureCelsius ?? L10n.string("value.unknown")),
+                        (L10n.string("disk_health.power_on_hours"), disk.metric(9, named: "Power-on hours count") ?? L10n.string("value.unknown")),
+                        (L10n.string("disk_health.reallocated"), disk.metric(5, named: "Reallocated sector count") ?? L10n.string("value.unknown")),
+                        (L10n.string("disk_health.pending"), disk.metric(197, named: "Current pending sector") ?? L10n.string("value.unknown")),
+                        (L10n.string("disk_health.uncorrectable"), disk.metric(198, named: "Offline uncorrectable") ?? L10n.string("value.unknown")),
+                        (L10n.string("disk_health.crc_errors"), disk.metric(199, named: "Ultra DMA CRC error count") ?? L10n.string("value.unknown"))
+                    ])
+                    Text(L10n.string("disk_health.attributes")).font(.subheadline.weight(.medium))
                     Table(disk.details.attributes) {
                         TableColumn(L10n.string("disk_health.id")) { attribute in Text(String(attribute.id)) }
                             .width(32)

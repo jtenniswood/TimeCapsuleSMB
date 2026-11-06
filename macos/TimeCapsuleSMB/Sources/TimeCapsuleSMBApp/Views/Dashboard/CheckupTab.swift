@@ -34,29 +34,25 @@ struct CheckupTab: View {
                         Button {
                             session.performCheckupAction(action, profile: profile, showDiagnostics: showDiagnostics)
                         } label: {
-                            Label(action.title, systemImage: action.systemImage)
+                            Label(action == .runCheckup ? L10n.string("simple.check_connection") : action.title, systemImage: action.systemImage)
                         }
                         .buttonStyle(.borderedProminent)
                         .disabled(isDeviceBusy)
                     }
 
-                    if !presentation.timeline.isEmpty {
-                        OperationTimelineListView(
-                            title: L10n.string("checkup.timeline.title"),
-                            items: presentation.timeline
-                        )
+                    if let progress {
+                        InlineOperationProgress(progress: progress)
                     }
 
-                    if !presentation.summaryRows.isEmpty {
-                        SummaryGrid(rows: presentation.summaryRows.map { ($0.label, $0.value) })
+                    if !presentation.timeline.isEmpty && !store.isRunning {
+                        DashboardDisclosureSection(title: L10n.string("simple.technical_details")) {
+                            OperationTimelineListView(title: L10n.string("checkup.timeline.title"), items: presentation.timeline)
+                            SummaryGrid(rows: presentation.summaryRows.map { ($0.label, $0.value) })
+                        }
                     }
 
                     ForEach(presentation.domains) { domain in
                         CheckupDomainView(domain: domain)
-                    }
-
-                    if let report = store.summary?.diskHealth {
-                        DiskHealthView(report: report, checkedAt: profile.lastCheckup?.checkedAt)
                     }
 
                     CheckupAdvancedOptionsView(store: store)
@@ -71,9 +67,6 @@ struct CheckupTab: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
 
-            if let progress {
-                BlockingProgressOverlay(progress: progress, allowsBackgroundInteraction: true)
-            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
@@ -89,7 +82,7 @@ private struct CheckupHeaderView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline) {
-                Text(presentation.title)
+                Text(L10n.string("simple.tab.connection"))
                     .font(.title2.weight(.semibold))
                 Spacer()
                 Text(presentation.stateTitle)
@@ -120,27 +113,32 @@ private struct CheckupDomainView: View {
                 }
                 .font(.headline)
                 Spacer()
-                Text(domain.countSummary)
+                Text(domain.status.title)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            ForEach(domain.rows) { row in
-                HStack(alignment: .top, spacing: 8) {
-                    Image(systemName: row.status.systemImage)
-                        .foregroundStyle(iconColor(for: row.status))
-                        .accessibilityLabel(row.status.title)
-                        .frame(width: 16)
-                    Text(row.statusText)
-                        .font(.system(.caption, design: .monospaced))
-                        .frame(width: 44, alignment: .leading)
-                    Text(row.message)
-                        .font(.caption)
-                }
+            ForEach(domain.attentionRows) { row in
+                checkRow(row)
             }
+            DashboardDisclosureSection(title: L10n.string("simple.show_details")) {
+                Text(domain.countSummary).font(.caption).foregroundStyle(.secondary)
+                ForEach(domain.rows) { row in checkRow(row) }
+            }
+
         }
         .padding(10)
         .background(Color.secondary.opacity(0.08))
         .clipShape(RoundedRectangle(cornerRadius: 6))
+    }
+
+    private func checkRow(_ row: CheckupRowPresentation) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: row.status.systemImage)
+                .foregroundStyle(iconColor(for: row.status))
+                .accessibilityLabel(row.status.title)
+                .frame(width: 16)
+            Text(row.message).font(.callout).fixedSize(horizontal: false, vertical: true)
+        }
     }
 
     private func iconColor(for status: CheckupStatusPresentation) -> Color {

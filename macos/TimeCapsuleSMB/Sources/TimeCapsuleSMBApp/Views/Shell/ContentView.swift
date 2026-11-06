@@ -44,74 +44,57 @@ public struct ContentView: View {
     }
 
     public var body: some View {
-        NavigationSplitView {
-            sidebar
-        } detail: {
-            VStack(spacing: 0) {
-                if case .blocked = appReadinessStore.state {
-                    AppReadinessBlockedView(store: appReadinessStore) {
-                        diagnosticsPresented = true
-                    }
-                } else {
-                    AppReadinessBannerView(store: appReadinessStore) {
-                        diagnosticsPresented = true
-                    }
-                    if let message = deviceRegistry.identityErrorMessage {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(message).foregroundStyle(.red)
-                            if let profile = deviceRegistry.conflictingProfile {
-                                Button(L10n.format("discovery.open_saved_device", profile.title)) {
-                                    appStore.select(profile)
-                                }
+        VStack(spacing: 0) {
+            if case .blocked = appReadinessStore.state {
+                AppReadinessBlockedView(store: appReadinessStore) {
+                    diagnosticsPresented = true
+                }
+            } else {
+                AppReadinessBannerView(store: appReadinessStore) {
+                    diagnosticsPresented = true
+                }
+                if let message = deviceRegistry.identityErrorMessage {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(message).foregroundStyle(.red)
+                        if let profile = deviceRegistry.conflictingProfile {
+                            Button(L10n.format("discovery.open_saved_device", profile.title)) {
+                                appStore.select(profile)
                             }
                         }
-                        .padding()
-                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    detail
-                    Divider()
-                    ActivityCompactView(
-                        activityStore: activityStore,
-                        registry: deviceRegistry,
-                        context: activityDisplayContext
-                    )
+                    .padding()
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-            }
-            .toolbar {
-                ToolbarItemGroup {
-                    ToolbarIconButton(
-                        title: L10n.string("toolbar.add"),
-                        systemImage: "plus"
-                    ) {
-                        appStore.showAddDevice()
-                    }
-                    ToolbarIconButton(
-                        title: L10n.string("toolbar.diagnostics"),
-                        systemImage: "wrench.and.screwdriver"
-                    ) {
-                        diagnosticsPresented = true
-                    }
-                    ToolbarIconButton(
-                        title: L10n.string("toolbar.forget"),
-                        systemImage: "trash",
-                        disabled: selectedProfileIsBusy
-                    ) {
-                        guard let profile = appStore.selectedProfile else {
-                            return
-                        }
-                        profilePendingDeletion = profile
-                    }
-                    ToolbarIconButton(
-                        title: L10n.string("toolbar.cancel"),
-                        systemImage: "xmark.circle",
-                        disabled: !appStore.canCancelSelectedOperation
-                    ) {
-                        appStore.cancelSelectedOperation()
-                    }
+                detail
+                    .frame(maxWidth: appStore.route == .allDevices ? .infinity : 920, maxHeight: .infinity)
+                if appStore.route != .addDevice {
+                    windowFooter
                 }
             }
         }
-        .frame(minWidth: 1080, minHeight: 720)
+        .frame(minWidth: 760, minHeight: 580)
+        .background(Color(nsColor: .windowBackgroundColor))
+        .navigationTitle(appStore.selectedProfile?.title ?? "TimeCapsuleSMB")
+        .toolbar {
+            ToolbarItem {
+                Menu {
+                    Button(L10n.string("sidebar.activity")) { appStore.navigate(to: .activity) }
+                    Button(L10n.string("sidebar.settings")) { appStore.navigate(to: .appSettings) }
+                    Divider()
+                    Button(L10n.string("toolbar.diagnostics")) { diagnosticsPresented = true }
+                    if let profile = appStore.selectedProfile {
+                        Divider()
+                        Button(L10n.string("toolbar.forget"), role: .destructive) {
+                            profilePendingDeletion = profile
+                        }
+                        .disabled(operationCoordinator.isDeviceBusy(profile))
+                    }
+                } label: {
+                    Label(L10n.string("simple.tools"), systemImage: "ellipsis.circle")
+                }
+                .help(L10n.string("simple.tools"))
+            }
+        }
         .preferredColorScheme(appSettingsStore.settings.appearance.preferredColorScheme(systemColorScheme: systemColorScheme))
         .background(WindowCloseGuardInstaller())
         .onAppear {
@@ -130,6 +113,7 @@ public struct ContentView: View {
         // already started over after a save, and a click leaves it as it was.
         .onChange(of: addDeviceStore.savedProfile) { _, profile in
             guard let profile else { return }
+            dashboardStore.session(for: profile).selectedTab = profile.runtimeState?.state == .notInstalled ? .install : .overview
             appStore.openJustSaved(profile)
             addDeviceStore.clearHandoffs()
         }
@@ -248,128 +232,34 @@ public struct ContentView: View {
         )
     }
 
-    private var selectedProfileIsBusy: Bool {
-        guard let profile = appStore.selectedProfile else {
-            return true
-        }
-        return operationCoordinator.isDeviceBusy(profile)
-    }
-
     private func configureCloseGuard() {
         AppCloseGuard.shared.configure { [weak operationCoordinator] in
             operationCoordinator?.hasBlockingWork ?? false
         }
     }
 
-    private var sidebarSelection: Binding<AppRoute?> {
-        Binding(
-            get: {
-                appStore.route
-            },
-            set: { value in
-                guard let value else { return }
-                appStore.navigate(to: value)
+    private var windowFooter: some View {
+        VStack(spacing: 0) {
+            if activityStore.hasActiveActivity {
+                ActivityCompactView(activityStore: activityStore, registry: deviceRegistry, context: activityDisplayContext)
             }
-        )
-    }
-
-    private var sidebar: some View {
-        List(selection: sidebarSelection) {
-            Label(L10n.string("sidebar.all_airport_devices"), systemImage: "externaldrive.connected.to.line.below")
-                .tag(AppRoute.allDevices)
-            Label(L10n.string("sidebar.activity"), systemImage: activityStore.hasActiveActivity ? "hourglass" : "clock")
-                .tag(AppRoute.activity)
-            Label(L10n.string("sidebar.settings"), systemImage: "gearshape")
-                .tag(AppRoute.appSettings)
-
-            Section(L10n.string("sidebar.devices")) {
-                ForEach(deviceRegistry.profiles) { profile in
-                    let summary = appStore.dashboardSummary(for: profile)
-                    DeviceSidebarRow(
-                        profile: profile,
-                        summary: summary,
-                        lastSeenText: deviceDiscovery.lastSeenText(for: profile)
-                    )
-                        .contextMenu {
-                            DeviceSidebarContextMenu(
-                                presentation: sidebarContextMenuPresentation(for: profile, summary: summary)
-                            ) { action in
-                                performSidebarContextMenuAction(action, profile: profile)
-                            }
-                        }
-                        .tag(AppRoute.device(profile.id))
+            HStack(spacing: 16) {
+                if appStore.route == .allDevices {
+                    Button(L10n.string("sidebar.activity")) { appStore.navigate(to: .activity) }
+                    Button(L10n.string("sidebar.settings")) { appStore.navigate(to: .appSettings) }
+                } else if appStore.canCancelSelectedOperation {
+                    Button(L10n.string("toolbar.cancel")) { appStore.cancelSelectedOperation() }
+                }
+                Spacer()
+                if appStore.route != .allDevices {
+                    Button(L10n.string("action.done")) { appStore.navigate(to: .allDevices) }
+                        .keyboardShortcut(.cancelAction)
                 }
             }
-
-            Section {
-                Label(L10n.string("sidebar.add_airport_device"), systemImage: "plus.circle")
-                    .tag(AppRoute.addDevice)
-            }
+            .controlSize(.regular)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 14)
         }
-        .navigationTitle("TimeCapsuleSMB")
-        .navigationSplitViewColumnWidth(min: 240, ideal: 280, max: 360)
-    }
-
-    private func sidebarContextMenuPresentation(
-        for profile: DeviceProfile,
-        summary: DeviceDashboardSummary
-    ) -> DeviceSidebarContextMenuPresentation {
-        DeviceSidebarContextMenuPresentation(
-            profile: profile,
-            summary: summary,
-            isDeviceBusy: operationCoordinator.isDeviceBusy(profile)
-        )
-    }
-
-    private func performSidebarContextMenuAction(
-        _ action: DeviceSidebarContextMenuAction,
-        profile: DeviceProfile
-    ) {
-        switch action {
-        case .openOverview:
-            openDashboard(profile, tab: .overview)
-        case .openFinder:
-            dashboardStore.session(for: profile).performSecondaryAction(.openFinder, profile: profile)
-        case .runCheckup:
-            guard !operationCoordinator.isDeviceBusy(profile) else {
-                return
-            }
-            appStore.select(profile)
-            dashboardStore.session(for: profile).performSecondaryAction(.runCheckup, profile: profile)
-        case .viewCheckup:
-            openDashboard(profile, tab: .checkup)
-        case .refreshStatus:
-            guard !operationCoordinator.isDeviceBusy(profile) else {
-                return
-            }
-            dashboardStore.session(for: profile).performSecondaryAction(.refreshStatus, profile: profile)
-        case .settings:
-            openDashboard(profile, tab: .settings)
-        case .copySMBAddress, .copyHostname, .copyIPAddress:
-            copySidebarValue(action, profile: profile)
-        case .removeFromThisMac:
-            guard !operationCoordinator.isDeviceBusy(profile) else {
-                return
-            }
-            profilePendingDeletion = profile
-        }
-    }
-
-    private func openDashboard(_ profile: DeviceProfile, tab: DeviceDashboardTab) {
-        let session = dashboardStore.session(for: profile)
-        session.selectedTab = tab
-        appStore.select(profile)
-    }
-
-    private func copySidebarValue(_ action: DeviceSidebarContextMenuAction, profile: DeviceProfile) {
-        let summary = appStore.dashboardSummary(for: profile)
-        let presentation = sidebarContextMenuPresentation(for: profile, summary: summary)
-        guard let value = presentation.clipboardValue(for: action) else {
-            return
-        }
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.setString(value, forType: .string)
     }
 
     private var activityDisplayContext: ActivityDisplayContext {
@@ -396,7 +286,7 @@ public struct ContentView: View {
                 updater: updater
             )
         case .addDevice:
-            AddDeviceView(store: addDeviceStore)
+            AddDeviceView(store: addDeviceStore, onCancel: { appStore.navigate(to: .allDevices) })
         case .device(let profileID):
             if let profile = deviceRegistry.profile(id: profileID) {
                 DeviceDashboardView(
@@ -419,9 +309,12 @@ public struct ContentView: View {
                     deviceRegistry: deviceRegistry,
                     deviceDiscovery: deviceDiscovery,
                     backend: appBackend,
+                    dashboardStore: dashboardStore,
+                    addManually: { addDeviceStore.startManualEntry(); appStore.showAddDevice() },
                     canAddDevice: !addDeviceStore.isAdding,
                     addDiscoveredDevice: { device in
                         addDeviceStore.select(device)
+                        addDeviceStore.continueToPassword()
                         appStore.showAddDevice()
                     }
                 )
@@ -432,9 +325,12 @@ public struct ContentView: View {
                 deviceRegistry: deviceRegistry,
                 deviceDiscovery: deviceDiscovery,
                 backend: appBackend,
+                dashboardStore: dashboardStore,
+                addManually: { addDeviceStore.startManualEntry(); appStore.showAddDevice() },
                 canAddDevice: !addDeviceStore.isAdding,
                 addDiscoveredDevice: { device in
                     addDeviceStore.select(device)
+                    addDeviceStore.continueToPassword()
                     appStore.showAddDevice()
                 }
             )

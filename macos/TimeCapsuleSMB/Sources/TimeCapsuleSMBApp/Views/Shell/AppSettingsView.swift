@@ -45,35 +45,38 @@ struct AppSettingsView: View {
                     }
                 }
 
-                SettingsFormSection(title: L10n.string("app_settings.section.defaults"), contentWidth: contentWidth) {
-                    SettingsFormRow(title: L10n.string("app_settings.default_bonjour_timeout")) {
-                        TextField("", text: $editor.draft.defaultBonjourTimeoutSeconds)
-                            .frame(width: 120)
+                DashboardDisclosureSection(title: L10n.string("profile_editor.advanced")) {
+                    SettingsFormSection(title: L10n.string("app_settings.section.defaults"), contentWidth: contentWidth) {
+                        SettingsFormRow(title: L10n.string("app_settings.default_bonjour_timeout")) {
+                            TextField("", text: $editor.draft.defaultBonjourTimeoutSeconds)
+                                .frame(width: 120)
+                        }
+                        DeviceAdvancedSettingsFields(
+                            rsyncEnabled: $editor.draft.rsyncEnabled,
+                            internalShareUseDiskRoot: $editor.draft.internalShareUseDiskRoot,
+                            smbBrowseCompatibility: $editor.draft.smbBrowseCompatibility,
+                            mdnsAdvertiseAFP: $editor.draft.mdnsAdvertiseAFP,
+                            anyProtocol: $editor.draft.anyProtocol,
+                            requireSMBSigning: $editor.draft.requireSMBSigning,
+                            requireSMBEncryption: $editor.draft.requireSMBEncryption,
+                            disableSMBEncryption: $editor.draft.disableSMBEncryption,
+                            fruitMetadataNetatalk: $editor.draft.fruitMetadataNetatalk,
+                            vfsAIOForkEnabled: $editor.draft.vfsAIOForkEnabled,
+                            debugLogging: $editor.draft.debugLogging,
+                            mountWaitSeconds: $editor.draft.mountWaitSeconds,
+                            ataIdleSeconds: $editor.draft.ataIdleSeconds,
+                            ataStandby: $editor.draft.ataStandby
+                        )
                     }
-                    DeviceAdvancedSettingsFields(
-                        rsyncEnabled: $editor.draft.rsyncEnabled,
-                        internalShareUseDiskRoot: $editor.draft.internalShareUseDiskRoot,
-                        smbBrowseCompatibility: $editor.draft.smbBrowseCompatibility,
-                        mdnsAdvertiseAFP: $editor.draft.mdnsAdvertiseAFP,
-                        anyProtocol: $editor.draft.anyProtocol,
-                        requireSMBSigning: $editor.draft.requireSMBSigning,
-                        requireSMBEncryption: $editor.draft.requireSMBEncryption,
-                        disableSMBEncryption: $editor.draft.disableSMBEncryption,
-                        fruitMetadataNetatalk: $editor.draft.fruitMetadataNetatalk,
-                        vfsAIOForkEnabled: $editor.draft.vfsAIOForkEnabled,
-                        debugLogging: $editor.draft.debugLogging,
-                        mountWaitSeconds: $editor.draft.mountWaitSeconds,
-                        ataIdleSeconds: $editor.draft.ataIdleSeconds,
-                        ataStandby: $editor.draft.ataStandby
-                    )
-                }
 
-                SettingsFormSection(title: L10n.string("app_settings.section.diagnostics"), contentWidth: contentWidth) {
-                    SettingsFormRow(title: L10n.string("app_settings.helper_path")) {
-                        TextField(L10n.string("value.auto"), text: $editor.draft.helperPathOverride)
-                            .frame(maxWidth: 420)
+                    SettingsFormSection(title: L10n.string("app_settings.section.diagnostics"), contentWidth: contentWidth) {
+                        SettingsFormRow(title: L10n.string("app_settings.helper_path")) {
+                            TextField(L10n.string("value.auto"), text: $editor.draft.helperPathOverride)
+                                .frame(maxWidth: 420)
+                        }
+                        Toggle(L10n.string("app_settings.show_raw_events"), isOn: $editor.draft.showRawBackendEventsByDefault)
                     }
-                    Toggle(L10n.string("app_settings.show_raw_events"), isOn: $editor.draft.showRawBackendEventsByDefault)
+
                 }
 
                 // Sparkle keeps this setting itself, so it applies at once

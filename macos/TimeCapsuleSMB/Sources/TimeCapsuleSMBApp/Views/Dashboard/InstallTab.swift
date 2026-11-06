@@ -25,7 +25,13 @@ struct InstallTab: View {
         ZStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
-                    InstallHeaderView(presentation: presentation)
+                    InstallHeaderView(presentation: presentation, isIdle: store.state == .idle)
+                    if store.state == .idle {
+                        Text(L10n.string("simple.sharing.message"))
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    if let progress { InlineOperationProgress(progress: progress) }
 
                     ForEach(presentation.notices, id: \.self) { notice in
                         Label(notice, systemImage: "exclamationmark.triangle")
@@ -36,7 +42,7 @@ struct InstallTab: View {
                     if !presentation.actions.isEmpty {
                         HStack {
                             ForEach(presentation.actions) { action in
-                                InstallActionButton(action: action) {
+                                InstallActionButton(action: action, firstInstall: profile.runtimeState == nil || profile.runtimeState?.state == .notInstalled) {
                                     session.performInstallAction(action, profile: profile, showDiagnostics: showDiagnostics)
                                 }
                                 .disabled(isDisabled(action, store: store, isDeviceBusy: isDeviceBusy))
@@ -45,7 +51,9 @@ struct InstallTab: View {
                     }
 
                     if let timeline = presentation.timeline {
-                        InstallTimelineView(presentation: timeline)
+                        DashboardDisclosureSection(title: L10n.string("simple.technical_details")) {
+                            InstallTimelineView(presentation: timeline)
+                        }
                     }
 
                     if let error = presentation.error {
@@ -70,9 +78,6 @@ struct InstallTab: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
 
-            if let progress {
-                BlockingProgressOverlay(progress: progress, allowsBackgroundInteraction: true)
-            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
@@ -88,35 +93,41 @@ struct InstallTab: View {
 
 private struct InstallHeaderView: View {
     let presentation: InstallWorkflowPresentation
+    let isIdle: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline) {
-                Text(presentation.title)
+                Text(L10n.string("simple.sharing.title"))
                     .font(.title2.weight(.semibold))
                 Spacer()
-                Text(presentation.stateTitle)
-                    .font(.caption.weight(.medium))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 5)
-                    .background(.quaternary)
-                    .clipShape(Capsule())
+                if !isIdle {
+                    Text(presentation.stateTitle)
+                        .font(.caption.weight(.medium))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 5)
+                        .background(.quaternary)
+                        .clipShape(Capsule())
+                }
             }
-            Text(presentation.statusMessage)
-                .font(.callout)
-                .foregroundStyle(.secondary)
+            if !isIdle {
+                Text(presentation.statusMessage)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 }
 
 private struct InstallActionButton: View {
     let action: InstallUserAction
+    var firstInstall = false
     let perform: () -> Void
 
     var body: some View {
         if action == .installUpdate {
             Button(action: perform) {
-                Label(action.title, systemImage: action.systemImage)
+                Label(L10n.string(firstInstall ? "simple.sharing.set_up" : "simple.sharing.update"), systemImage: action.systemImage)
             }
             .buttonStyle(.borderedProminent)
         } else {

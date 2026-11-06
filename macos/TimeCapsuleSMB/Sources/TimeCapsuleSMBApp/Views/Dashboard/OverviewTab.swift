@@ -27,114 +27,84 @@ struct OverviewTab: View {
                     WarningBanner(warning: warning)
                 }
 
-                DashboardHeaderView(presentation: presentation.header)
-
-                DashboardPrimaryActionStrip(
-                    primaryAction: presentation.primaryAction,
-                    isPrimaryActionEnabled: presentation.isPrimaryActionEnabled,
-                    secondaryActions: presentation.secondaryActions,
-                    isSecondaryActionEnabled: presentation.isEnabled,
-                    performPrimary: {
-                        session.performPrimaryAction(presentation.primaryAction, profile: profile)
-                    },
-                    performSecondary: { action in
-                        session.performSecondaryAction(action, profile: profile)
+                HStack(spacing: 24) {
+                    AirPortDeviceIcon(isTower: profile.deviceGeneration == "gen5" || profile.model?.contains("8,") == true)
+                        .frame(width: 64, height: 86)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(profile.title).font(.title2.weight(.semibold))
+                        HStack(spacing: 7) {
+                            DeviceStatusLight(status: summary.displayStatus)
+                            Text(summary.displayStatus.title).foregroundStyle(.secondary)
+                        }
+                        Text(profile.connectionTarget).font(.callout).foregroundStyle(.secondary)
                     }
-                )
+                    Spacer(minLength: 0)
+                }
+                .padding(.vertical, 18)
 
-                VStack(alignment: .leading, spacing: 10) {
-                    DiskHealthView(report: profile.lastCheckup?.diskHealth, checkedAt: profile.lastCheckup?.checkedAt)
-                    ForEach(presentation.healthSections) { section in
-                        DashboardHealthSectionView(section: section, isActionEnabled: presentation.isEnabled) { action in
-                            session.performSecondaryAction(action, profile: profile)
+                Text(L10n.string(summary.primaryAction == .openSMB ? "simple.summary.ready" : "simple.summary.help"))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                HStack(spacing: 12) {
+                    Button(primaryActionTitle(presentation.primaryAction)) {
+                        if presentation.primaryAction == .installSMB {
+                            session.selectedTab = .install
+                        } else {
+                            session.performPrimaryAction(presentation.primaryAction, profile: profile)
                         }
                     }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(!presentation.isPrimaryActionEnabled)
+                    if presentation.primaryAction != .runCheckup {
+                        Button(L10n.string("simple.check_connection")) {
+                            session.performSecondaryAction(.runCheckup, profile: profile)
+                        }
+                        .disabled(!presentation.isEnabled(.runCheckup))
+                    }
+                }
+                .padding(.vertical, 8)
+
+                ForEach(presentation.healthSections.compactMap { section -> DashboardHealthSection? in
+                    let problems = section.rows.filter { $0.status == .warning || $0.status == .failed }
+                    return problems.isEmpty ? nil : DashboardHealthSection(domain: section.domain, rows: problems)
+                }) { section in
+                    DashboardHealthSectionView(section: section, isActionEnabled: presentation.isEnabled) { action in
+                        session.performSecondaryAction(action, profile: profile)
+                    }
+                }
+
+                if let disk = profile.lastCheckup?.diskHealth?.disks.first {
+                    HStack(spacing: 10) {
+                        Image(systemName: "internaldrive").foregroundStyle(.secondary)
+                        Text(disk.label)
+                        Spacer()
+                        if let temperature = disk.temperatureCelsius {
+                            Text(temperature).foregroundStyle(.secondary)
+                        }
+                        Button(L10n.string("simple.disk_details")) { session.selectedTab = .maintenance }
+                    }
+                    .font(.callout)
+                    .padding(.vertical, 14)
+                }
+
+                DashboardDisclosureSection(title: L10n.string("simple.connection_details")) {
+                    SummaryGrid(rows: presentation.header.rows.map { ($0.label, $0.value) })
+                    Text(presentation.header.lastChecked).font(.caption).foregroundStyle(.secondary)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
-}
-
-private struct DashboardHeaderView: View {
-    let presentation: DeviceDashboardHeaderPresentation
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(presentation.title)
-                        .font(.title2.weight(.semibold))
-                    Text(presentation.connectionTarget)
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                StatusBadge(status: presentation.status)
-            }
-
-            Label(presentation.lastChecked, systemImage: "clock")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            SummaryGrid(rows: presentation.rows.map { ($0.label, $0.value) })
+    private func primaryActionTitle(_ action: DashboardPrimaryAction) -> String {
+        switch action {
+        case .openSMB: return L10n.string("simple.open_disk")
+        case .installSMB: return L10n.string("simple.sharing.set_up")
+        case .runCheckup: return L10n.string("simple.check_connection")
+        default: return action.title
         }
     }
-}
 
-private struct StatusBadge: View {
-    let status: DeviceDisplayStatus
-
-    var body: some View {
-        Label {
-            Text(status.title)
-        } icon: {
-            Image(systemName: status.systemImage)
-                .frame(width: OverviewLayout.actionIconSize, height: OverviewLayout.actionIconSize)
-        }
-            .font(.caption.weight(.medium))
-            .padding(.horizontal, 8)
-            .padding(.vertical, 5)
-            .background(.quaternary)
-            .clipShape(Capsule())
-    }
-}
-
-private struct DashboardPrimaryActionStrip: View {
-    let primaryAction: DashboardPrimaryAction
-    let isPrimaryActionEnabled: Bool
-    let secondaryActions: [DashboardSecondaryAction]
-    let isSecondaryActionEnabled: (DashboardSecondaryAction) -> Bool
-    let performPrimary: () -> Void
-    let performSecondary: (DashboardSecondaryAction) -> Void
-
-    var body: some View {
-        HStack(spacing: 8) {
-            DashboardPrimaryActionButton(action: primaryAction, perform: performPrimary)
-                .disabled(!isPrimaryActionEnabled)
-
-            ForEach(secondaryActions) { action in
-                Button {
-                    performSecondary(action)
-                } label: {
-                    DashboardActionLabel(title: action.title, systemImage: action.systemImage)
-                }
-                .disabled(!isSecondaryActionEnabled(action))
-            }
-        }
-    }
-}
-
-private struct DashboardPrimaryActionButton: View {
-    let action: DashboardPrimaryAction
-    let perform: () -> Void
-
-    var body: some View {
-        Button(action: perform) {
-            DashboardActionLabel(title: action.title, systemImage: action.systemImage)
-        }
-        .buttonStyle(.borderedProminent)
-    }
 }
 
 private struct DashboardActionLabel: View {

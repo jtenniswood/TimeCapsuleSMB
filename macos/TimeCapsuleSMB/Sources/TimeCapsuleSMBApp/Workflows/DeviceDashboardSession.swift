@@ -5,6 +5,7 @@ import Foundation
 final class DeviceDashboardSession: ObservableObject, Identifiable {
     let id: DeviceProfile.ID
     @Published var selectedTab: DeviceDashboardTab = .overview
+    @Published var maintenanceUtilitiesExpanded = false
 
     let appStore: AppStore
     var deployStore: DeployWorkflowStore
@@ -110,8 +111,7 @@ final class DeviceDashboardSession: ObservableObject, Identifiable {
     }
 
     func openSSHAccess(profile: DeviceProfile) {
-        selectedTab = .maintenance
-        maintenanceStore.selectedWorkflow = .sshAccess
+        showMaintenance(.sshAccess)
         refreshSSHAccessStatus(profile: profile)
     }
 
@@ -120,8 +120,7 @@ final class DeviceDashboardSession: ObservableObject, Identifiable {
         if let waiting = localNetworkPreflight, waiting.tab != .maintenance {
             return
         }
-        selectedTab = .maintenance
-        maintenanceStore.selectedWorkflow = .sshAccess
+        showMaintenance(.sshAccess)
         if let password = maintenancePassword(for: profile) {
             startEnableSSHAccess(password: password, profile: profile)
         }
@@ -227,8 +226,7 @@ final class DeviceDashboardSession: ObservableObject, Identifiable {
         case .viewCheckup:
             selectedTab = .checkup
         case .startSMB:
-            selectedTab = .maintenance
-            maintenanceStore.selectedWorkflow = .activate
+            showMaintenance(.activate)
         case .settings:
             selectedTab = .settings
         }
@@ -247,8 +245,7 @@ final class DeviceDashboardSession: ObservableObject, Identifiable {
         case .viewDiagnostics:
             showDiagnostics()
         case .openBootHook:
-            selectedTab = .maintenance
-            maintenanceStore.selectedWorkflow = .bootHook
+            showMaintenance(.bootHook)
         }
     }
 
@@ -259,8 +256,7 @@ final class DeviceDashboardSession: ObservableObject, Identifiable {
         case .installUpdate:
             runInstall(profile: profile)
         case .startSMB:
-            selectedTab = .maintenance
-            maintenanceStore.selectedWorkflow = .activate
+            showMaintenance(.activate)
         case .replacePassword:
             showPasswordReplacement()
         case .openFinder:
@@ -453,6 +449,7 @@ final class DeviceDashboardSession: ObservableObject, Identifiable {
 
     private func showMaintenance(_ workflow: MaintenanceWorkflow) {
         selectedTab = .maintenance
+        maintenanceUtilitiesExpanded = true
         maintenanceStore.selectedWorkflow = workflow
     }
 

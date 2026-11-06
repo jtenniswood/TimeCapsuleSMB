@@ -110,7 +110,7 @@ final class ContentViewSmokeTests: XCTestCase {
         try await waitUntilStoreState { checked() == ["office", "den"] }
         // Away and back to the same device: only the page reappearing checks again.
         fixture.appStore.navigate(to: .allDevices)
-        let allDevicesTitle = L10n.string("overview.saved_devices.title")
+        let allDevicesTitle = L10n.string("simple.select_device")
         try await waitUntilStoreState {
             accessibleElements(in: host.contentView).contains { $0.text == allDevicesTitle }
         }
@@ -150,7 +150,7 @@ final class ContentViewSmokeTests: XCTestCase {
         XCTAssertEqual(runs(), ["set-ssh:office", "reachability:office", "set-ssh:den", "reachability:den"])
         // Back within a minute: SSH again, reachability not.
         fixture.appStore.navigate(to: .allDevices)
-        let allDevicesTitle = L10n.string("overview.saved_devices.title")
+        let allDevicesTitle = L10n.string("simple.select_device")
         try await waitUntilStoreState { accessibleElements(in: host.contentView).contains { $0.text == allDevicesTitle } }
         await runQueuedStoreUpdates()
         fixture.appStore.navigate(to: .device(den.id))
@@ -161,7 +161,9 @@ final class ContentViewSmokeTests: XCTestCase {
         let passwords = runner.calls.filter { $0.operation == "reachability" }.map { $0.params["credentials"] }
         XCTAssertEqual(passwords, [.object(["password": .string("pw-office")]), .object(["password": .string("pw-den")])])
         // The page shows the version the login read.
-        XCTAssertTrue(devicePageTexts(fixture.contentView).contains("v5.0.0"))
+        XCTAssertTrue(pressAccessibleControl(in: host.contentView, labeled: L10n.string("simple.connection_details")))
+        await runQueuedStoreUpdates()
+        XCTAssertTrue(accessibleElements(in: host.contentView).map(\.text).contains("v5.0.0"))
     }
 
     func testAPageWithoutAWorkingPasswordRunsNoAutomaticReachability() async throws {
@@ -505,8 +507,8 @@ final class ContentViewSmokeTests: XCTestCase {
         try await waitUntilStoreState { flow.state == .discoveryReady }
         fixture.appStore.navigate(to: .allDevices)
         func addButtonsEnabled() -> [Bool] {
-            accessibleElements(fixture.contentView)
-                .filter { $0.role == .button && $0.text == L10n.string("overview.discovery.add") }
+            overviewMenuElements(fixture)
+                .filter { $0.role == .button && ["Office Capsule", "Den Capsule"].contains($0.text) }
                 .map(\.isEnabled)
         }
         XCTAssertEqual(addButtonsEnabled(), [true, true])
@@ -547,9 +549,9 @@ final class ContentViewSmokeTests: XCTestCase {
         try await waitUntilStoreState { flow.state == .discoveryReady }
         fixture.appStore.navigate(to: .allDevices)
 
-        let overview = accessibleElements(fixture.contentView).map(\.text)
+        let overview = overviewMenuElements(fixture).map(\.text)
         XCTAssertTrue(overview.contains("Office Capsule"))
-        XCTAssertTrue(overview.contains(L10n.string("discovery_monitor.state.ready")))
+        XCTAssertTrue(accessibleElements(fixture.contentView).map(\.text).contains(L10n.string("simple.welcome.title")))
         XCTAssertFalse(overview.contains { $0.contains("Living Room Express") })
         XCTAssertFalse(overview.contains { $0.contains(L10n.string("add_device.state.unsupported")) })
 
@@ -572,8 +574,8 @@ final class ContentViewSmokeTests: XCTestCase {
         try await waitUntilStoreState { fixture.appStore.deviceDiscovery.state == .ready }
         fixture.appStore.navigate(to: .allDevices)
 
-        let overview = accessibleElements(fixture.contentView).map(\.text)
-        XCTAssertTrue(overview.contains(L10n.string("discovery_monitor.state.empty")))
+        let overview = overviewMenuElements(fixture).map(\.text)
+        XCTAssertTrue(fixture.appStore.deviceDiscovery.nearbyUnsavedDevices.isEmpty)
         XCTAssertTrue(overview.contains(L10n.string("overview.discovery.empty")))
         XCTAssertFalse(overview.contains(L10n.string("discovery_monitor.state.ready")))
         XCTAssertFalse(overview.contains { $0.contains("Living Room Express") })
@@ -593,14 +595,12 @@ final class ContentViewSmokeTests: XCTestCase {
         fixture.appStore.deviceDiscovery.refresh(timeout: 6)
         try await waitUntilStoreState { fixture.appStore.deviceDiscovery.state == .ready }
 
-        let elements = overviewElements(fixture)
-        func count(_ key: String) -> Int {
-            elements.filter { $0.text == L10n.string(key) }.count
+        let deviceButtons = overviewMenuElements(fixture).filter {
+            $0.role == .button && ["Office Capsule", "Den Capsule", "Attic Capsule"].contains($0.text)
         }
-        // Unequal counts, so swapped labels cannot pass.
-        XCTAssertEqual(count("overview.discovery.saved"), 1)
-        XCTAssertEqual(count("overview.discovery.unsaved"), 2)
-        XCTAssertEqual(count("overview.discovery.add"), 2)
+        XCTAssertEqual(Set(deviceButtons.map(\.text)), ["Den Capsule", "Attic Capsule"])
+        XCTAssertTrue(deviceButtons.allSatisfy(\.isEnabled))
+        XCTAssertEqual(overviewElements(fixture).filter { $0.text.contains("Office Capsule") }.count, 1)
     }
 
     func testSavedUnsupportedDeviceStaysSavedAndLeavesNearbyDevices() async throws {
@@ -640,8 +640,8 @@ final class ContentViewSmokeTests: XCTestCase {
         let texts = overviewElements(fixture).map(\.text)
         // One row, the saved one: a Nearby row would name the device again.
         XCTAssertEqual(texts.filter { $0.contains(profile.title) }.count, 1)
-        XCTAssertTrue(texts.contains(L10n.string("discovery_monitor.state.empty")))
-        XCTAssertTrue(texts.contains(L10n.string("overview.discovery.empty")))
+        XCTAssertTrue(fixture.appStore.deviceDiscovery.nearbyUnsavedDevices.isEmpty)
+        XCTAssertTrue(overviewMenuElements(fixture).map(\.text).contains(L10n.string("overview.discovery.empty")))
         XCTAssertFalse(texts.contains(L10n.string("overview.discovery.saved")))
     }
 
@@ -726,7 +726,16 @@ final class ContentViewSmokeTests: XCTestCase {
         try assertRendersNonBlank(fixture.contentView)
     }
 
-    /// The overview alone: the shell's sidebar also names saved devices.
+    private func overviewMenuElements(_ fixture: AppViewFixture) -> [AccessibleElement] {
+        accessibleElements(NearbyAirPortMenuItems(
+            devices: fixture.appStore.deviceDiscovery.nearbyUnsavedDevices,
+            canAddDevice: !fixture.composition.addDeviceStore.isAdding,
+            isRefreshing: fixture.appStore.backend.isRunning,
+            add: { _ in }, addManually: {}, refresh: {}
+        ))
+    }
+
+    /// Saved devices stay on the canvas; nearby ones live in the menu.
     private func overviewElements(_ fixture: AppViewFixture) -> [AccessibleElement] {
         accessibleElements(DeviceListOverviewView(
             appStore: fixture.appStore,

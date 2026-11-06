@@ -33,6 +33,7 @@ struct TimeCapsuleSMBExecutable: App {
         WindowGroup {
             ContentView(updater: updater)
         }
+        .defaultSize(width: 900, height: 660)
         .commands {
             CommandGroup(after: .appInfo) {
                 CheckForUpdatesCommand(updater: updater)
