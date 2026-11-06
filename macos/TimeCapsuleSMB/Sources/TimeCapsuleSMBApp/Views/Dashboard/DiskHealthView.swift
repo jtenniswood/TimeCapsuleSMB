@@ -4,6 +4,9 @@ import SwiftUI
 struct DiskHealthView: View {
     let report: DiskHealthReport?
     let checkedAt: Date?
+    var deviceBusy = false
+    var repair: ((DiskHealthDisk) -> Void)? = nil
+    var erase: ((DiskHealthDisk) -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
@@ -13,7 +16,19 @@ struct DiskHealthView: View {
                         .font(UtilityStyle.body)
                 }
                 ForEach(report.disks) { disk in
-                    DiskSmartReadingsView(disk: disk)
+                    GroupBox {
+                        VStack(alignment: .leading, spacing: 16) {
+                            DiskSmartReadingsView(disk: disk)
+                            if repair != nil || (disk.builtin && erase != nil) {
+                                Divider()
+                                HStack(spacing: 8) {
+                                    if let repair { Button(L10n.string("utility.disk.repair")) { repair(disk) } }
+                                    if disk.builtin, let erase { Button(L10n.string("utility.disk.erase")) { erase(disk) } }
+                                    Spacer()
+                                }.disabled(deviceBusy)
+                            }
+                        }.padding(16).frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 }
             } else {
                 Text(L10n.string(report == nil || report?.error == "not_checked" ? "utility.status.unchecked" : "utility.disk.unavailable"))
@@ -68,7 +83,8 @@ private struct DiskSmartReadingsView: View {
                 if let total = DiskHealthPartition.bytes(partition.sizeMiB),
                    let free = DiskHealthPartition.bytes(partition.freeMiB) {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(L10n.format("disk_health.space", partition.name, free, total))
+                        Text(disk.partitions.count == 1 ? L10n.format("disk_health.space_compact", free, total) :
+                            L10n.format("disk_health.space", partition.name, free, total))
                             .font(UtilityStyle.secondary).foregroundStyle(.secondary)
                         if let size = partition.sizeMiB, size > 0, let available = partition.freeMiB, available >= 0 {
                             ProgressView(value: Double(size - min(size, available)), total: Double(size))
@@ -81,10 +97,11 @@ private struct DiskSmartReadingsView: View {
             }
             if disk.details.state == "available" {
                 VStack(alignment: .leading, spacing: 20) {
-                    SummaryGrid(rows: [
-                        (L10n.string("disk_health.temperature"), disk.temperatureCelsius ?? L10n.string("value.unknown")),
-                        (L10n.string("disk_health.usage"), disk.metric(9, named: "Power-on hours count") ?? L10n.string("value.unknown"))
-                    ])
+                    HStack(spacing: 32) {
+                        reading(L10n.string("disk_health.temperature"), value: disk.temperatureCelsius)
+                        reading(L10n.string("disk_health.usage"), value: disk.metric(9, named: "Power-on hours count"))
+                        Spacer(minLength: 0)
+                    }
                     if disk.needsAttention {
                         SummaryGrid(rows: [
                             (L10n.string("disk_health.reallocated"), disk.metric(5, named: "Reallocated sector count")),
@@ -97,6 +114,13 @@ private struct DiskSmartReadingsView: View {
                 Text(L10n.string("disk_health.details_unavailable"))
                     .font(UtilityStyle.secondary).foregroundStyle(.secondary)
             }
+        }
+    }
+
+    private func reading(_ label: String, value: String?) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label).font(UtilityStyle.secondary).foregroundStyle(.secondary)
+            Text(value ?? L10n.string("value.unknown")).monospacedDigit()
         }
     }
 }

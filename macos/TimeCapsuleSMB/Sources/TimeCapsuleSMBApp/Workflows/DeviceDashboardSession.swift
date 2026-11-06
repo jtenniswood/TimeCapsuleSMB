@@ -402,7 +402,7 @@ final class DeviceDashboardSession: ObservableObject, Identifiable {
             return
         }
         profileEditorStore.clearPasswordAttention()
-        selectedTab = .install
+        selectedTab = .overview
         if case .started(let operation) = deployStore.runDeploy(password: password, profile: profile) {
             stateSynchronizer.trackDeployStart(operation, profile: profile)
         }
@@ -465,6 +465,7 @@ final class DeviceDashboardSession: ObservableObject, Identifiable {
     }
 
     private func showMaintenance(_ workflow: MaintenanceWorkflow) {
+        if workflow == .fsck { maintenanceStore.fsckStore.prepareForDisk(nil) }
         selectedTab = .maintenance
         maintenanceUtilitiesExpanded = true
         maintenanceStore.selectedWorkflow = workflow

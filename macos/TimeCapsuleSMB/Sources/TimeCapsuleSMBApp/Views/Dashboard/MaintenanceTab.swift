@@ -12,8 +12,6 @@ struct MaintenanceTab: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 HStack(spacing: 8) {
-                    Button(L10n.string("utility.disk.repair")) { open(.fsck) }
-                    Button(L10n.string("utility.disk.erase")) { open(.wipeDisk) }
                     Spacer()
                     Button(L10n.string("simple.disk.refresh")) {
                         session.runCheckup(profile: profile)
@@ -21,13 +19,24 @@ struct MaintenanceTab: View {
                     }
                 }
                 .disabled(busy)
-                DiskHealthView(report: profile.lastCheckup?.diskHealth, checkedAt: profile.lastCheckup?.checkedAt)
+                DiskHealthView(report: profile.lastCheckup?.diskHealth, checkedAt: profile.lastCheckup?.checkedAt,
+                    deviceBusy: busy, repair: { disk in
+                        session.maintenanceStore.fsckStore.prepareForDisk(disk)
+                        open(.fsck)
+                    }, erase: { _ in open(.wipeDisk) })
+                GroupBox(L10n.string("simple.sharing.title")) {
+                    DiskSharingSettingsView(store: session.sharingStore, deviceBusy: busy,
+                        isLegacyDevice: profile.osRelease?.hasPrefix("4.") == true, showPartitions: false) {
+                        session.sharingStore.load(profile: profile, password: session.appStore.passwordWithoutPrompt(for: profile), force: true)
+                    }.padding(16)
+                }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .sheet(isPresented: $session.maintenanceUtilitiesExpanded) {
             MaintenanceToolSheet(profile: profile, session: session, showDiagnostics: showDiagnostics, diagnosticsText: diagnosticsText)
         }
+        .task(id: profile.lastDeployState?.finishedAt) { await session.refreshSharingSettings(profile: profile) }
     }
 
     private func open(_ workflow: MaintenanceWorkflow) {

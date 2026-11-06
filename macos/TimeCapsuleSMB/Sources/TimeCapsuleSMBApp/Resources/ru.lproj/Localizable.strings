@@ -1655,3 +1655,10 @@
 
 "sharing.update_help" = "Обновляет общий доступ к файлам для новых компьютеров.";
 "sharing.unavailable" = "Эти настройки общего доступа пока недоступны на этом AirPort.";
+
+"simple.software.update_available" = "Доступно обновление";
+"simple.software.current" = "Обновлено";
+"simple.software.installed" = "Установлено";
+"simple.firmware_version" = "Версия прошивки";
+"simple.serial_number" = "Серийный номер";
+"disk_health.space_compact" = "Свободно %@ из %@";

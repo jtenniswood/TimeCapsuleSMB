@@ -7,6 +7,18 @@ enum DeviceDashboardTab: String, CaseIterable, Equatable, Identifiable {
     case maintenance
     case settings
 
+    // Legacy workflow destinations remain valid; everyday navigation groups
+    // connection checks into Overview and disk access into Disks.
+    static let allCases: [Self] = [.overview, .maintenance, .settings]
+
+    var visibleTab: Self {
+        switch self {
+        case .checkup: return .overview
+        case .install: return .maintenance
+        default: return self
+        }
+    }
+
     var id: String { rawValue }
 
     var title: String {

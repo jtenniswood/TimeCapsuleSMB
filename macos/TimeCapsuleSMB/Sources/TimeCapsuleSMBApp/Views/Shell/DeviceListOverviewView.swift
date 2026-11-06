@@ -13,7 +13,6 @@ struct DeviceListOverviewView: View {
     let canAddDevice: Bool
     let addDiscoveredDevice: (DiscoveredDevice) -> Void
     @Environment(\.colorScheme) private var colorScheme
-    @State private var selectedDeviceID: DeviceProfile.ID?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -24,33 +23,34 @@ struct DeviceListOverviewView: View {
                     ProgressView().controlSize(.small)
                 }
             }
-            .padding(20)
+            .padding(.horizontal, 20).padding(.top, 16).padding(.bottom, 8)
 
             if deviceRegistry.profiles.isEmpty {
                 welcome
             } else {
                 ScrollView {
-                    VStack(spacing: 18) {
-                        VStack(spacing: 8) {
+                    VStack(spacing: 10) {
+                        VStack(spacing: 4) {
                             if let image = NSImage(named: NSImage.computerName) {
-                                Image(nsImage: image).resizable().scaledToFit().frame(width: 144, height: 104)
+                                Image(nsImage: image).resizable().scaledToFit().frame(width: 240, height: 240)
+                                    .frame(width: 240, height: 140).clipped()
                             } else {
-                                Image(systemName: "laptopcomputer").font(.system(size: 72))
+                                Image(systemName: "laptopcomputer").font(.system(size: 108))
                             }
                             Text(L10n.string("simple.this_mac")).font(UtilityStyle.deviceName)
                         }
                         RoundedRectangle(cornerRadius: 1)
                             .fill(.secondary.opacity(0.35))
-                            .frame(width: 2, height: 44)
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 200, maximum: 280), spacing: 36)], spacing: 32) {
+                            .frame(width: 2, height: 20)
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 280, maximum: 320), spacing: 28)], spacing: 24) {
                             ForEach(deviceRegistry.profiles) { profile in
                                 deviceButton(profile)
                             }
                         }
-                        .frame(maxWidth: max(280, CGFloat(deviceRegistry.profiles.count) * 280))
+                        .frame(maxWidth: max(320, CGFloat(deviceRegistry.profiles.count) * 320))
                     }
                     .padding(.horizontal, 32)
-                    .padding(.vertical, 36)
+                    .padding(.vertical, 8)
                     .frame(maxWidth: .infinity)
                 }
             }
@@ -81,12 +81,10 @@ struct DeviceListOverviewView: View {
 
     private func deviceButton(_ profile: DeviceProfile) -> some View {
         let summary = appStore.dashboardSummary(for: profile)
-        return Button {
-            selectedDeviceID = profile.id
-        } label: {
-            VStack(spacing: 14) {
+        return VStack(spacing: 10) {
                 AirPortDeviceIcon(isTower: profile.usesTowerArtwork)
-                    .frame(width: 100, height: 120)
+                    .frame(width: 132, height: 144)
+                    .scaleEffect(1.15)
                 HStack(spacing: 7) {
                     DeviceStatusLight(status: summary.displayStatus)
                     Text(profile.title).font(UtilityStyle.deviceName).multilineTextAlignment(.center)
@@ -94,26 +92,17 @@ struct DeviceListOverviewView: View {
                 Text(summary.displayStatus.title)
                     .font(UtilityStyle.body)
                     .foregroundStyle(.secondary)
-            }
-            .padding(14)
-            .frame(maxWidth: .infinity)
-            .contentShape(RoundedRectangle(cornerRadius: 12))
+                HStack(spacing: 10) {
+                    Button(L10n.string("simple.edit")) { appStore.select(profile) }
+                    Button(L10n.string("simple.open_disk")) {
+                        dashboardStore?.session(for: profile).performSecondaryAction(.openFinder, profile: profile)
+                    }
+                    .disabled(!DashboardActionPolicy.isEnabled(.openFinder, for: summary))
+                }.padding(.top, 4)
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(profile.title + ", " + summary.displayStatus.title)
-        .help(L10n.string("simple.select_device"))
-        .popover(isPresented: Binding(
-            get: { selectedDeviceID == profile.id },
-            set: { if !$0 { selectedDeviceID = nil } }
-        ), arrowEdge: .trailing) {
-            DeviceQuickInfoView(profile: profile, summary: summary, openDisk: {
-                dashboardStore?.session(for: profile).performSecondaryAction(.openFinder, profile: profile)
-            }, edit: {
-                selectedDeviceID = nil
-                appStore.select(profile)
-            })
-            .task { await dashboardStore?.session(for: profile).refreshDeviceStatus(profile: profile) }
-        }
+        .padding(8).frame(maxWidth: .infinity)
+        .accessibilityElement(children: .contain)
+        .task { await dashboardStore?.session(for: profile).refreshDeviceStatus(profile: profile) }
     }
 
     private var otherDevicesMenu: some View {

@@ -140,6 +140,8 @@ def reachability_payload(result: ReachabilityResult) -> dict[str, object]:
         "installed_version_code": installed.version_code if installed else None,
         "install_state": installed.state if installed else "not_checked",
         "app_release_tag": installed.app_release_tag if installed else None,
+        "firmware_version": installed.firmware_version if installed else None,
+        "serial_number": installed.serial_number if installed else None,
         **result.summary.fields(),
     })
 

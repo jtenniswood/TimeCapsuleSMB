@@ -1655,3 +1655,10 @@
 
 "sharing.update_help" = "Updates file sharing for newer computers.";
 "sharing.unavailable" = "These sharing settings aren't available on this AirPort yet.";
+
+"simple.software.update_available" = "Update Available";
+"simple.software.current" = "Up to Date";
+"simple.software.installed" = "Installed";
+"simple.firmware_version" = "Firmware Version";
+"simple.serial_number" = "Serial Number";
+"disk_health.space_compact" = "%@ free of %@";

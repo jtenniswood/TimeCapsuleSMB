@@ -41,6 +41,8 @@ class InstalledVersion:
     # version code (an install before v2.1, or none at all).
     state: str
     app_release_tag: str
+    firmware_version: str | None = None
+    serial_number: str | None = None
 
 
 @dataclass(frozen=True)
@@ -122,7 +124,7 @@ def installed_version(deployed: DeployedVersionProbeResult) -> InstalledVersion:
         state = "newer"
     else:
         state = "current"
-    return InstalledVersion(deployed.release_tag, code, state, RELEASE_TAG)
+    return InstalledVersion(deployed.release_tag, code, state, RELEASE_TAG, deployed.firmware_version, deployed.serial_number)
 
 
 def ssh_target_from_params(config: AppConfig, params: Mapping[str, object]) -> str:
@@ -287,7 +289,7 @@ def check_ssh_auth(
         # login ran the whole command.
         proc = run_ssh(
             connection,
-            f"/bin/sh -c {shlex.quote(f'{deployed_version_script()}; printf {REACHABILITY_OK_TOKEN}')}",
+            f"/bin/sh -c {shlex.quote(f'{deployed_version_script(include_device_info=True)}; printf {REACHABILITY_OK_TOKEN}')}",
             check=False,
             timeout=timeout,
         )

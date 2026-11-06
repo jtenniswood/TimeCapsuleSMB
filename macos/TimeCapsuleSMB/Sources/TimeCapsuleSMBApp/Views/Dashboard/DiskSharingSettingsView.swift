@@ -4,6 +4,7 @@ struct DiskSharingSettingsView: View {
     @ObservedObject var store: DiskSharingStore
     let deviceBusy: Bool
     var isLegacyDevice = false
+    var showPartitions = true
     let reload: () -> Void
     @State private var selectedAccountID: UUID?
     @State private var editingAccount: SharingAccountDraft?
@@ -13,7 +14,7 @@ struct DiskSharingSettingsView: View {
             if store.loading && store.snapshot == nil {
                 ProgressView().controlSize(.small).frame(maxWidth: .infinity)
             } else if let snapshot = store.snapshot {
-                if !snapshot.partitions.isEmpty {
+                if showPartitions && !snapshot.partitions.isEmpty {
                     UtilityFormRow(title: L10n.string("sharing.partitions")) {
                         List(snapshot.partitions) { partition in
                             HStack(spacing: 12) {

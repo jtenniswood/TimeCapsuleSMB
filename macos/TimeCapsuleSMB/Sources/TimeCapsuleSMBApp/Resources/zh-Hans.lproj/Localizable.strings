@@ -1655,3 +1655,10 @@
 
 "sharing.update_help" = "更新文件共享，以支持较新的电脑。";
 "sharing.unavailable" = "这台 AirPort 暂不支持这些共享设置。";
+
+"simple.software.update_available" = "有可用更新";
+"simple.software.current" = "已是最新";
+"simple.software.installed" = "已安装";
+"simple.firmware_version" = "固件版本";
+"simple.serial_number" = "序列号";
+"disk_health.space_compact" = "可用 %@，共 %@";

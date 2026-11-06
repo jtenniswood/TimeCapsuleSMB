@@ -1655,3 +1655,10 @@
 
 "sharing.update_help" = "Atnaujina failų bendrinimą naujesniems kompiuteriams.";
 "sharing.unavailable" = "Šiame „AirPort“ šios bendrinimo nuostatos dar nepasiekiamos.";
+
+"simple.software.update_available" = "Yra naujinys";
+"simple.software.current" = "Atnaujinta";
+"simple.software.installed" = "Įdiegta";
+"simple.firmware_version" = "Programinės aparatinės įrangos versija";
+"simple.serial_number" = "Serijos numeris";
+"disk_health.space_compact" = "Laisva %@ iš %@";

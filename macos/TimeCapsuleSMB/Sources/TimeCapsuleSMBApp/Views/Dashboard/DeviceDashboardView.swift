@@ -14,7 +14,8 @@ struct DeviceDashboardView: View {
     let showDiagnostics: () -> Void
 
     var body: some View {
-        UtilityTabs(tabs: DeviceDashboardTab.allCases.map { (id: $0, title: $0.title) }, selection: $session.selectedTab) { tab in
+        UtilityTabs(tabs: DeviceDashboardTab.allCases.map { (id: $0, title: $0.title) }, selection: Binding(
+            get: { session.selectedTab.visibleTab }, set: { session.selectedTab = $0 })) { tab in
                 VStack(alignment: .leading, spacing: 16) {
                     if justSaved { DashboardSavedNoticeView(deviceName: profile.title) }
                     if let notice = session.staleEndpointNotice(for: profile) {
@@ -54,15 +55,10 @@ struct DeviceDashboardView: View {
     @ViewBuilder
     private func tabContent(_ tab: DeviceDashboardTab) -> some View {
         switch tab {
-        case .overview:
-            OverviewTab(profile: profile, session: session, reachabilityStore: reachabilityStore)
-        case .install:
-            InstallTab(profile: profile, session: session, operationCoordinator: operationCoordinator,
-                       showDiagnostics: showDiagnostics, diagnosticsText: diagnosticsText)
-        case .checkup:
-            CheckupTab(profile: profile, session: session, operationCoordinator: operationCoordinator,
-                       appSettings: appSettingsStore.settings, showDiagnostics: showDiagnostics, diagnosticsText: diagnosticsText)
-        case .maintenance:
+        case .overview, .checkup:
+            OverviewTab(profile: profile, session: session, reachabilityStore: reachabilityStore,
+                        showDiagnostics: showDiagnostics, diagnosticsText: diagnosticsText)
+        case .maintenance, .install:
             MaintenanceTab(profile: profile, session: session, showDiagnostics: showDiagnostics, diagnosticsText: diagnosticsText)
         case .settings:
             ScrollView { SettingsTab(profile: profile, session: session, appStore: appStore, backend: backend) }

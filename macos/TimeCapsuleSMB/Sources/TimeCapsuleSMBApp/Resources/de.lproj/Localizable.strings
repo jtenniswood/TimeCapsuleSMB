@@ -1655,3 +1655,10 @@
 
 "sharing.update_help" = "Aktualisiert die Dateifreigabe für neuere Computer.";
 "sharing.unavailable" = "Diese Freigabeeinstellungen sind auf dieser AirPort-Basisstation noch nicht verfügbar.";
+
+"simple.software.update_available" = "Update verfügbar";
+"simple.software.current" = "Aktuell";
+"simple.software.installed" = "Installiert";
+"simple.firmware_version" = "Firmware-Version";
+"simple.serial_number" = "Seriennummer";
+"disk_health.space_compact" = "%@ von %@ frei";

@@ -128,6 +128,22 @@ struct DeviceDashboardHeaderPresentation: Equatable {
         profile.lastDeployState?.localizedSummary ?? L10n.string("value.never")
     }
 
+    static func friendlyModelValue(for profile: DeviceProfile) -> String {
+        let capsuleIDs: Set<String> = ["106", "109", "113", "116", "119"]
+        let extremeIDs: Set<String> = ["104", "105", "108", "114", "117", "120"]
+        let model = profile.model?.lowercased() ?? ""
+        let family: String
+        if capsuleIDs.contains(profile.syap ?? "") || model.contains("timecapsule") || model.contains("time capsule") {
+            family = "Apple Time Capsule"
+        } else if extremeIDs.contains(profile.syap ?? "") || model.contains("extreme") {
+            family = "AirPort Extreme"
+        } else {
+            family = "AirPort"
+        }
+        let generation = generationValue(for: profile).replacingOccurrences(of: " generation", with: " Generation")
+        return generation == L10n.string("value.unknown") ? family : family + ", " + generation
+    }
+
     private static func generationValue(for profile: DeviceProfile) -> String {
         if let syapGeneration = generationFromSyAP(profile.syap) {
             return syapGeneration

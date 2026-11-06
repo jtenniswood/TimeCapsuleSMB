@@ -1655,3 +1655,10 @@
 
 "sharing.update_help" = "Werkt bestandsdeling bij voor nieuwere computers.";
 "sharing.unavailable" = "Deze instellingen voor delen zijn nog niet beschikbaar op deze AirPort.";
+
+"simple.software.update_available" = "Update beschikbaar";
+"simple.software.current" = "Bijgewerkt";
+"simple.software.installed" = "Geïnstalleerd";
+"simple.firmware_version" = "Firmwareversie";
+"simple.serial_number" = "Serienummer";
+"disk_health.space_compact" = "%@ vrij van %@";
