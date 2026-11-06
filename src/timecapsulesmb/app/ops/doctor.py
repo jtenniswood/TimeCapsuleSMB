@@ -24,6 +24,7 @@ def doctor_operation(params: dict[str, object], context: AppOperationContext) ->
     if not skip_ssh and config.has_value("TC_HOST"):
         connection = resolve_request_connection(config, context, allow_empty_password=True)
     debug_fields: dict[str, object] = {}
+    disk_health: dict[str, object] = {"error": "not_checked", "disks": []}
 
     def on_result(result: CheckResult) -> None:
         context.check(status=result.status, message=result.message, details=doctor_result_details(result))
@@ -45,6 +46,7 @@ def doctor_operation(params: dict[str, object], context: AppOperationContext) ->
         on_result=on_result,
         on_stage=on_stage,
         debug_fields=debug_fields,
+        disk_health_report=disk_health,
     )
     airport_mac = debug_fields.pop("airport_mac", None)
     naming = debug_fields.get("runtime_naming_identity")
@@ -59,6 +61,6 @@ def doctor_operation(params: dict[str, object], context: AppOperationContext) ->
         context.set_error(error)
     return OperationResult(
         not fatal,
-        doctor_payload(fatal=fatal, results=results, error=error),
+        doctor_payload(fatal=fatal, results=results, error=error, disk_health=disk_health),
         diagnostic_error=context.build_error() if fatal else None,
     )

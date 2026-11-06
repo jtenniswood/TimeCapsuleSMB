@@ -1481,3 +1481,32 @@
 "backend.recovery.ssh_client_failed.action.1" = "Riprova.";
 "backend.recovery.ssh_client_failed.action.2" = "Se continua a non riuscire, fai clic su “Copia diagnostica” e segnala il problema su https://github.com/jamesyc/TimeCapsuleSMB/issues.";
 "app_menu.check_for_updates" = "Verifica aggiornamenti...";
+
+/* Disk health from the last Checkup. */
+"disk_health.title" = "Stato del disco";
+"disk_health.checked_at" = "Ultimo controllo: %@";
+"disk_health.no_disks" = "Il dispositivo non ha segnalato dischi.";
+"disk_health.not_checked" = "Esegui Controllo con SSH per leggere lo stato del disco.";
+"disk_health.unavailable" = "Impossibile leggere lo stato del disco. Esegui di nuovo Controllo.";
+"disk_health.failing" = "SMART: guasto";
+"disk_health.verified" = "SMART: verificato";
+"disk_health.not_reported" = "SMART: non segnalato";
+"disk_health.failure_advice" = "Il disco segnala un guasto SMART. Copia i file importanti su un altro disco e organizzane la sostituzione.";
+"disk_health.space" = "%@: %@ liberi su %@";
+"disk_health.temperature" = "Temperatura";
+"disk_health.power_on_hours" = "Ore di funzionamento";
+"disk_health.reallocated" = "Settori riallocati";
+"disk_health.pending" = "Settori in attesa";
+"disk_health.uncorrectable" = "Settori non correggibili";
+"disk_health.crc_errors" = "Errori CRC dell’interfaccia";
+"disk_health.attributes" = "Tutti gli attributi SMART";
+"disk_health.id" = "ID";
+"disk_health.attribute" = "Attributo";
+"disk_health.value" = "Valore";
+"disk_health.threshold" = "Soglia";
+"disk_health.raw" = "Valore grezzo";
+"disk_health.reliability" = "Stato della soglia";
+"disk_health.outside_threshold" = "Alla soglia o al di sotto";
+"disk_health.within_threshold" = "Sopra la soglia";
+"disk_health.vendor_values" = "I valori e le soglie sono normalizzati dal disco. I valori grezzi e le relative unità dipendono dal produttore; valori grezzi elevati del tasso di errori non indicano da soli un guasto del disco.";
+"disk_health.details_unavailable" = "Le letture SMART dettagliate non sono disponibili per questo disco o per il suo collegamento.";

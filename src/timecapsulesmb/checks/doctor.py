@@ -78,6 +78,7 @@ def run_doctor_checks(
     on_result: Optional[Callable[[CheckResult], None]] = None,
     on_stage: Optional[Callable[[str, str | None], None]] = None,
     debug_fields: dict[str, object] | None = None,
+    disk_health_report: dict[str, object] | None = None,
 ) -> tuple[list[CheckResult], bool]:
     options = DoctorOptions(
         skip_ssh=skip_ssh,
@@ -97,7 +98,11 @@ def run_doctor_checks(
         on_result=on_result,
         debug_fields=debug_fields,
         on_stage=on_stage,
+        disk_health_report=disk_health_report,
     )
+    if disk_health_report is not None:
+        disk_health_report.clear()
+        disk_health_report.update(error="not_checked", disks=[])
 
     # This computer's own setup first: it decides whether anything else can run.
     with sink.in_section(DOMAIN_COMPUTER):

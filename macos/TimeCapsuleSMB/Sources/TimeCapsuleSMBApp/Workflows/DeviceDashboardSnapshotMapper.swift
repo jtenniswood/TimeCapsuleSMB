@@ -14,7 +14,8 @@ enum DeviceDashboardSnapshotMapper {
             failCount: summary.failCount,
             summary: "",
             device: summary.sections[.device],
-            thisMac: summary.sections[.thisMac]
+            thisMac: summary.sections[.thisMac],
+            diskHealth: summary.diskHealth
         )
     }
 

@@ -1481,3 +1481,32 @@
 "backend.recovery.ssh_client_failed.action.1" = "Bandykite dar kartą.";
 "backend.recovery.ssh_client_failed.action.2" = "Jei vis tiek nepavyksta, spustelėkite „Kopijuoti diagnostiką“ ir praneškite apie problemą adresu https://github.com/jamesyc/TimeCapsuleSMB/issues.";
 "app_menu.check_for_updates" = "Ieškoti naujinimų...";
+
+/* Disk health from the last Checkup. */
+"disk_health.title" = "Disko būklė";
+"disk_health.checked_at" = "Paskutinį kartą tikrinta: %@";
+"disk_health.no_disks" = "Įrenginys nepranešė apie diskus.";
+"disk_health.not_checked" = "Paleiskite patikrą su SSH, kad nuskaitytumėte disko būklę.";
+"disk_health.unavailable" = "Nepavyko nuskaityti disko būklės. Paleiskite patikrą dar kartą.";
+"disk_health.failing" = "SMART: gedimas";
+"disk_health.verified" = "SMART: patikrinta";
+"disk_health.not_reported" = "SMART: nepranešta";
+"disk_health.failure_advice" = "Diskas praneša apie SMART gedimą. Nukopijuokite svarbius failus į kitą diską ir pasirūpinkite jo pakeitimu.";
+"disk_health.space" = "%@: laisva %@ iš %@";
+"disk_health.temperature" = "Temperatūra";
+"disk_health.power_on_hours" = "Veikimo valandos";
+"disk_health.reallocated" = "Perskirstyti sektoriai";
+"disk_health.pending" = "Laukiantys sektoriai";
+"disk_health.uncorrectable" = "Nepataisomi sektoriai";
+"disk_health.crc_errors" = "Sąsajos CRC klaidos";
+"disk_health.attributes" = "Visi SMART atributai";
+"disk_health.id" = "ID";
+"disk_health.attribute" = "Atributas";
+"disk_health.value" = "Reikšmė";
+"disk_health.threshold" = "Slenkstis";
+"disk_health.raw" = "Neapdorota reikšmė";
+"disk_health.reliability" = "Slenksčio būsena";
+"disk_health.outside_threshold" = "Ties slenksčiu arba žemiau";
+"disk_health.within_threshold" = "Virš slenksčio";
+"disk_health.vendor_values" = "Reikšmes ir slenksčius normalizuoja diskas. Neapdorotos reikšmės ir jų vienetai priklauso nuo gamintojo; didelės neapdorotos klaidų dažnio reikšmės savaime nereiškia disko gedimo.";
+"disk_health.details_unavailable" = "Išsamūs SMART rodmenys šiam diskui ar jo jungčiai neprieinami.";

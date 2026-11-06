@@ -1481,3 +1481,32 @@
 "backend.recovery.ssh_client_failed.action.1" = "Vuelva a intentarlo.";
 "backend.recovery.ssh_client_failed.action.2" = "Si sigue fallando, haga clic en «Copiar diagnóstico» e informe del problema en https://github.com/jamesyc/TimeCapsuleSMB/issues.";
 "app_menu.check_for_updates" = "Buscar actualizaciones...";
+
+/* Disk health from the last Checkup. */
+"disk_health.title" = "Estado del disco";
+"disk_health.checked_at" = "Última comprobación: %@";
+"disk_health.no_disks" = "El dispositivo no ha informado de ningún disco.";
+"disk_health.not_checked" = "Ejecuta Comprobación con SSH para leer el estado del disco.";
+"disk_health.unavailable" = "No se pudo leer el estado del disco. Vuelve a ejecutar Comprobación.";
+"disk_health.failing" = "SMART: fallo";
+"disk_health.verified" = "SMART: verificado";
+"disk_health.not_reported" = "SMART: no informado";
+"disk_health.failure_advice" = "El disco informa de un fallo SMART. Copia los archivos importantes a otro disco y prepara su sustitución.";
+"disk_health.space" = "%@: %@ libres de %@";
+"disk_health.temperature" = "Temperatura";
+"disk_health.power_on_hours" = "Horas de funcionamiento";
+"disk_health.reallocated" = "Sectores reasignados";
+"disk_health.pending" = "Sectores pendientes";
+"disk_health.uncorrectable" = "Sectores no corregibles";
+"disk_health.crc_errors" = "Errores CRC de la interfaz";
+"disk_health.attributes" = "Todos los atributos SMART";
+"disk_health.id" = "ID";
+"disk_health.attribute" = "Atributo";
+"disk_health.value" = "Valor";
+"disk_health.threshold" = "Umbral";
+"disk_health.raw" = "Valor bruto";
+"disk_health.reliability" = "Estado del umbral";
+"disk_health.outside_threshold" = "En el umbral o por debajo";
+"disk_health.within_threshold" = "Por encima del umbral";
+"disk_health.vendor_values" = "El disco normaliza los valores y umbrales. Los valores brutos y sus unidades dependen del fabricante; una tasa de errores bruta elevada no significa por sí sola que el disco esté fallando.";
+"disk_health.details_unavailable" = "Las lecturas SMART detalladas no están disponibles para este disco o su conexión.";

@@ -99,6 +99,7 @@ from timecapsulesmb.core.net import (
     same_scoped_ip,
 )
 from timecapsulesmb.device.compat import render_compatibility_message
+from timecapsulesmb.device.smart import read_smart_status
 from timecapsulesmb.device.disk_errors import (
     disk_errors_explain,
     disk_errors_in,
@@ -2939,7 +2940,8 @@ def _acpd_silent(sink: DoctorSink) -> bool:
 def _doctor_check_disk_health(target: DoctorTarget, remote: RemoteAccess, sink: DoctorSink) -> None:
     """Each disk's SMART verdict and space from MaSt, which never wakes a
     sleeping disk, so it runs on every check, even when what follows stops
-    early. An ACPd the check before found silent is not asked: acp would
+    early. The app can additionally request read-only ATA attributes, which
+    may wake a sleeping drive. An ACPd the check before found silent is not asked: acp would
     wait out the read's timeout to say the same."""
     if not remote.remote_checks_enabled:
         return
@@ -2964,13 +2966,42 @@ def _doctor_check_disk_health(target: DoctorTarget, remote: RemoteAccess, sink: 
             "error": reason,
             "disks": [{key: value for key, value in asdict(disk).items() if key != "product"} for disk in disks],
         }
+    smart_failures: set[str] = set()
+    if sink.disk_health_report is not None:
+        # These optional ATA reads are requested by the app, not background
+        # reachability probes or telemetry. Never copy serials or raw MaSt.
+        sink.disk_health_report.update(
+            error="unavailable" if reason else None,
+            disks=[
+                {
+                    "device": disk.device, "label": disk.label or disk.device,
+                    "builtin": disk.builtin, "smart_status": disk.smart_status,
+                    "partitions": [{
+                        "name": part.name or part.device, "size_mib": part.size_mib,
+                        "used_mib": part.used_mib, "free_mib": part.free_mib,
+                    } for part in disk.partitions],
+                    "details": read_smart_status(target.connection, disk.device),
+                }
+                for disk in disks
+            ],
+        )
+        for disk in sink.disk_health_report["disks"]:
+            details = disk["details"]
+            if details.get("threshold_exceeded") or any(
+                attribute["critical"] and attribute["reliability"] == "negative"
+                for attribute in details["attributes"]
+            ):
+                smart_failures.add(disk["device"])
     if reason is not None:
         sink.add(CheckResult(
             "INFO", f"Attempt to read Apple ACPd's MaSt to get disk information failed: {reason}",
             details={"code": DOCTOR_CODE_DISK_INFO_UNAVAILABLE},
         ))
     for disk in disks:
-        sink.add(_disk_health_result(disk))
+        # A fresh ATA failure takes precedence over diskd's cached verdict.
+        # Reuse the existing warning so Checkup's counts and advice agree
+        # with the detailed panel; it does not claim Samba has stopped.
+        sink.add(_disk_health_result(replace(disk, smart_status="failing") if disk.device in smart_failures else disk))
     if any(partition.format == "hfs" for disk in disks for partition in disk.partitions):
         _doctor_check_in_memory_volumes(target, disks, sink)
     elif disks:

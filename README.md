@@ -244,6 +244,21 @@ If you want the results in JSON instead of human-readable text, use:
 .venv/bin/tcapsule doctor --json
 ```
 
+In the macOS app, run Checkup with SSH enabled to collect disk health. The
+Overview and Checkup tabs show the last check's SMART verdict, temperature,
+power-on hours, sector counts and interface CRC errors where available. Expand
+“All SMART attributes” to see the drive's normalized values, thresholds and raw
+readings. Missing readings stay unknown; raw values and their units depend on
+the drive manufacturer.
+
+Detailed readings use the device's existing `atactl smart status` command. This
+does not start a self-test or change drive settings, but it may wake a sleeping
+drive. Unsupported disks and USB connections still show the basic information
+the device provides. These readings describe the physical drive, including the
+drive containing your shared folder; collecting them does not change which
+folders are shared. Detailed attributes stay in the app's saved Checkup report
+and are not added to developer telemetry.
+
 ## Step 6: Remove It Later If Needed
 
 Run:

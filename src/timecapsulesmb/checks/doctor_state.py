@@ -64,6 +64,8 @@ class DoctorSink:
     # reaches it (network.local_network_block): the checks of the device over
     # the network would only fail the same way.
     local_network_blocked: bool = False
+    # App-only structured disk readings, separate from telemetry/debug fields.
+    disk_health_report: dict[str, object] | None = None
 
     def stage(self, stage: str, detail: str | None = None) -> None:
         if self.on_stage is not None:

@@ -1481,3 +1481,32 @@
 "backend.recovery.ssh_client_failed.action.1" = "请重试。";
 "backend.recovery.ssh_client_failed.action.2" = "如果仍然失败，请点击“复制诊断信息”，然后在 https://github.com/jamesyc/TimeCapsuleSMB/issues 报告此问题。";
 "app_menu.check_for_updates" = "检查更新…";
+
+/* Disk health from the last Checkup. */
+"disk_health.title" = "磁盘健康状况";
+"disk_health.checked_at" = "上次检查：%@";
+"disk_health.no_disks" = "设备未报告任何磁盘。";
+"disk_health.not_checked" = "通过 SSH 运行检查以读取磁盘健康状况。";
+"disk_health.unavailable" = "无法读取磁盘健康状况。请重新运行检查。";
+"disk_health.failing" = "SMART：故障";
+"disk_health.verified" = "SMART：已验证";
+"disk_health.not_reported" = "SMART：未报告";
+"disk_health.failure_advice" = "驱动器报告 SMART 故障。请将重要文件复制到其他磁盘，并安排更换驱动器。";
+"disk_health.space" = "%@：可用 %@，共 %@";
+"disk_health.temperature" = "温度";
+"disk_health.power_on_hours" = "通电小时数";
+"disk_health.reallocated" = "已重新分配的扇区";
+"disk_health.pending" = "待处理扇区";
+"disk_health.uncorrectable" = "无法纠正的扇区";
+"disk_health.crc_errors" = "接口 CRC 错误";
+"disk_health.attributes" = "所有 SMART 属性";
+"disk_health.id" = "ID";
+"disk_health.attribute" = "属性";
+"disk_health.value" = "数值";
+"disk_health.threshold" = "阈值";
+"disk_health.raw" = "原始值";
+"disk_health.reliability" = "阈值状态";
+"disk_health.outside_threshold" = "等于或低于阈值";
+"disk_health.within_threshold" = "高于阈值";
+"disk_health.vendor_values" = "数值和阈值由驱动器进行标准化。原始值及其单位因制造商而异；较大的原始错误率数值本身并不代表驱动器发生故障。";
+"disk_health.details_unavailable" = "此驱动器或其连接不提供详细的 SMART 读数。";

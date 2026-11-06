@@ -1481,3 +1481,32 @@
 "backend.recovery.ssh_client_failed.action.1" = "Try again.";
 "backend.recovery.ssh_client_failed.action.2" = "If it keeps failing, click “Copy Diagnostics” and report it at https://github.com/jamesyc/TimeCapsuleSMB/issues.";
 "app_menu.check_for_updates" = "Check for Updates...";
+
+/* Disk health from the last Checkup. */
+"disk_health.title" = "Disk health";
+"disk_health.checked_at" = "Last checked: %@";
+"disk_health.no_disks" = "No disks were reported by the device.";
+"disk_health.not_checked" = "Run Checkup with SSH to read disk health.";
+"disk_health.unavailable" = "Disk health could not be read. Run Checkup to try again.";
+"disk_health.failing" = "SMART: failing";
+"disk_health.verified" = "SMART: verified";
+"disk_health.not_reported" = "SMART: not reported";
+"disk_health.failure_advice" = "The drive reports a SMART failure. Copy your important files to another disk and arrange a replacement.";
+"disk_health.space" = "%@: %@ free of %@";
+"disk_health.temperature" = "Temperature";
+"disk_health.power_on_hours" = "Power-on hours";
+"disk_health.reallocated" = "Reallocated sectors";
+"disk_health.pending" = "Pending sectors";
+"disk_health.uncorrectable" = "Uncorrectable sectors";
+"disk_health.crc_errors" = "Interface CRC errors";
+"disk_health.attributes" = "All SMART attributes";
+"disk_health.id" = "ID";
+"disk_health.attribute" = "Attribute";
+"disk_health.value" = "Value";
+"disk_health.threshold" = "Threshold";
+"disk_health.raw" = "Raw value";
+"disk_health.reliability" = "Threshold status";
+"disk_health.outside_threshold" = "At or below threshold";
+"disk_health.within_threshold" = "Above threshold";
+"disk_health.vendor_values" = "Values and thresholds are normalized by the drive. Raw values and their units depend on the manufacturer; large raw error-rate values do not by themselves mean the drive is failing.";
+"disk_health.details_unavailable" = "Detailed SMART readings are unavailable for this drive or its connection.";

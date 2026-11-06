@@ -1481,3 +1481,32 @@
 "backend.recovery.ssh_client_failed.action.1" = "Probeer het opnieuw.";
 "backend.recovery.ssh_client_failed.action.2" = "Mislukt het nog steeds, klik dan op ‘Diagnostische gegevens kopiëren’ en meld het probleem op https://github.com/jamesyc/TimeCapsuleSMB/issues.";
 "app_menu.check_for_updates" = "Zoek naar updates...";
+
+/* Disk health from the last Checkup. */
+"disk_health.title" = "Schijfgezondheid";
+"disk_health.checked_at" = "Laatst gecontroleerd: %@";
+"disk_health.no_disks" = "Het apparaat heeft geen schijven gemeld.";
+"disk_health.not_checked" = "Voer Controle met SSH uit om de schijfgezondheid te lezen.";
+"disk_health.unavailable" = "De schijfgezondheid kon niet worden gelezen. Voer Controle opnieuw uit.";
+"disk_health.failing" = "SMART: defect";
+"disk_health.verified" = "SMART: geverifieerd";
+"disk_health.not_reported" = "SMART: niet gemeld";
+"disk_health.failure_advice" = "De schijf meldt een SMART-fout. Kopieer belangrijke bestanden naar een andere schijf en regel vervanging.";
+"disk_health.space" = "%@: %@ vrij van %@";
+"disk_health.temperature" = "Temperatuur";
+"disk_health.power_on_hours" = "Bedrijfsuren";
+"disk_health.reallocated" = "Opnieuw toegewezen sectoren";
+"disk_health.pending" = "Wachtende sectoren";
+"disk_health.uncorrectable" = "Niet-corrigeerbare sectoren";
+"disk_health.crc_errors" = "CRC-interfacefouten";
+"disk_health.attributes" = "Alle SMART-kenmerken";
+"disk_health.id" = "ID";
+"disk_health.attribute" = "Kenmerk";
+"disk_health.value" = "Waarde";
+"disk_health.threshold" = "Drempel";
+"disk_health.raw" = "Ruwe waarde";
+"disk_health.reliability" = "Drempelstatus";
+"disk_health.outside_threshold" = "Op of onder de drempel";
+"disk_health.within_threshold" = "Boven de drempel";
+"disk_health.vendor_values" = "Waarden en drempels worden door de schijf genormaliseerd. Ruwe waarden en hun eenheden hangen af van de fabrikant; grote ruwe foutpercentages betekenen op zichzelf niet dat de schijf defect is.";
+"disk_health.details_unavailable" = "Gedetailleerde SMART-metingen zijn niet beschikbaar voor deze schijf of verbinding.";

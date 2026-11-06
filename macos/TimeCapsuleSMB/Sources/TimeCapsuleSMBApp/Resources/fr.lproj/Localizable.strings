@@ -1481,3 +1481,32 @@
 "backend.recovery.ssh_client_failed.action.1" = "Réessayez.";
 "backend.recovery.ssh_client_failed.action.2" = "Si l’échec persiste, cliquez sur « Copier le diagnostic » et signalez le problème sur https://github.com/jamesyc/TimeCapsuleSMB/issues.";
 "app_menu.check_for_updates" = "Rechercher des mises à jour...";
+
+/* Disk health from the last Checkup. */
+"disk_health.title" = "État du disque";
+"disk_health.checked_at" = "Dernière vérification : %@";
+"disk_health.no_disks" = "L’appareil n’a signalé aucun disque.";
+"disk_health.not_checked" = "Lancez Vérification avec SSH pour lire l’état du disque.";
+"disk_health.unavailable" = "Impossible de lire l’état du disque. Relancez Vérification.";
+"disk_health.failing" = "SMART : défaillant";
+"disk_health.verified" = "SMART : vérifié";
+"disk_health.not_reported" = "SMART : non signalé";
+"disk_health.failure_advice" = "Le disque signale une défaillance SMART. Copiez vos fichiers importants sur un autre disque et prévoyez son remplacement.";
+"disk_health.space" = "%@ : %@ disponibles sur %@";
+"disk_health.temperature" = "Température";
+"disk_health.power_on_hours" = "Heures de fonctionnement";
+"disk_health.reallocated" = "Secteurs réalloués";
+"disk_health.pending" = "Secteurs en attente";
+"disk_health.uncorrectable" = "Secteurs incorrigibles";
+"disk_health.crc_errors" = "Erreurs CRC de l’interface";
+"disk_health.attributes" = "Tous les attributs SMART";
+"disk_health.id" = "ID";
+"disk_health.attribute" = "Attribut";
+"disk_health.value" = "Valeur";
+"disk_health.threshold" = "Seuil";
+"disk_health.raw" = "Valeur brute";
+"disk_health.reliability" = "État du seuil";
+"disk_health.outside_threshold" = "Au niveau ou en dessous du seuil";
+"disk_health.within_threshold" = "Au-dessus du seuil";
+"disk_health.vendor_values" = "Les valeurs et les seuils sont normalisés par le disque. Les valeurs brutes et leurs unités dépendent du fabricant ; des valeurs brutes élevées de taux d’erreur ne signifient pas à elles seules que le disque est défaillant.";
+"disk_health.details_unavailable" = "Les relevés SMART détaillés ne sont pas disponibles pour ce disque ou sa connexion.";

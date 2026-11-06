@@ -1481,3 +1481,32 @@
 "backend.recovery.ssh_client_failed.action.1" = "Повторите попытку.";
 "backend.recovery.ssh_client_failed.action.2" = "Если ошибка повторяется, нажмите «Скопировать диагностику» и сообщите о проблеме на https://github.com/jamesyc/TimeCapsuleSMB/issues.";
 "app_menu.check_for_updates" = "Проверить обновления...";
+
+/* Disk health from the last Checkup. */
+"disk_health.title" = "Состояние диска";
+"disk_health.checked_at" = "Последняя проверка: %@";
+"disk_health.no_disks" = "Устройство не сообщило о дисках.";
+"disk_health.not_checked" = "Запустите проверку с SSH, чтобы прочитать состояние диска.";
+"disk_health.unavailable" = "Не удалось прочитать состояние диска. Запустите проверку ещё раз.";
+"disk_health.failing" = "SMART: сбой";
+"disk_health.verified" = "SMART: проверено";
+"disk_health.not_reported" = "SMART: нет данных";
+"disk_health.failure_advice" = "Диск сообщает об ошибке SMART. Скопируйте важные файлы на другой диск и подготовьте замену.";
+"disk_health.space" = "%@: свободно %@ из %@";
+"disk_health.temperature" = "Температура";
+"disk_health.power_on_hours" = "Часы работы";
+"disk_health.reallocated" = "Переназначенные секторы";
+"disk_health.pending" = "Ожидающие секторы";
+"disk_health.uncorrectable" = "Неисправимые секторы";
+"disk_health.crc_errors" = "Ошибки CRC интерфейса";
+"disk_health.attributes" = "Все атрибуты SMART";
+"disk_health.id" = "ID";
+"disk_health.attribute" = "Атрибут";
+"disk_health.value" = "Значение";
+"disk_health.threshold" = "Порог";
+"disk_health.raw" = "Исходное значение";
+"disk_health.reliability" = "Состояние порога";
+"disk_health.outside_threshold" = "На пороге или ниже";
+"disk_health.within_threshold" = "Выше порога";
+"disk_health.vendor_values" = "Значения и пороги нормализованы диском. Исходные значения и их единицы зависят от производителя; большие исходные значения частоты ошибок сами по себе не означают неисправность диска.";
+"disk_health.details_unavailable" = "Подробные показания SMART недоступны для этого диска или его подключения.";

@@ -43,6 +43,7 @@ struct OverviewTab: View {
                 )
 
                 VStack(alignment: .leading, spacing: 10) {
+                    DiskHealthView(report: profile.lastCheckup?.diskHealth, checkedAt: profile.lastCheckup?.checkedAt)
                     ForEach(presentation.healthSections) { section in
                         DashboardHealthSectionView(section: section, isActionEnabled: presentation.isEnabled) { action in
                             session.performSecondaryAction(action, profile: profile)

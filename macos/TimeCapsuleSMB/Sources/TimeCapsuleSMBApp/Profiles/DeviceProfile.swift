@@ -204,6 +204,7 @@ struct DeviceCheckupSnapshot: Codable, Equatable {
     /// had sections.
     var device: DoctorSection? = nil
     var thisMac: DoctorSection? = nil
+    var diskHealth: DiskHealthReport? = nil
 
     var localizedSummary: String {
         L10n.format("summary.checkup_counts", passCount, warnCount, failCount)

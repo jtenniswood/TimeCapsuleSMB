@@ -55,6 +55,10 @@ struct CheckupTab: View {
                         CheckupDomainView(domain: domain)
                     }
 
+                    if let report = store.summary?.diskHealth {
+                        DiskHealthView(report: report, checkedAt: profile.lastCheckup?.checkedAt)
+                    }
+
                     CheckupAdvancedOptionsView(store: store)
 
                     if let error = store.error {

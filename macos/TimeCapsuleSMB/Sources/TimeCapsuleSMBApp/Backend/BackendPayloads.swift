@@ -465,6 +465,7 @@ struct DoctorPayload: Decodable, Equatable {
     /// ("computer" and "device"), as the helper worked them out.
     var status: DoctorSectionStatus? = nil
     var sections: [String: DoctorSection]? = nil
+    var diskHealth: DiskHealthReport? = nil
 
     enum CodingKeys: String, CodingKey {
         case schemaVersion = "schema_version"
@@ -478,6 +479,7 @@ struct DoctorPayload: Decodable, Equatable {
         case summaryArgs = "summary_args"
         case status
         case sections
+        case diskHealth = "disk_health"
     }
 }
 
