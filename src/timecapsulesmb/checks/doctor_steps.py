@@ -2261,12 +2261,12 @@ def _doctor_select_smb_password(target: DoctorTarget, remote: RemoteAccess,
         if (remote.remote_checks_enabled and re.search(r"^\s*tc:airport disk password\s*=\s*yes\s*$", smb_config.text or "", re.M)):
             try:
                 data = run_ssh_capture_bytes(target.connection, "/usr/bin/acp -q fssp", timeout=25)
-                if len(data) > 8192 or data.startswith(b"###") or b"\0" in data:
+                if len(data) > 8192 or b"\0" in data:
                     raise ValueError
                 password = data.decode().removesuffix("\n")
                 if not password:
                     data = run_ssh_capture_bytes(target.connection, "/usr/bin/acp -q syPW", timeout=25)
-                    if len(data) > 8192 or data.startswith(b"###") or b"\0" in data:
+                    if len(data) > 8192 or b"\0" in data:
                         raise ValueError
                     password = data.decode().removesuffix("\n")
                 return replace(target, smb_account="root", smb_password=password, smb_password_available=bool(password))

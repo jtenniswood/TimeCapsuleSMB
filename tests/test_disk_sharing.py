@@ -9,6 +9,8 @@ from unittest.mock import Mock
 import pytest
 
 from timecapsulesmb.app.ops import sharing as operation
+from timecapsulesmb.app.events import EventSink
+from timecapsulesmb.app.service import run_api_request
 from timecapsulesmb.device import sharing
 from timecapsulesmb.integrations import cfl
 from timecapsulesmb.services.app import AppOperationError
@@ -89,7 +91,7 @@ def test_unsupported_service_and_missing_disk_password_cannot_be_saved(current):
 
 
 def test_read_decodes_only_public_inventory_and_bad_disk_does_not_block_accounts(monkeypatch, current):
-    values = {"usbF": b"0x410\n", "usrd": plistlib.dumps(current.users), "fssp 2>&1": b"disk\n",
+    values = {"usbF": b"0x410\n", "usrd": plistlib.dumps(current.users), "fssp": b"disk\n",
               "MaSt": plistlib.dumps([{"builtin": True, "partitions": [
                   {"uuid": bytes.fromhex("11"*16), "name": "Data", "size": 100, "sizeFree": 60},
                   {"name": "Missing UUID"},
@@ -107,6 +109,28 @@ def test_read_decodes_only_public_inventory_and_bad_disk_does_not_block_accounts
         sharing.read_settings(SshConnection("root@capsule.local", "admin", ""))
     assert "private-account-secret" not in str(error.value)
     assert error.value.__context__ is None
+
+
+@pytest.mark.parametrize("disk_value", [b"", b"\n", b"### a valid password\n"])
+def test_app_request_reads_account_settings_when_no_disk_password_is_configured(monkeypatch, current, disk_value):
+    connection = SshConnection("root@capsule.local", "ssh-password", "")
+    monkeypatch.setattr(operation, "load_request_config", lambda *_: None)
+    monkeypatch.setattr(operation, "resolve_request_connection", lambda *_args, **_: connection)
+    values = {"/usr/bin/acp -q usbF": b"0x410\n", "/usr/bin/acp -q usrd": plistlib.dumps(current.users),
+              "/usr/bin/acp -q fssp": disk_value, "/usr/bin/acp -q MaSt": plistlib.dumps([]),
+              "/mnt/Flash/service --print-sharing-features": b"airport-sharing-v1\n"}
+    def capture(_connection, command, **_):
+        assert "2>&1" not in command  # An unset fssp reports an error only on stderr.
+        return values[command]
+    monkeypatch.setattr(sharing, "run_ssh_capture_bytes", capture)
+    events = []
+    result = run_api_request({"operation": "disk-sharing", "request_id": "sharing-read", "params": {
+        "action": "read", "config": "/profile/.env", "credentials": {"password": "ssh-password"},
+    }}, EventSink(lambda event: events.append(event.to_jsonable())))
+    assert result == 0 and not any(event["type"] == "error" for event in events)
+    payload = next(event["payload"] for event in events if event["type"] == "result")
+    assert payload["security"] == "accounts" and payload["accounts"][0]["name"] == "Alex"
+    assert "private-account-secret" not in json.dumps(events)
 
 
 @pytest.fixture

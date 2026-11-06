@@ -87,8 +87,10 @@ def read_settings(connection: SshConnection) -> SharingSettings:
             if not isinstance(user.get("password"), str):
                 raise ValueError
             names.add(name.casefold())
-        disk = run_ssh_capture_bytes(connection, "/usr/bin/acp -q fssp 2>&1", timeout=25)
-        if len(disk) > 8192 or disk.startswith(b"###"):
+        # An unset property prints a diagnostic on stderr but has an empty
+        # value on stdout. Never merge the diagnostic into the password.
+        disk = run_ssh_capture_bytes(connection, "/usr/bin/acp -q fssp", timeout=25)
+        if len(disk) > 8192 or b"\0" in disk:
             raise ValueError
         disk_password = disk.decode().removesuffix("\n")
         try:
@@ -211,8 +213,8 @@ def write_settings(connection: SshConnection, desired: SharingSettings, previous
         desired_properties, previous_properties = properties(desired), properties(previous)
         # SSH and base station passwords can differ. Root can read Apple's
         # local property, so settings writes do not assume they are the same.
-        admin_data = run_ssh_capture_bytes(connection, "/usr/bin/acp -q syPW 2>&1", timeout=25)
-        if len(admin_data) > 8192 or admin_data.startswith(b"###") or b"\0" in admin_data:
+        admin_data = run_ssh_capture_bytes(connection, "/usr/bin/acp -q syPW", timeout=25)
+        if len(admin_data) > 8192 or b"\0" in admin_data:
             raise ValueError
         admin_password = admin_data.decode().removesuffix("\n")
         def save_config(data: bytes) -> None:

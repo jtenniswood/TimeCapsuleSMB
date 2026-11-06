@@ -170,7 +170,10 @@ final class DiskSharingStore: ObservableObject {
     private func receive(_ event: BackendEvent, applying: Bool) {
         if event.type == "error" {
             // Confirmations are handled by the app's existing confirmation sheet.
-            if event.code != "confirmation_required" { error = BackendErrorViewModel(event: event) }
+            if event.code != "confirmation_required" {
+                error = applying ? BackendErrorViewModel(event: event) : BackendErrorViewModel(
+                    operation: "disk-sharing", code: event.code ?? "operation_failed", message: L10n.string("sharing.read_error"))
+            }
             return
         }
         do {
