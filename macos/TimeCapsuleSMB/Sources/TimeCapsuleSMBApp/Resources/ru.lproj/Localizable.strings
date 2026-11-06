@@ -1617,3 +1617,41 @@
 "utility.readiness.warning" = "Некоторые функции недоступны.";
 "utility.support.title" = "Сведения для поддержки";
 "utility.support.include_logs" = "Добавить подробные журналы";
+
+/* Disk sharing */
+"sharing.enable" = "Включить общий доступ к файлам";
+"sharing.secure_disks" = "Защита общих дисков";
+"sharing.accounts" = "Учетные записи";
+"sharing.security.accounts" = "С учетными записями";
+"sharing.security.disk_password" = "С паролем диска";
+"sharing.security.device_password" = "С паролем базовой станции";
+"sharing.account_name" = "Имя учетной записи";
+"sharing.access" = "Доступ";
+"sharing.access.0" = "Чтение и запись";
+"sharing.access.1" = "Только чтение";
+"sharing.access.2" = "Нет доступа";
+"sharing.add_account" = "Добавить учетную запись";
+"sharing.remove_account" = "Удалить учетную запись";
+"sharing.edit_account" = "Изменить учетную запись";
+"sharing.disk_password" = "Пароль диска";
+"sharing.password" = "Пароль";
+"sharing.verify_password" = "Подтверждение пароля";
+"sharing.update_required" = "Обновите общий доступ к файлам для управления этими настройками.";
+"sharing.saving" = "Обновление настроек общего доступа...";
+"sharing.read_error" = "Не удалось прочитать настройки общего доступа.";
+"confirm.disk-sharing.apply.title" = "Обновить общий доступ к файлам?";
+"confirm.disk-sharing.apply.message" = "AirPort перезагрузится для применения настроек. Общие диски будут временно недоступны.";
+"confirm.disk-sharing.apply.action" = "Обновить";
+"disk_health.usage" = "Часы работы";
+"disk_health.attention" = "Диск требует внимания";
+"disk_health.attention_advice" = "Создайте резервную копию диска и проверьте его снова.";
+
+/* Sharing progress */
+"timeline.stage.read_sharing.title" = "Общий доступ к файлам";
+"timeline.stage.save_sharing.title" = "Обновление настроек общего доступа...";
+"timeline.stage.verify_sharing.title" = "Проверка";
+"sharing.partitions" = "Разделы";
+"sharing.space_free" = "Свободно: %@";
+
+"sharing.update_help" = "Обновляет общий доступ к файлам для новых компьютеров.";
+"sharing.unavailable" = "Эти настройки общего доступа пока недоступны на этом AirPort.";

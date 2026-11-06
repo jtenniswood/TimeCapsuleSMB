@@ -1,6 +1,7 @@
 #include "service.h"
 #include "airport_account.h"
 #include <sys/param.h>
+#include <sys/utsname.h>
 #if defined(__NetBSD__) && !defined(TC_NATIVE_TEST)
 #include <sys/sysctl.h>
 #endif
@@ -281,6 +282,13 @@ int tc_service_helper_main(int argc, char **argv) {
     int i;
 
     signal(SIGTERM, stop_acp); signal(SIGINT, stop_acp); signal(SIGPIPE, SIG_IGN);
+    if (argc == 2 && !strcmp(argv[1], "--print-sharing-features")) {
+        struct utsname system;
+        if (uname(&system) || (!strcmp(system.sysname, "NetBSD") && system.release[0] == '4'))
+            return 1;
+        puts("airport-sharing-v1");
+        return 0;
+    }
     if (argc >= 2 && !strcmp(argv[1], "--print-airport-account-nt-hash")) {
         char hash[33];
         int access, failed;

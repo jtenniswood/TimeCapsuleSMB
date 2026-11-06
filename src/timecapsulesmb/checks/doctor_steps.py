@@ -209,7 +209,7 @@ from timecapsulesmb.discovery.models import normalize_airport_mac
 from timecapsulesmb.transport.local import find_free_local_port
 from timecapsulesmb.transport.local import scoped_tcp_connect_errors
 from timecapsulesmb.transport.errors import TransportError
-from timecapsulesmb.transport.ssh import SshCommandTimeout, SshConnection, run_ssh, ssh_local_forward
+from timecapsulesmb.transport.ssh import SshCommandTimeout, SshConnection, run_ssh, run_ssh_capture_bytes, ssh_local_forward
 
 
 T = TypeVar("T")
@@ -2258,6 +2258,21 @@ def _doctor_select_smb_password(target: DoctorTarget, remote: RemoteAccess,
                       smb_config.text or "", re.M)
     account_backend = re.search(r"^\s*passdb backend\s*=\s*tc_airport:", smb_config.text or "", re.M)
     if match is None and account_backend is None:
+        if (remote.remote_checks_enabled and re.search(r"^\s*tc:airport disk password\s*=\s*yes\s*$", smb_config.text or "", re.M)):
+            try:
+                data = run_ssh_capture_bytes(target.connection, "/usr/bin/acp -q fssp", timeout=25)
+                if len(data) > 8192 or data.startswith(b"###") or b"\0" in data:
+                    raise ValueError
+                password = data.decode().removesuffix("\n")
+                if not password:
+                    data = run_ssh_capture_bytes(target.connection, "/usr/bin/acp -q syPW", timeout=25)
+                    if len(data) > 8192 or data.startswith(b"###") or b"\0" in data:
+                        raise ValueError
+                    password = data.decode().removesuffix("\n")
+                return replace(target, smb_account="root", smb_password=password, smb_password_available=bool(password))
+            except Exception:
+                sink.add(CheckResult("FAIL", "The disk password could not be read"))
+                return replace(target, smb_password="", smb_password_available=False)
         return target
     name = match.group(1) if match else "*"
     target = replace(target, smb_account=name, smb_password="", smb_password_available=False)

@@ -21,15 +21,24 @@ struct DiskHealthDisk: Codable, Equatable, Identifiable {
             || details.attributes.contains { $0.critical && $0.reliability == "negative" }
     }
 
+    var needsAttention: Bool {
+        reportsFailure || [(5, "Reallocated sector count"), (197, "Current pending sector"), (198, "Offline uncorrectable")]
+            .contains { (metricCount($0.0, named: $0.1) ?? 0) > 0 }
+    }
+
     /// These are the names atactl itself gives the standard HDD attributes.
     /// Other vendor-specific encodings remain visible only as raw attributes.
     func metric(_ id: Int, named name: String) -> String? {
+        metricCount(id, named: name)?.formatted()
+    }
+
+    func metricCount(_ id: Int, named name: String) -> UInt64? {
         guard details.state == "available",
               let attribute = details.attributes.first(where: { $0.id == id }),
               attribute.name.caseInsensitiveCompare(name) == .orderedSame,
               let raw = attribute.raw.split(separator: " ").first,
               let value = UInt64(raw) else { return nil }
-        return value.formatted()
+        return value
     }
 
     var temperatureCelsius: String? {

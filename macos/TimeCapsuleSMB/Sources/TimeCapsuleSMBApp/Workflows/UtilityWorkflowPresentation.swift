@@ -47,7 +47,7 @@ enum UtilityOperationTitle {
         let key: String
         switch operation {
         case "configure", "reachability", "set-ssh": key = "simple.tab.connection"
-        case "deploy": key = "simple.sharing.title"
+        case "deploy", "disk-sharing": key = "simple.sharing.title"
         case "doctor": key = "simple.check_connection"
         case "fsck": key = "maintenance.presentation.fsck.title"
         case "wipe-disk": key = "utility.tools.wipeDisk"

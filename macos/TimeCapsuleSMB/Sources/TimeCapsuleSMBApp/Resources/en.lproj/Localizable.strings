@@ -1617,3 +1617,41 @@
 "utility.readiness.warning" = "Some features are unavailable.";
 "utility.support.title" = "Support Details";
 "utility.support.include_logs" = "Include detailed logs";
+
+/* Disk sharing */
+"sharing.enable" = "Enable file sharing";
+"sharing.secure_disks" = "Secure Shared Disks";
+"sharing.accounts" = "Accounts";
+"sharing.security.accounts" = "With accounts";
+"sharing.security.disk_password" = "With a disk password";
+"sharing.security.device_password" = "With base station password";
+"sharing.account_name" = "Account Name";
+"sharing.access" = "Access";
+"sharing.access.0" = "Read and write";
+"sharing.access.1" = "Read only";
+"sharing.access.2" = "No access";
+"sharing.add_account" = "Add Account";
+"sharing.remove_account" = "Remove Account";
+"sharing.edit_account" = "Edit Account";
+"sharing.disk_password" = "Disk Password";
+"sharing.password" = "Password";
+"sharing.verify_password" = "Verify Password";
+"sharing.update_required" = "Update File Sharing to manage these settings.";
+"sharing.saving" = "Updating sharing settings...";
+"sharing.read_error" = "Sharing settings could not be read.";
+"confirm.disk-sharing.apply.title" = "Update file sharing?";
+"confirm.disk-sharing.apply.message" = "Your AirPort will restart to apply these settings. Shared disks will be briefly unavailable.";
+"confirm.disk-sharing.apply.action" = "Update";
+"disk_health.usage" = "Hours in use";
+"disk_health.attention" = "Disk needs attention";
+"disk_health.attention_advice" = "Back up this disk and check it again.";
+
+/* Sharing progress */
+"timeline.stage.read_sharing.title" = "File Sharing";
+"timeline.stage.save_sharing.title" = "Updating sharing settings...";
+"timeline.stage.verify_sharing.title" = "Checking";
+"sharing.partitions" = "Partitions";
+"sharing.space_free" = "%@ free";
+
+"sharing.update_help" = "Updates file sharing for newer computers.";
+"sharing.unavailable" = "These sharing settings aren't available on this AirPort yet.";

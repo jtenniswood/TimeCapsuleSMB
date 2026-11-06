@@ -93,9 +93,19 @@ int tc_samba_settings_read(struct tc_samba_settings *settings, const char *hostn
         fputs("settings: device identity unavailable\n", stderr);
         return -1;
     }
+    if (settings->config.airport_sharing) {
+        unsigned flags;
+        if (airport_sharing_flags(&flags)) return -1;
+        settings->config.sharing_enabled = !(flags & 4u);
+        if (!settings->config.sharing_enabled) return 0;
+        if (!(flags & 0x40u)) {
+            if (settings->config.netbsd4) return -1;
+            strcpy(settings->config.smb_airport_account, "*");
+        } else settings->config.smb_airport_account[0] = 0;
+    }
     int auth_failed = settings->config.smb_airport_account[0]
         ? airport_accounts_nt_hashes(&settings->config.smb_accounts)
-        : device_nt_hash(settings->nt_hash);
+        : settings->config.airport_sharing ? airport_disk_nt_hash(settings->nt_hash) : device_nt_hash(settings->nt_hash);
     if (auth_failed) {
         fputs("settings: device authentication unavailable\n", stderr);
         return -1;

@@ -20,9 +20,10 @@ struct InstallTab: View {
                 VStack(alignment: .leading, spacing: 16) {
                     if let progress = InstallProgressPresentation(state: store.state, currentStage: store.currentStage) {
                         InlineOperationProgress(progress: progress, title: L10n.string("simple.sharing.title"))
-                    } else if presentation.error == nil {
-                        UtilityFormRow(title: L10n.string("simple.sharing.title")) {
-                            Text(session.summary(for: profile).displayStatus.title)
+                    }
+                    if !store.isBusy {
+                        DiskSharingSettingsView(store: session.sharingStore, deviceBusy: isDeviceBusy, isLegacyDevice: profile.osRelease?.hasPrefix("4.") == true) {
+                            session.sharingStore.load(profile: profile, password: session.appStore.passwordWithoutPrompt(for: profile), force: true)
                         }
                     }
                     if !firstInstall && !store.isBusy {
@@ -39,10 +40,14 @@ struct InstallTab: View {
                     }
                     if !store.isBusy {
                         UtilityFormRow(title: "") {
-                            Button(L10n.string(firstInstall ? "simple.sharing.set_up" : "simple.sharing.update")) {
-                                session.performInstallAction(.installUpdate, profile: profile, showDiagnostics: showDiagnostics)
+                            VStack(alignment: .leading, spacing: 6) {
+                                Button(L10n.string(firstInstall ? "simple.sharing.set_up" : "simple.sharing.update")) {
+                                    session.performInstallAction(.installUpdate, profile: profile, showDiagnostics: showDiagnostics)
+                                }
+                                .disabled(!InstallActionAvailabilityPolicy.isEnabled(.installUpdate, store: store, isDeviceBusy: isDeviceBusy))
+                                Text(L10n.string("sharing.update_help"))
+                                    .font(UtilityStyle.secondary).foregroundStyle(.secondary)
                             }
-                            .disabled(!InstallActionAvailabilityPolicy.isEnabled(.installUpdate, store: store, isDeviceBusy: isDeviceBusy))
                         }
                     }
                 }
@@ -66,7 +71,7 @@ struct InstallTab: View {
                         kind == .diagnostics ? { showDiagnostics() } : session.recoveryAction(kind, error: error, profile: profile)
                     }
                 }
-                if presentation.timeline != nil || presentation.completion != nil {
+                if presentation.error == nil && (presentation.timeline != nil || presentation.completion != nil) {
                     DashboardDisclosureSection(title: L10n.string("utility.details")) {
                         if let completion = presentation.completion {
                             SummaryGrid(rows: completion.rows.filter { $0.label != L10n.string("deploy.result.message") }.map { ($0.label, $0.value) })
@@ -76,7 +81,6 @@ struct InstallTab: View {
                         }
                     }
                 }
-                InstallExecutionOptionsView(store: store, isDeviceBusy: isDeviceBusy)
             }
             .frame(maxWidth: 560, alignment: .leading)
             .frame(maxWidth: .infinity, alignment: .top)
@@ -84,6 +88,7 @@ struct InstallTab: View {
         .task(id: InstalledVersionRefresh(profileID: profile.id, finishedAt: profile.lastDeployState?.finishedAt, deviceBusy: isDeviceBusy)) {
             guard !isDeviceBusy else { return }
             await session.refreshInstalledVersion(profile: profile)
+            await session.refreshSharingSettings(profile: profile)
         }
     }
 
@@ -96,22 +101,4 @@ private struct InstalledVersionRefresh: Equatable {
     let profileID: DeviceProfile.ID
     let finishedAt: Date?
     let deviceBusy: Bool
-}
-
-private struct InstallExecutionOptionsView: View {
-    @ObservedObject var store: DeployWorkflowStore
-    let isDeviceBusy: Bool
-
-    var body: some View {
-        DashboardDisclosureSection(title: L10n.string("install.advanced_options")) {
-            VStack(alignment: .leading, spacing: 12) {
-                Toggle(L10n.string("toggle.no_wait"), isOn: $store.noWait)
-                    .help(L10n.string("install.advanced_options.no_wait_note"))
-
-            }
-            .padding(.top, 8)
-        }
-        .disabled(store.isBusy || isDeviceBusy)
-    }
-
 }

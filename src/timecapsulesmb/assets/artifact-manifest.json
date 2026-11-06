@@ -38,7 +38,7 @@
     },
     "service": {
       "path": "bin/service/service",
-      "sha256": "5eb332a83e213e9e2c70b6553f862fcf20662477148bef140ab7fa4021b21c0b"
+      "sha256": "e95d11c2ce8ccfe806f9b5fd0d0e536ec2b0da0c78cc52a740eb38349359756e"
     },
     "service-netbsd4le": {
       "path": "bin/service-netbsd4le/service",

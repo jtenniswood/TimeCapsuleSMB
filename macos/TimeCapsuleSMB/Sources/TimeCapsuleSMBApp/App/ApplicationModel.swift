@@ -39,8 +39,8 @@ public struct ApplicationCommands: Commands {
 
     public var body: some Commands {
         CommandMenu("AirPort") {
-            Menu(L10n.string("profile_editor.advanced")) {
-                ForEach(advancedWorkflows) { workflow in
+            Group {
+                ForEach(deviceTools) { workflow in
                     Button(workflow.utilityTitle) {
                         guard let profile = appStore.selectedProfile else { return }
                         openWindow(id: "main")
@@ -66,7 +66,7 @@ public struct ApplicationCommands: Commands {
             Button(L10n.string("utility.support")) { openWindow(id: "main"); presentation.diagnosticsPresented = true }
         }
     }
-    private var advancedWorkflows: [MaintenanceWorkflow] {
+    private var deviceTools: [MaintenanceWorkflow] {
         guard let profile = appStore.selectedProfile else { return [] }
         return MaintenanceWorkflowAvailability.workflows(for: profile).filter { $0 != .fsck && $0 != .wipeDisk }
     }

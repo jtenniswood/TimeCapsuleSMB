@@ -43,6 +43,21 @@ final class DiskHealthReportTests: XCTestCase {
         XCTAssertNil(unavailable.metric(9, named: "Power-on hours count"))
     }
 
+    func testSelectedMediaProblemsNeedAttentionWithoutLabelingEveryVendorValueAsFailure() throws {
+        let disk = try report().disks[0]
+        XCTAssertFalse(disk.needsAttention)
+        for (id, name) in [(5, "Reallocated sector count"), (197, "Current pending sector"), (198, "Offline uncorrectable")] {
+            let attribute = DiskSmartAttribute(id: id, value: 100, threshold: 0, critical: false,
+                collection: "online", reliability: "positive", name: name, raw: "1")
+            let problem = replacing(disk, details: DiskSmartDetails(state: "available", attributes: [attribute]))
+            XCTAssertTrue(problem.needsAttention)
+            XCTAssertFalse(problem.reportsFailure)
+        }
+        let vendor = DiskSmartAttribute(id: 197, value: 100, threshold: 0, critical: false,
+            collection: "online", reliability: "positive", name: "Vendor-specific", raw: "999")
+        XCTAssertFalse(replacing(disk, details: DiskSmartDetails(state: "available", attributes: [vendor])).needsAttention)
+    }
+
     func testFailureIsKeptWhenDetailedReadingsAreUnavailable() throws {
         let disk = try report().disks[0]
         XCTAssertTrue(replacing(disk, status: "failing", details: DiskSmartDetails(

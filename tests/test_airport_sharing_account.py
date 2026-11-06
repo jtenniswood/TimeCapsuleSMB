@@ -23,6 +23,19 @@ def test_selected_account_is_deployed_without_storing_its_password():
     assert "PASSWORD" not in text
 
 
+@pytest.mark.parametrize("disk_password", [b"private-disk-secret\n", b"\n"])
+def test_checkup_uses_the_disk_or_base_station_password_instead_of_assuming_ssh_matches(disk_password):
+    target = DoctorTarget(SshConnection("root@192.0.2.1", "ssh-only-password", ""), "192.0.2.1", "ssh-only-password")
+    sink = DoctorSink(None, {})
+    with mock.patch.object(doctor_steps, "run_ssh_capture_bytes", side_effect=[disk_password, b"private-base-secret\n"]) as capture:
+        selected = _doctor_select_smb_password(target, RemoteAccess(True, True, True, ""),
+            SmbConfigState("[global]\n tc:airport disk password = yes\n", ""), sink)
+    assert selected.smb_account == "root" and selected.smb_password_available
+    assert selected.smb_password == ("private-disk-secret" if disk_password.strip() else "private-base-secret")
+    assert capture.call_count == (1 if disk_password.strip() else 2)
+    assert "private-" not in repr(selected) + repr(sink.results)
+
+
 @pytest.mark.parametrize("name", ["", "*", "jtenniswood", "a.b-c_d", "x" * 63])
 def test_selected_account_names_are_validated(name):
     assert validate_smb_airport_account(name, "TC_SMB_AIRPORT_ACCOUNT") is None

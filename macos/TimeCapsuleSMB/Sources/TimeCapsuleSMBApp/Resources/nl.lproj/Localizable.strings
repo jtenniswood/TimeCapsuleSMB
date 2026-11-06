@@ -1617,3 +1617,41 @@
 "utility.readiness.warning" = "Sommige functies zijn niet beschikbaar.";
 "utility.support.title" = "Ondersteuningsdetails";
 "utility.support.include_logs" = "Voeg gedetailleerde logbestanden toe";
+
+/* Disk sharing */
+"sharing.enable" = "Bestandsdeling inschakelen";
+"sharing.secure_disks" = "Gedeelde schijven beveiligen";
+"sharing.accounts" = "Accounts";
+"sharing.security.accounts" = "Met accounts";
+"sharing.security.disk_password" = "Met schijfwachtwoord";
+"sharing.security.device_password" = "Met basisstationwachtwoord";
+"sharing.account_name" = "Accountnaam";
+"sharing.access" = "Toegang";
+"sharing.access.0" = "Lezen en schrijven";
+"sharing.access.1" = "Alleen lezen";
+"sharing.access.2" = "Geen toegang";
+"sharing.add_account" = "Account toevoegen";
+"sharing.remove_account" = "Account verwijderen";
+"sharing.edit_account" = "Account wijzigen";
+"sharing.disk_password" = "Schijfwachtwoord";
+"sharing.password" = "Wachtwoord";
+"sharing.verify_password" = "Bevestig wachtwoord";
+"sharing.update_required" = "Werk Bestandsdeling bij om deze instellingen te beheren.";
+"sharing.saving" = "Instellingen voor delen bijwerken...";
+"sharing.read_error" = "De instellingen voor delen konden niet worden gelezen.";
+"confirm.disk-sharing.apply.title" = "Bestandsdeling bijwerken?";
+"confirm.disk-sharing.apply.message" = "Uw AirPort wordt opnieuw opgestart om deze instellingen toe te passen. Gedeelde schijven zijn even niet beschikbaar.";
+"confirm.disk-sharing.apply.action" = "Werk bij";
+"disk_health.usage" = "Gebruiksuren";
+"disk_health.attention" = "Schijf vereist aandacht";
+"disk_health.attention_advice" = "Maak een reservekopie van deze schijf en controleer deze opnieuw.";
+
+/* Sharing progress */
+"timeline.stage.read_sharing.title" = "Bestandsdeling";
+"timeline.stage.save_sharing.title" = "Instellingen voor delen bijwerken...";
+"timeline.stage.verify_sharing.title" = "Controleren";
+"sharing.partitions" = "Partities";
+"sharing.space_free" = "%@ beschikbaar";
+
+"sharing.update_help" = "Werkt bestandsdeling bij voor nieuwere computers.";
+"sharing.unavailable" = "Deze instellingen voor delen zijn nog niet beschikbaar op deze AirPort.";

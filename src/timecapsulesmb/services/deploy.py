@@ -1334,6 +1334,7 @@ def upload_and_verify_deployment_payload(
         payload_home,
         telemetry_enabled=runtime_config.telemetry_enabled,
         rsync_enabled=runtime_config.rsync_enabled,
+        airport_sharing_settings=prepared_plan.payload_context.payload_family == "netbsd6_samba4",
         debug_logging=runtime_config.debug_logging,
         internal_share_use_disk_root=runtime_config.internal_share_use_disk_root,
         smb_browse_compatibility=runtime_config.smb_browse_compatibility,
@@ -1768,6 +1769,7 @@ def render_flash_runtime_config(
     *,
     telemetry_enabled: bool = True,
     rsync_enabled: bool = False,
+    airport_sharing_settings: bool = False,
     debug_logging: bool | None = None,
     internal_share_use_disk_root: bool | None = None,
     smb_browse_compatibility: bool | None = None,
@@ -1852,6 +1854,7 @@ def render_flash_runtime_config(
         ("RSYNC_ENABLED", 1 if rsync_enabled else 0),
         ("SMBD_DEBUG_LOGGING", 1 if effective_debug_logging else 0),
         ("SMB_AIRPORT_ACCOUNT", config.get("TC_SMB_AIRPORT_ACCOUNT", "")),
+        ("AIRPORT_SHARING_SETTINGS", 1 if airport_sharing_settings else 0),
         ("MDNS_DEBUG_LOGGING", 1 if effective_debug_logging else 0),
     ]
     return "\n".join(_render_flash_config_assignment(key, value) for key, value in values) + "\n"

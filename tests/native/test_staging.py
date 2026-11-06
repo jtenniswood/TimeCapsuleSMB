@@ -121,6 +121,31 @@ def test_no_accounts_publishes_an_empty_database_without_a_device_password_fallb
     assert "passdb backend = tc_airport:" in (root / "ram/etc/smb.conf").read_text()
 
 
+@pytest.mark.parametrize("flags,account", [("0x410", True), ("0x450", False)])
+def test_managed_sharing_follows_apple_security_and_keeps_configured_folder(stage, flags, account):
+    root, _, run = stage
+    (root / "runtime.conf").write_text("AIRPORT_SHARING_SETTINGS=1\n")
+    result = run(SHARING_FLAGS=flags, FAIL_HASH="1")
+    assert result.returncode == 0, result.stderr
+    config = (root / "ram/etc/smb.conf").read_text()
+    assert ("passdb backend = tc_airport:" in config) is account
+    assert ("tc:airport disk password = yes" in config) is not account
+    assert str(root / "dk2/ShareRoot") in config
+    if not account:
+        assert "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC" in (root / "ram/private/smbpasswd").read_text()
+
+
+def test_sharing_off_needs_no_password_and_failed_flag_read_keeps_applied(stage):
+    root, _, run = stage
+    (root / "runtime.conf").write_text("AIRPORT_SHARING_SETTINGS=1\n")
+    off = run("settings", SHARING_FLAGS="0x414", FAIL_HASH="1", FAIL_ACCOUNT="1")
+    assert off.returncode == 0 and b"sharing=0" in off.stdout
+    assert run().returncode == 0
+    before = (root / "ram/etc/smb.conf").read_bytes()
+    assert run("reload", FAIL_SHARING="1").returncode != 0
+    assert (root / "ram/etc/smb.conf").read_bytes() == before
+
+
 def test_invalid_account_hash_cannot_replace_the_published_passwords(stage):
     root, payload, run = stage
     (root / "runtime.conf").write_text("SMB_AIRPORT_ACCOUNT=jtenniswood\n")

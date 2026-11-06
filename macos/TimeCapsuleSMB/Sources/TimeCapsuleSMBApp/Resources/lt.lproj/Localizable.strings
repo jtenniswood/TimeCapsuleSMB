@@ -1617,3 +1617,41 @@
 "utility.readiness.warning" = "Kai kurios funkcijos nepasiekiamos.";
 "utility.support.title" = "Pagalbos informacija";
 "utility.support.include_logs" = "Įtraukti išsamius žurnalus";
+
+/* Disk sharing */
+"sharing.enable" = "Įjungti failų bendrinimą";
+"sharing.secure_disks" = "Apsaugoti bendrinamus diskus";
+"sharing.accounts" = "Paskyros";
+"sharing.security.accounts" = "Su paskyromis";
+"sharing.security.disk_password" = "Su disko slaptažodžiu";
+"sharing.security.device_password" = "Su bazinės stotelės slaptažodžiu";
+"sharing.account_name" = "Paskyros pavadinimas";
+"sharing.access" = "Prieiga";
+"sharing.access.0" = "Skaityti ir rašyti";
+"sharing.access.1" = "Tik skaityti";
+"sharing.access.2" = "Prieigos nėra";
+"sharing.add_account" = "Pridėti paskyrą";
+"sharing.remove_account" = "Pašalinti paskyrą";
+"sharing.edit_account" = "Redaguoti paskyrą";
+"sharing.disk_password" = "Disko slaptažodis";
+"sharing.password" = "Slaptažodis";
+"sharing.verify_password" = "Patvirtinti slaptažodį";
+"sharing.update_required" = "Atnaujinkite failų bendrinimą, kad galėtumėte keisti šias nuostatas.";
+"sharing.saving" = "Atnaujinamos bendrinimo nuostatos...";
+"sharing.read_error" = "Nepavyko perskaityti bendrinimo nuostatų.";
+"confirm.disk-sharing.apply.title" = "Atnaujinti failų bendrinimą?";
+"confirm.disk-sharing.apply.message" = "AirPort bus paleistas iš naujo, kad pritaikytų šias nuostatas. Bendrinami diskai trumpam bus nepasiekiami.";
+"confirm.disk-sharing.apply.action" = "Atnaujinti";
+"disk_health.usage" = "Darbo valandos";
+"disk_health.attention" = "Diskui reikia dėmesio";
+"disk_health.attention_advice" = "Sukurkite disko atsarginę kopiją ir patikrinkite dar kartą.";
+
+/* Sharing progress */
+"timeline.stage.read_sharing.title" = "Failų bendrinimas";
+"timeline.stage.save_sharing.title" = "Atnaujinamos bendrinimo nuostatos...";
+"timeline.stage.verify_sharing.title" = "Tikrinama";
+"sharing.partitions" = "Skaidiniai";
+"sharing.space_free" = "Laisva: %@";
+
+"sharing.update_help" = "Atnaujina failų bendrinimą naujesniems kompiuteriams.";
+"sharing.unavailable" = "Šiame „AirPort“ šios bendrinimo nuostatos dar nepasiekiamos.";

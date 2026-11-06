@@ -44,6 +44,8 @@ enum DeviceWorkflowLane: String, Hashable, Equatable, CaseIterable {
     case deploy
     case doctor
     case reachability
+    case diskSharing = "disk_sharing"
+    case diskSharingStatus = "disk_sharing_status"
     /// The reachability check the device page starts on its own
     /// (DeviceReachabilityStore), apart from Refresh Status's `.reachability`.
     case reachabilityStatus = "reachability_status"
@@ -68,6 +70,8 @@ enum DeviceWorkflowLane: String, Hashable, Equatable, CaseIterable {
             return .doctor
         case "reachability":
             return .reachability
+        case "disk-sharing":
+            return .diskSharing
         case "set-ssh":
             return .sshAccess
         case "activate":
@@ -130,7 +134,7 @@ enum OperationLaneKey: Hashable, Equatable, Identifiable, CustomStringConvertibl
     /// and one may start while it runs.
     var isBackground: Bool {
         switch self {
-        case .deviceWorkflow(_, .sshStatus), .deviceWorkflow(_, .reachabilityStatus):
+        case .deviceWorkflow(_, .sshStatus), .deviceWorkflow(_, .reachabilityStatus), .deviceWorkflow(_, .diskSharingStatus):
             return true
         default:
             return false

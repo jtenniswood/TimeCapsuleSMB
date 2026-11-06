@@ -1460,6 +1460,7 @@ static int unit_always(const struct manager *m) {
 static int samba_may_stage(const struct manager *m) {
     return m->hostname[0] && !m->hostname_waiting;
 }
+static int samba_wanted(const struct manager *m) { return m->settings.config.sharing_enabled; }
 static int samba_prepare(struct manager *m, long long now) {
     /* A 15 MiB RAM disk cannot hold two smbd images: the old one stops first.
      * Changing authentication backends also drains the old sessions before
@@ -1498,7 +1499,7 @@ static void samba_deliver(struct manager *m, long long now) {
         m->smb_reload_pending = 1;
 }
 static int rsync_wanted(const struct manager *m) {
-    return m->settings.config.rsync;
+    return m->settings.config.rsync && m->settings.config.sharing_enabled;
 }
 /* A running rsync keeps its old copy while the new one is written. */
 static int rsync_prepare(struct manager *m, long long now) {
@@ -1512,7 +1513,7 @@ static void rsync_deliver(struct manager *m, long long now) {
         stop_role(&m->rsync, now, 1);
 }
 static const struct unit_kind samba_kind = {"smbd", BLOCK_SMB, 0, 1, samba_job, tc_samba_publish, tc_samba_discard,
-                                            unit_always, samba_may_stage, samba_prepare, samba_deliver};
+                                            samba_wanted, samba_may_stage, samba_prepare, samba_deliver};
 static const struct unit_kind rsync_kind = {"rsync", BLOCK_RSYNC, 1, 0, rsync_job, tc_rsync_publish, tc_rsync_discard,
                                             rsync_wanted, unit_always, rsync_prepare, rsync_deliver};
 static void reconcile_discovery(struct manager *m, long long now) {
@@ -1602,6 +1603,8 @@ static void check_locks(struct manager *m, long long now) {
     stop_role(&m->smb, now, 1);
 }
 static void reconcile_roles(struct manager *m, long long now) {
+    if (m->have_settings && !m->settings.config.sharing_enabled)
+        stop_role(&m->smb, now, 1);
     /* Each program starts only from the copy its unit verified (image.h) and
      * with the files it published. */
     if (m->have_applied && unit_may_start(m, &m->samba_unit)) {
@@ -1622,7 +1625,7 @@ static void reconcile_roles(struct manager *m, long long now) {
         if (!start_role(&m->rsync, rsync, TC_RAM_ROOT "/var/rsync.log", now, 1, NULL, 0))
             m->audit_at = now + 1000;
     }
-    if (!m->have_settings || !m->settings.config.rsync)
+    if (!m->have_settings || !rsync_wanted(m))
         stop_role(&m->rsync, now, 1);
     /* RAM keeps rsync's files only while rsync may run. Once it is disabled
      * or no disk holds its payload, they go when nothing runs or stages

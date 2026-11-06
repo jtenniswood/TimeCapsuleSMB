@@ -40,25 +40,7 @@ private struct DeviceProfileEditorView: View {
                 ErrorRecoveryView(error: error, diagnosticsText: diagnosticsText, omittedActions: [.retry, .replacePassword]) { recoveryAction($0, error) }
             }
             ForEach(store.validationErrors, id: \.self) { error in Text(error.localizedDescription).foregroundStyle(.red) }
-            DashboardDisclosureSection(title: L10n.string("profile_editor.advanced")) {
-                DeviceAdvancedSettingsFields(
-                    rsyncEnabled: $store.draft.rsyncEnabled,
-                    internalShareUseDiskRoot: $store.draft.internalShareUseDiskRoot,
-                    smbBrowseCompatibility: $store.draft.smbBrowseCompatibility,
-                    mdnsAdvertiseAFP: $store.draft.mdnsAdvertiseAFP,
-                    anyProtocol: $store.draft.anyProtocol,
-                    requireSMBSigning: $store.draft.requireSMBSigning,
-                    requireSMBEncryption: $store.draft.requireSMBEncryption,
-                    disableSMBEncryption: $store.draft.disableSMBEncryption,
-                    fruitMetadataNetatalk: $store.draft.fruitMetadataNetatalk,
-                    vfsAIOForkEnabled: $store.draft.vfsAIOForkEnabled,
-                    debugLogging: $store.draft.debugLogging,
-                    mountWaitSeconds: $store.draft.mountWaitSeconds,
-                    ataIdleSeconds: $store.draft.ataIdleSeconds,
-                    ataStandby: $store.draft.ataStandby
-                )
-                .help(L10n.string("profile_editor.advanced.deploy_notice")).disabled(store.isRunning)
-            }
+
         }
         .frame(maxWidth: 560, alignment: .leading)
         .frame(maxWidth: .infinity, alignment: .top)

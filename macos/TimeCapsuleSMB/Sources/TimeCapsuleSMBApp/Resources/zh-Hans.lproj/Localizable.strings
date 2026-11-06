@@ -1617,3 +1617,41 @@
 "utility.readiness.warning" = "部分功能不可用。";
 "utility.support.title" = "支持详细信息";
 "utility.support.include_logs" = "包括详细日志";
+
+/* Disk sharing */
+"sharing.enable" = "启用文件共享";
+"sharing.secure_disks" = "保护共享磁盘";
+"sharing.accounts" = "帐户";
+"sharing.security.accounts" = "使用帐户";
+"sharing.security.disk_password" = "使用磁盘密码";
+"sharing.security.device_password" = "使用基站密码";
+"sharing.account_name" = "帐户名称";
+"sharing.access" = "访问权限";
+"sharing.access.0" = "读和写";
+"sharing.access.1" = "只读";
+"sharing.access.2" = "无访问权限";
+"sharing.add_account" = "添加帐户";
+"sharing.remove_account" = "移除帐户";
+"sharing.edit_account" = "编辑帐户";
+"sharing.disk_password" = "磁盘密码";
+"sharing.password" = "密码";
+"sharing.verify_password" = "验证密码";
+"sharing.update_required" = "请更新文件共享以管理这些设置。";
+"sharing.saving" = "正在更新共享设置…";
+"sharing.read_error" = "无法读取共享设置。";
+"confirm.disk-sharing.apply.title" = "更新文件共享？";
+"confirm.disk-sharing.apply.message" = "AirPort 将重新启动以应用这些设置。共享磁盘将暂时不可用。";
+"confirm.disk-sharing.apply.action" = "更新";
+"disk_health.usage" = "使用小时数";
+"disk_health.attention" = "磁盘需要注意";
+"disk_health.attention_advice" = "请备份此磁盘，然后再次检查。";
+
+/* Sharing progress */
+"timeline.stage.read_sharing.title" = "文件共享";
+"timeline.stage.save_sharing.title" = "正在更新共享设置…";
+"timeline.stage.verify_sharing.title" = "正在检查";
+"sharing.partitions" = "分区";
+"sharing.space_free" = "%@ 可用";
+
+"sharing.update_help" = "更新文件共享，以支持较新的电脑。";
+"sharing.unavailable" = "这台 AirPort 暂不支持这些共享设置。";

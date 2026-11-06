@@ -68,6 +68,10 @@
       "service",
       "timeout"
     ],
+    "disk-sharing": [
+      "action",
+      "changes"
+    ],
     "doctor": [
       "bonjour_timeout",
       "macos_local_network_preflight_duration_ms",

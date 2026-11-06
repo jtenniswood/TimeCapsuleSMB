@@ -12,6 +12,7 @@ final class DeviceDashboardSession: ObservableObject, Identifiable {
     var doctorStore: DoctorStore
     var maintenanceStore: MaintenanceStore
     let profileEditorStore: DeviceProfileEditorStore
+    let sharingStore: DiskSharingStore
 
     private let urlOpener: URLOpening
     private let smbAccountResolver: SMBAccountResolving
@@ -55,6 +56,7 @@ final class DeviceDashboardSession: ObservableObject, Identifiable {
             laneKey: .deviceWorkflow(profile.id, .maintenance)
         )
         self.profileEditorStore = DeviceProfileEditorStore(profile: profile, appStore: appStore)
+        self.sharingStore = DiskSharingStore(coordinator: appStore.operationCoordinator, profileID: profile.id)
         self.stateSynchronizer = DeviceDashboardStateSynchronizer(
             appStore: appStore,
             doctorStore: doctorStore,
@@ -69,6 +71,7 @@ final class DeviceDashboardSession: ObservableObject, Identifiable {
         checkedAddressOutcomes = Set(addressOutcomeEvents().map(\.id))
         observeRemoteWorkflowFailures()
         observeSSHAccessMaintenanceResults()
+        sharingStore.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &cancellables)
     }
 
     func summary(for profile: DeviceProfile) -> DeviceDashboardSummary {
@@ -114,6 +117,14 @@ final class DeviceDashboardSession: ObservableObject, Identifiable {
         // invalid, or reading it would show a keychain prompt.
         let current = latestProfile(for: profile)
         appStore.reachabilityStore.refreshIfNeeded(profile: current, password: self.appStore.passwordWithoutPrompt(for: current))
+    }
+
+    func refreshSharingSettings(profile: DeviceProfile) async {
+        let check = appStore.operationCoordinator.lane(for: .deviceWorkflow(profile.id, .reachabilityStatus))
+        for await running in check.backend.$isRunning.values where !running { break }
+        guard !Task.isCancelled else { return }
+        let current = latestProfile(for: profile)
+        sharingStore.load(profile: current, password: appStore.passwordWithoutPrompt(for: current))
     }
 
     func openSSHAccess(profile: DeviceProfile) {

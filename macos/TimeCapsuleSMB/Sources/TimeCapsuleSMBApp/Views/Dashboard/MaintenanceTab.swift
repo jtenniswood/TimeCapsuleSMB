@@ -164,11 +164,7 @@ private struct MaintenanceDetailView: View {
                 }
             }
 
-            // Wipe Internal Disk mounts nothing and always restarts and waits;
-            // the boot hook's options are its firmware choices above.
-            if presentation.workflow != .wipeDisk, presentation.workflow != .bootHook {
-                MaintenanceAdvancedOptionsView(workflow: presentation.workflow, store: store)
-            }
+
         }
     }
 
@@ -326,49 +322,5 @@ struct MaintenanceTimelineView: View {
             title: L10n.string("maintenance.timeline.title"),
             items: presentation.items
         )
-    }
-}
-
-private struct MaintenanceAdvancedOptionsView: View {
-    let workflow: MaintenanceWorkflow
-    @ObservedObject var store: MaintenanceStore
-
-    var body: some View {
-        DashboardDisclosureSection(title: L10n.string("maintenance.advanced_options")) {
-            if workflow == .sshAccess {
-                SSHAccessAdvancedOptionsView(store: store)
-            } else {
-                RemoteMaintenanceAdvancedOptionsView(store: store)
-            }
-        }
-    }
-}
-
-private struct SSHAccessAdvancedOptionsView: View {
-    @ObservedObject var store: MaintenanceStore
-
-    var body: some View {
-        Toggle(L10n.string("toggle.no_wait"), isOn: $store.noWait)
-    }
-}
-
-private struct RemoteMaintenanceAdvancedOptionsView: View {
-    @ObservedObject var store: MaintenanceStore
-
-    var body: some View {
-        Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
-            GridRow {
-                Text(L10n.string("field.mount_wait"))
-                    .foregroundStyle(.secondary)
-                TextField(L10n.string("field.mount_wait"), text: $store.mountWait)
-                    .frame(width: 150)
-            }
-            GridRow {
-                Toggle(L10n.string("toggle.no_reboot"), isOn: $store.noReboot)
-                    .disabled(!RebootExecutionOptionPolicy.allowsNoReboot(noWait: store.noWait))
-                Toggle(L10n.string("toggle.no_wait"), isOn: $store.noWait)
-                    .disabled(!RebootExecutionOptionPolicy.allowsNoWait(noReboot: store.noReboot))
-            }
-        }
     }
 }

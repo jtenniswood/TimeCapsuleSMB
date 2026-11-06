@@ -1617,3 +1617,41 @@
 "utility.readiness.warning" = "Einige Funktionen sind nicht verfügbar.";
 "utility.support.title" = "Supportdetails";
 "utility.support.include_logs" = "Detaillierte Protokolle einschließen";
+
+/* Disk sharing */
+"sharing.enable" = "Dateifreigabe aktivieren";
+"sharing.secure_disks" = "Gemeinsame Laufwerke schützen";
+"sharing.accounts" = "Accounts";
+"sharing.security.accounts" = "Mit Accounts";
+"sharing.security.disk_password" = "Mit Laufwerkspasswort";
+"sharing.security.device_password" = "Mit Basisstationspasswort";
+"sharing.account_name" = "Accountname";
+"sharing.access" = "Zugriff";
+"sharing.access.0" = "Lesen und Schreiben";
+"sharing.access.1" = "Nur Lesen";
+"sharing.access.2" = "Kein Zugriff";
+"sharing.add_account" = "Account hinzufügen";
+"sharing.remove_account" = "Account entfernen";
+"sharing.edit_account" = "Account bearbeiten";
+"sharing.disk_password" = "Laufwerkspasswort";
+"sharing.password" = "Passwort";
+"sharing.verify_password" = "Passwort bestätigen";
+"sharing.update_required" = "Aktualisieren Sie die Dateifreigabe, um diese Einstellungen zu verwalten.";
+"sharing.saving" = "Freigabeeinstellungen werden aktualisiert...";
+"sharing.read_error" = "Die Freigabeeinstellungen konnten nicht gelesen werden.";
+"confirm.disk-sharing.apply.title" = "Dateifreigabe aktualisieren?";
+"confirm.disk-sharing.apply.message" = "Ihre AirPort-Basisstation startet neu, um diese Einstellungen anzuwenden. Gemeinsame Laufwerke sind kurz nicht verfügbar.";
+"confirm.disk-sharing.apply.action" = "Aktualisieren";
+"disk_health.usage" = "Betriebsstunden";
+"disk_health.attention" = "Laufwerk prüfen";
+"disk_health.attention_advice" = "Sichern Sie dieses Laufwerk und prüfen Sie es erneut.";
+
+/* Sharing progress */
+"timeline.stage.read_sharing.title" = "Dateifreigabe";
+"timeline.stage.save_sharing.title" = "Freigabeeinstellungen werden aktualisiert...";
+"timeline.stage.verify_sharing.title" = "Prüfung";
+"sharing.partitions" = "Partitionen";
+"sharing.space_free" = "%@ frei";
+
+"sharing.update_help" = "Aktualisiert die Dateifreigabe für neuere Computer.";
+"sharing.unavailable" = "Diese Freigabeeinstellungen sind auf dieser AirPort-Basisstation noch nicht verfügbar.";

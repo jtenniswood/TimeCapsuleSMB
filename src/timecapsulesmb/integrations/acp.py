@@ -354,15 +354,34 @@ def set_property_int(
     *,
     timeout: float = 25.0,
 ) -> None:
-    payload = _compose_property_element(name, value)
-    sock = _send_message(host, password, COMMAND_SETPROP, payload, timeout=timeout)
+    set_properties(host, password, {name: value}, timeout=timeout)
+
+
+def set_properties(
+    host: str, password: str, values: dict[str, int | bytes], *, timeout: float = 25.0, port: int = ACP_PORT,
+) -> None:
+    """Set a bounded batch and check every property acknowledgement."""
+    if not values or len(values) > 16:
+        raise ACPPropertyError("Invalid settings batch")
+    payload = b"".join(_compose_property_element(name, value) for name, value in values.items())
+    if len(payload) > 1_048_576:
+        raise ACPPropertyError("Settings batch is too large")
+    sock = _send_message(host, password, COMMAND_SETPROP, payload, timeout=timeout, port=port)
     try:
         header = _read_reply_header(sock, expected_command=COMMAND_SETPROP)
         results = _read_property_results(sock, header)
         if results is None:
-            _read_property_result(sock)
-        elif not results:
-            raise ACPProtocolError("ACP set-property response body did not contain a property result")
+            results = []
+            for _ in range(len(values) + 1):
+                result = _read_property_result(sock)
+                results.append(result)
+                if result[0] is None:
+                    break
+        names = [name for name, _, _ in results if name is not None]
+        # Some firmware returns only a successful end marker. Callers that
+        # change settings also read them back before reporting success.
+        if not results or (names and names != list(values)):
+            raise ACPProtocolError("ACP did not acknowledge every setting")
     finally:
         sock.close()
 

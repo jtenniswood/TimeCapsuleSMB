@@ -6,17 +6,13 @@ struct AppSettingsView: View {
     @ObservedObject var editor: AppSettingsEditorStore
     @ObservedObject var updater: AppUpdater
     @Environment(\.dismiss) private var dismiss
-    @State private var selectedPane = 0
     @State private var automaticUpdates = true
 
     var body: some View {
         VStack(spacing: 0) {
-            UtilityTabs(tabs: [(id: 0, title: L10n.string("app_settings.section.general")),
-                               (id: 1, title: L10n.string("profile_editor.advanced"))], selection: $selectedPane) { pane in
-                if pane == 0 { general } else { advanced }
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 20)
+            GroupBox { general }
+                .padding(.horizontal, 20)
+                .padding(.top, 20)
             if let message = editor.validationError ?? editor.errorMessage ?? appSettingsStore.error?.localizedDescription {
                 Text(message).font(UtilityStyle.secondary).foregroundStyle(.red).padding(.horizontal, 24)
             }
@@ -78,34 +74,4 @@ struct AppSettingsView: View {
         }
     }
 
-    private var advanced: some View {
-        UtilityPane {
-            DashboardDisclosureSection(title: L10n.string("app_settings.section.defaults")) {
-                DeviceAdvancedSettingsFields(
-                    rsyncEnabled: $editor.draft.rsyncEnabled,
-                    internalShareUseDiskRoot: $editor.draft.internalShareUseDiskRoot,
-                    smbBrowseCompatibility: $editor.draft.smbBrowseCompatibility,
-                    mdnsAdvertiseAFP: $editor.draft.mdnsAdvertiseAFP,
-                    anyProtocol: $editor.draft.anyProtocol,
-                    requireSMBSigning: $editor.draft.requireSMBSigning,
-                    requireSMBEncryption: $editor.draft.requireSMBEncryption,
-                    disableSMBEncryption: $editor.draft.disableSMBEncryption,
-                    fruitMetadataNetatalk: $editor.draft.fruitMetadataNetatalk,
-                    vfsAIOForkEnabled: $editor.draft.vfsAIOForkEnabled,
-                    debugLogging: $editor.draft.debugLogging,
-                    mountWaitSeconds: $editor.draft.mountWaitSeconds,
-                    ataIdleSeconds: $editor.draft.ataIdleSeconds,
-                    ataStandby: $editor.draft.ataStandby
-                )
-            }
-            UtilityFormRow(title: L10n.string("app_settings.default_bonjour_timeout")) {
-                TextField("", text: $editor.draft.defaultBonjourTimeoutSeconds).frame(width: 100)
-            }
-            UtilityFormRow(title: L10n.string("app_settings.helper_path")) {
-                TextField(L10n.string("value.auto"), text: $editor.draft.helperPathOverride)
-            }
-            Toggle(L10n.string("app_settings.show_raw_events"), isOn: $editor.draft.showRawBackendEventsByDefault)
-            Button(L10n.string("app_settings.restore_defaults")) { editor.restoreDefaultsDraft() }.disabled(editor.isSaving)
-        }
-    }
 }

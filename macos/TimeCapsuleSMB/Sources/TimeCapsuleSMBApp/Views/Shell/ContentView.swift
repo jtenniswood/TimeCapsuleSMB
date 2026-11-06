@@ -341,12 +341,14 @@ private struct DeviceEditorFooter: View {
     @ObservedObject var session: DeviceDashboardSession
     @ObservedObject var appStore: AppStore
     @ObservedObject private var editor: DeviceProfileEditorStore
+    @ObservedObject private var sharing: DiskSharingStore
 
     init(profile: DeviceProfile, session: DeviceDashboardSession, appStore: AppStore) {
         self.profile = profile
         self.session = session
         self.appStore = appStore
         editor = session.profileEditorStore
+        sharing = session.sharingStore
     }
 
     var body: some View {
@@ -355,20 +357,29 @@ private struct DeviceEditorFooter: View {
                 Button(L10n.string("toolbar.cancel")) { appStore.cancelSelectedOperation() }
             }
             Spacer()
-            if (session.selectedTab == .settings || editor.hasChanges) && !editor.isRunning {
+            if (session.selectedTab == .settings || editor.hasChanges || sharing.hasChanges) && !editor.isRunning && !sharing.saving {
                 Button(L10n.string("action.cancel")) {
                     editor.reset(to: profile)
+                    sharing.reset()
                     appStore.navigate(to: .allDevices)
                 }
                 .keyboardShortcut(.cancelAction)
                 Button(L10n.string("utility.update")) {
                     Task { @MainActor in
-                        await editor.save(profile: profile)
-                        if editor.state == .saved { appStore.navigate(to: .allDevices) }
+                        if editor.hasChanges {
+                            await editor.save(profile: profile)
+                            guard editor.state == .saved else { return }
+                        }
+                        if sharing.hasChanges {
+                            guard let password = appStore.password(for: profile),
+                                  await sharing.save(profile: profile, password: password) else { return }
+                        }
+                        appStore.navigate(to: .allDevices)
                     }
                 }
                 .keyboardShortcut(.defaultAction)
-                .disabled(!editor.canSave)
+                .disabled((editor.hasChanges && !editor.canSave) || (sharing.hasChanges && !sharing.canSave)
+                    || (!editor.hasChanges && !sharing.hasChanges) || appStore.operationCoordinator.isDeviceBusy(profile))
             } else {
                 Button(L10n.string("action.done")) { appStore.navigate(to: .allDevices) }
                     .keyboardShortcut(.cancelAction)

@@ -29,6 +29,9 @@ from timecapsulesmb.device.probe import (
 from timecapsulesmb.discovery.bonjour import BonjourQuery, BonjourServiceInstance
 from timecapsulesmb.services.callbacks import OperationCallbacks
 from timecapsulesmb.transport.ssh import SshConnection
+from timecapsulesmb.device.sharing import managed_sharing_disabled
+from timecapsulesmb.core.net import endpoint_host
+from timecapsulesmb.transport.local import tcp_open
 
 # How long deploy and Activate wait for the runtime. Each must outlast the
 # manager's restart of an smbd without listeners (manager.c TC_ROLE_READY_MS).
@@ -51,6 +54,23 @@ def verify_managed_runtime_ready(
     read_processes: Callable[[SshConnection], str] | None = None,
 ) -> ManagedRuntimeProbeResult:
     callbacks = callbacks or OperationCallbacks()
+    # Off is a deliberate service state. An update must preserve it, and must
+    # verify that its manager is alive and TCP 445 really stays closed.
+    if probe_runtime is None and managed_sharing_disabled(connection):
+        callbacks.stage(stage)
+        deadline = time.monotonic() + timeout_seconds
+        while True:
+            start = (read_start_state or probe_manager_startup_age_conn)(connection)
+            if start.acpd_running is False:
+                raise AcpdQuitError("Your AirPort stopped responding after restarting. Reconnect and check it again.")
+            if start.manager_started_seconds_ago is not None and start.acpd_running is True and not tcp_open(endpoint_host(connection.host), 445):
+                from timecapsulesmb.device.probe import ReadinessProbeResult
+                off = ReadinessProbeResult(False, "File sharing is turned off.")
+                return ManagedRuntimeProbeResult(True, "The manager is running; file sharing is turned off.", off, off)
+            if time.monotonic() >= deadline:
+                raise DeviceError("The sharing settings could not be verified after restarting.")
+            callbacks.stage(stage)
+            time.sleep(2)
     if read_processes is None:
         read_processes = acpd.read_processes
     if probe_runtime is None:

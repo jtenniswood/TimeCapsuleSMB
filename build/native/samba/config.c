@@ -36,7 +36,8 @@ int tc_runtime_config_load(struct tc_runtime_config *config) {
                                   {"ATA_IDLE_SECONDS", "", 0},
                                   {"ATA_STANDBY", "", 0},
                                   {"REQUIRE_SMB_SIGNING", "", 0},
-                                  {"SMB_AIRPORT_ACCOUNT", "", 0}};
+                                  {"SMB_AIRPORT_ACCOUNT", "", 0},
+                                  {"AIRPORT_SHARING_SETTINGS", "", 0}};
     struct utsname system;
     memset(config, 0, sizeof(*config));
     if (config_read_snapshot(TC_FLASH_CONFIG_PATH, items, sizeof(items) / sizeof(items[0])))
@@ -65,6 +66,8 @@ int tc_runtime_config_load(struct tc_runtime_config *config) {
     config->mount_poll = number(&items[14], 3, 1, 60);
     config->ata_idle = number(&items[15], 300, 0, 86400);
     config->require_signing = boolean(&items[17], 0);
+    config->airport_sharing = boolean(&items[19], 0);
+    config->sharing_enabled = 1;
     if (strlen(items[18].value) >= sizeof(config->smb_airport_account) ||
         (strcmp(items[18].value, "*") &&
          strspn(items[18].value, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-") !=
@@ -76,7 +79,7 @@ int tc_runtime_config_load(struct tc_runtime_config *config) {
             return -1;
         strcpy(config->ata_standby, items[16].value);
     }
-    if (config->telemetry < 0 || config->rsync < 0 || config->internal_root < 0 ||
+    if (config->airport_sharing < 0 || config->telemetry < 0 || config->rsync < 0 || config->internal_root < 0 ||
         config->browse_compatibility < 0 || config->any_protocol < 0 || config->require_signing < 0 ||
         config->require_encryption < 0 || config->disable_encryption < 0 || config->netatalk < 0 ||
         config->aio_fork < 0 || config->debug < 0 || config->discovery_debug < 0 || config->advertise_afp < 0 ||
@@ -102,6 +105,8 @@ int tc_samba_render(FILE *file, const struct tc_runtime_config *config,
             config->smb_airport_account[0] ? "tc_airport" : "smbpasswd");
     if (config->smb_airport_account[0]) {
         fprintf(file, "    tc:airport account = %s\n", config->smb_airport_account);
+    } else if (config->airport_sharing) {
+        fputs("    tc:airport disk password = yes\n", file);
     }
     if (config->require_encryption)
         fputs("    server smb encrypt = required\n    server min protocol = SMB3_00\n    server max protocol "

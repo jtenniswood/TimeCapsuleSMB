@@ -1617,3 +1617,41 @@
 "utility.readiness.warning" = "Alguns recursos não estão disponíveis.";
 "utility.support.title" = "Detalhes de suporte";
 "utility.support.include_logs" = "Incluir registros detalhados";
+
+/* Disk sharing */
+"sharing.enable" = "Ativar partilha de ficheiros";
+"sharing.secure_disks" = "Proteger discos partilhados";
+"sharing.accounts" = "Contas";
+"sharing.security.accounts" = "Com contas";
+"sharing.security.disk_password" = "Com palavra-passe do disco";
+"sharing.security.device_password" = "Com palavra-passe da estação-base";
+"sharing.account_name" = "Nome da conta";
+"sharing.access" = "Acesso";
+"sharing.access.0" = "Leitura e escrita";
+"sharing.access.1" = "Só leitura";
+"sharing.access.2" = "Sem acesso";
+"sharing.add_account" = "Adicionar conta";
+"sharing.remove_account" = "Remover conta";
+"sharing.edit_account" = "Editar conta";
+"sharing.disk_password" = "Palavra-passe do disco";
+"sharing.password" = "Palavra-passe";
+"sharing.verify_password" = "Confirmar palavra-passe";
+"sharing.update_required" = "Atualize a Partilha de ficheiros para gerir estas definições.";
+"sharing.saving" = "A atualizar definições de partilha...";
+"sharing.read_error" = "Não foi possível ler as definições de partilha.";
+"confirm.disk-sharing.apply.title" = "Atualizar a Partilha de ficheiros?";
+"confirm.disk-sharing.apply.message" = "O AirPort será reiniciado para aplicar estas definições. Os discos partilhados ficarão brevemente indisponíveis.";
+"confirm.disk-sharing.apply.action" = "Atualizar";
+"disk_health.usage" = "Horas de utilização";
+"disk_health.attention" = "O disco requer atenção";
+"disk_health.attention_advice" = "Faça uma cópia de segurança deste disco e volte a verificá-lo.";
+
+/* Sharing progress */
+"timeline.stage.read_sharing.title" = "Compartilhamento de arquivos";
+"timeline.stage.save_sharing.title" = "A atualizar definições de partilha...";
+"timeline.stage.verify_sharing.title" = "Verificação";
+"sharing.partitions" = "Partições";
+"sharing.space_free" = "%@ livres";
+
+"sharing.update_help" = "Atualiza a partilha de ficheiros para computadores mais recentes.";
+"sharing.unavailable" = "Estas definições de partilha ainda não estão disponíveis neste AirPort.";

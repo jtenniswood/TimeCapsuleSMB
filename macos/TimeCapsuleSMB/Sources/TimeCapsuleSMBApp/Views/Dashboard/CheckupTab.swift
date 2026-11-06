@@ -66,7 +66,6 @@ struct CheckupTab: View {
                         OperationTimelineListView(items: presentation.timeline)
                     }
                 }
-                CheckupAdvancedOptionsView(store: store)
             }
             .frame(maxWidth: 560, alignment: .leading)
             .frame(maxWidth: .infinity, alignment: .top)
@@ -81,25 +80,5 @@ struct CheckupTab: View {
         case .runFailed: return "utility.error.check"
         case .running: return "utility.status.working_on_device"
         }
-    }
-}
-
-private struct CheckupAdvancedOptionsView: View {
-    @ObservedObject var store: DoctorStore
-
-    var body: some View {
-        DashboardDisclosureSection(title: L10n.string("checkup.advanced_options")) {
-            Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
-                GridRow {
-                    Toggle(L10n.string("checkup.option.skip_ssh"), isOn: $store.skipSSH)
-                    Toggle(L10n.string("checkup.option.skip_bonjour"), isOn: $store.skipBonjour)
-                }
-                GridRow {
-                    Toggle(L10n.string("checkup.option.skip_smb"), isOn: $store.skipSMB)
-                    EmptyView()
-                }
-            }
-        }
-        .disabled(store.isRunning)
     }
 }

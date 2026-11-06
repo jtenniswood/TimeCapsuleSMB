@@ -173,6 +173,10 @@ if (root/'record-acp').exists():
         out.write(json.dumps(dict(kind='command',role='acp',pid=os.getpid(),ppid=os.getppid(),group=os.getpgrp(),key=key))+'\\n')
 if key=='syNm' and (root/'bad-name').exists():sys.exit(1)
 if key=='syPW' and (root/'bad-auth').exists():sys.exit(1)
+if key=='usbF':
+    print((root/'sharing-flags').read_text() if (root/'sharing-flags').exists() else '0x450');sys.exit(0)
+if key=='fssp':
+    print((root/'disk-password').read_text() if (root/'disk-password').exists() else 'password');sys.exit(0)
 if key=='usrd':
     sys.stdout.buffer.write((root/'accounts').read_bytes());sys.exit(0)
 if key=='MaSt':
@@ -232,7 +236,8 @@ def manager(manager_tools):
     else:hosts.unlink(missing_ok=True)
     for name in ('bad-mast','bad-name','bad-auth','name','slow-mast','no-listener','no-ipv6','diskd-absent','diskd-fail','record-acp','fail-claim','record-audit','record-fstat','smbd-hold','hold-activation',
                  'bufcache','bufcache.writes','bufcache.wakes','bufcache.tmp','bufcache.new','fork-fail','smbd-ignore-term','telemetry-hang',
-                 'report-hold','report-exit','titles','smbd-corrupt','smbd-exit-status','rsync-exit-status','discovery-exit-status','accounts'):
+                 'report-hold','report-exit','titles','smbd-corrupt','smbd-exit-status','rsync-exit-status','discovery-exit-status','accounts',
+                 'sharing-flags','disk-password'):
         (root/name).unlink(missing_ok=True)
     (root/'wake').mkdir(exist_ok=True)
     (root/'procs').mkdir()
@@ -294,6 +299,24 @@ def manager(manager_tools):
 
 
 def started(role):return lambda events:any(e['kind']=='start' and e['role']==role for e in events)
+
+
+def test_airport_sharing_switch_stops_both_services_and_can_enable_them_again(manager):
+    root,start,events,wait,_,_=manager
+    enable_rsync(root)
+    (root/'config').write_text('TELEMETRY=0\nRSYNC_ENABLED=1\nAIRPORT_SHARING_SETTINGS=1\n')
+    process=start()
+    wait(lambda rows:started('smbd')(rows) and started('rsync')(rows))
+    (root/'sharing-flags').write_text('0x454')
+    process.send_signal(signal.SIGHUP)
+    wait(lambda rows:all(any(e['role']==role and e['kind']=='stop' for e in rows) for role in ('smbd','rsync')))
+    # Leave several reconciliation passes with sharing off: neither daemon
+    # can return through its normal crash/retry path.
+    time.sleep(TIMINGS['TC_MANAGER_PASS_MS'] * 4 / 1000)
+    assert len(smbd_starts(events())) == len(rsync_starts(events())) == 1
+    (root/'sharing-flags').write_text('0x450')
+    process.send_signal(signal.SIGHUP)
+    wait(lambda rows:len(smbd_starts(rows))==len(rsync_starts(rows))==2)
 
 
 def test_airport_account_changes_reload_but_backend_changes_drain_old_sessions(manager):

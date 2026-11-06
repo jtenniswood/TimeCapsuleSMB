@@ -1617,3 +1617,41 @@
 "utility.readiness.warning" = "Algunas funciones no están disponibles.";
 "utility.support.title" = "Detalles de soporte";
 "utility.support.include_logs" = "Incluir registros detallados";
+
+/* Disk sharing */
+"sharing.enable" = "Activar compartir archivos";
+"sharing.secure_disks" = "Proteger discos compartidos";
+"sharing.accounts" = "Cuentas";
+"sharing.security.accounts" = "Con cuentas";
+"sharing.security.disk_password" = "Con contraseña del disco";
+"sharing.security.device_password" = "Con contraseña de la estación base";
+"sharing.account_name" = "Nombre de la cuenta";
+"sharing.access" = "Acceso";
+"sharing.access.0" = "Lectura y escritura";
+"sharing.access.1" = "Solo lectura";
+"sharing.access.2" = "Sin acceso";
+"sharing.add_account" = "Añadir cuenta";
+"sharing.remove_account" = "Eliminar cuenta";
+"sharing.edit_account" = "Editar cuenta";
+"sharing.disk_password" = "Contraseña del disco";
+"sharing.password" = "Contraseña";
+"sharing.verify_password" = "Verificar contraseña";
+"sharing.update_required" = "Actualice Compartir archivos para gestionar estos ajustes.";
+"sharing.saving" = "Actualizando los ajustes para compartir...";
+"sharing.read_error" = "No se pudieron leer los ajustes para compartir.";
+"confirm.disk-sharing.apply.title" = "¿Actualizar Compartir archivos?";
+"confirm.disk-sharing.apply.message" = "Su AirPort se reiniciará para aplicar estos ajustes. Los discos compartidos dejarán de estar disponibles brevemente.";
+"confirm.disk-sharing.apply.action" = "Actualizar";
+"disk_health.usage" = "Horas de uso";
+"disk_health.attention" = "El disco requiere atención";
+"disk_health.attention_advice" = "Haga una copia de seguridad de este disco y vuelva a comprobarlo.";
+
+/* Sharing progress */
+"timeline.stage.read_sharing.title" = "Compartir archivos";
+"timeline.stage.save_sharing.title" = "Actualizando los ajustes para compartir...";
+"timeline.stage.verify_sharing.title" = "Comprobando";
+"sharing.partitions" = "Particiones";
+"sharing.space_free" = "%@ libres";
+
+"sharing.update_help" = "Actualiza el uso compartido de archivos para ordenadores más recientes.";
+"sharing.unavailable" = "Estos ajustes de uso compartido aún no están disponibles en este AirPort.";

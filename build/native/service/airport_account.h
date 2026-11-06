@@ -25,4 +25,6 @@ int airport_account_nt_hash(const char *name, char hash[33], int *access);
 int airport_account_parse(const char *xml, size_t length, const char *name,
                          char hash[33], int *access);
 int password_nt_hash(const char *password, size_t length, char hash[33]);
+int airport_sharing_flags(unsigned *flags);
+int airport_disk_nt_hash(char hash[33]);
 #endif

@@ -35,6 +35,7 @@ private struct DiskSmartReadingsView: View {
 
     private var statusKey: String {
         if disk.reportsFailure { return "utility.disk.failing" }
+        if disk.needsAttention { return "disk_health.attention" }
         return disk.smartStatus == "verified" ? "utility.status.working" : "utility.status.unchecked"
     }
 
@@ -50,9 +51,9 @@ private struct DiskSmartReadingsView: View {
                 }
                 VStack(alignment: .leading, spacing: 6) {
                     Text(disk.partitions.first?.name ?? disk.label).font(UtilityStyle.heading)
-                    Label(L10n.string(statusKey), systemImage: disk.reportsFailure ? "exclamationmark.triangle" :
+                    Label(L10n.string(statusKey), systemImage: disk.needsAttention ? "exclamationmark.triangle" :
                         disk.smartStatus == "verified" ? "checkmark.circle" : "questionmark.circle")
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(disk.reportsFailure ? Color.red : disk.needsAttention ? .orange : .secondary)
                 }
                 Spacer()
 
@@ -60,6 +61,8 @@ private struct DiskSmartReadingsView: View {
             if disk.reportsFailure {
                 Text(L10n.string("utility.disk.failure_advice"))
                     .font(UtilityStyle.body)
+            } else if disk.needsAttention {
+                Text(L10n.string("disk_health.attention_advice")).font(UtilityStyle.body)
             }
             ForEach(Array(disk.partitions.enumerated()), id: \.offset) { _, partition in
                 if let total = DiskHealthPartition.bytes(partition.sizeMiB),
@@ -80,35 +83,15 @@ private struct DiskSmartReadingsView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     SummaryGrid(rows: [
                         (L10n.string("disk_health.temperature"), disk.temperatureCelsius ?? L10n.string("value.unknown")),
-                        (L10n.string("disk_health.power_on_hours"), disk.metric(9, named: "Power-on hours count") ?? L10n.string("value.unknown")),
-                        (L10n.string("disk_health.reallocated"), disk.metric(5, named: "Reallocated sector count") ?? L10n.string("value.unknown")),
-                        (L10n.string("disk_health.pending"), disk.metric(197, named: "Current pending sector") ?? L10n.string("value.unknown")),
-                        (L10n.string("disk_health.uncorrectable"), disk.metric(198, named: "Offline uncorrectable") ?? L10n.string("value.unknown")),
-                        (L10n.string("disk_health.crc_errors"), disk.metric(199, named: "Ultra DMA CRC error count") ?? L10n.string("value.unknown"))
+                        (L10n.string("disk_health.usage"), disk.metric(9, named: "Power-on hours count") ?? L10n.string("value.unknown"))
                     ])
-                    Text(L10n.string("disk_health.attributes")).font(UtilityStyle.heading)
-                    Table(disk.details.attributes) {
-                        TableColumn(L10n.string("disk_health.id")) { attribute in Text(String(attribute.id)) }
-                            .width(32)
-                        TableColumn(L10n.string("disk_health.attribute"), value: \.name)
-                            .width(min: 140)
-                        TableColumn(L10n.string("disk_health.value")) { attribute in Text(String(attribute.value)) }
-                            .width(50)
-                        TableColumn(L10n.string("disk_health.threshold")) { attribute in Text(String(attribute.threshold)) }
-                            .width(65)
-                        TableColumn(L10n.string("disk_health.raw"), value: \.raw)
-                            .width(min: 100)
-                        TableColumn(L10n.string("disk_health.reliability")) { attribute in
-                            Text(L10n.string(attribute.reliability == "negative" ? "disk_health.outside_threshold" : "disk_health.within_threshold"))
-                        }
-                            .width(min: 110)
+                    if disk.needsAttention {
+                        SummaryGrid(rows: [
+                            (L10n.string("disk_health.reallocated"), disk.metric(5, named: "Reallocated sector count")),
+                            (L10n.string("disk_health.pending"), disk.metric(197, named: "Current pending sector")),
+                            (L10n.string("disk_health.uncorrectable"), disk.metric(198, named: "Offline uncorrectable"))
+                        ].compactMap { label, value in value.map { (label, $0) } })
                     }
-                    .font(UtilityStyle.secondary)
-                    .frame(height: 260)
-                    Text(L10n.string("disk_health.vendor_values"))
-                        .font(UtilityStyle.secondary)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
             } else {
                 Text(L10n.string("disk_health.details_unavailable"))
@@ -118,7 +101,7 @@ private struct DiskSmartReadingsView: View {
     }
 }
 
-private enum DiskArtwork {
+enum DiskArtwork {
     static let image = NSImage(contentsOfFile:
         "/System/Applications/Utilities/AirPort Utility.app/Contents/Resources/AirDisk.icns")
 }

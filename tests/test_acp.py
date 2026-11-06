@@ -94,6 +94,32 @@ def response_with_header_version(response: bytes, version: int) -> bytes:
 
 
 class ACPTests(unittest.TestCase):
+    def test_batch_rejects_a_later_property_error_and_always_closes_socket(self) -> None:
+        response = (acp._compose_header(command=acp.COMMAND_SETPROP)
+                    + acp._compose_property_element("usrd", b"ok")
+                    + acp._compose_property_element("usbF", b"\xff\xff\xff\xff", flags=1))
+        sock = FakeSocket(response)
+        with mock.patch("timecapsulesmb.integrations.acp.socket.create_connection", return_value=sock):
+            with self.assertRaises(acp.ACPPropertyError):
+                acp.set_properties("127.0.0.1", "pw", {"usrd": b"data", "usbF": 4}, port=12345)
+        self.assertTrue(sock.closed)
+
+    def test_batch_rejects_missing_fixed_body_acknowledgements(self) -> None:
+        body = acp._compose_property_element("usrd", b"ok")
+        sock = FakeSocket(acp._compose_header(command=acp.COMMAND_SETPROP, payload=body) + body)
+        with mock.patch("timecapsulesmb.integrations.acp.socket.create_connection", return_value=sock):
+            with self.assertRaises(acp.ACPProtocolError):
+                acp.set_properties("127.0.0.1", "pw", {"usrd": b"data", "usbF": 4})
+        self.assertTrue(sock.closed)
+
+    def test_batch_accepts_all_acknowledgements_through_the_requested_local_port(self) -> None:
+        body = acp._compose_property_element("usrd", b"ok") + acp._compose_property_element("usbF", b"ok")
+        sock = FakeSocket(acp._compose_header(command=acp.COMMAND_SETPROP, payload=body) + body)
+        with mock.patch("timecapsulesmb.integrations.acp.socket.create_connection", return_value=sock) as create:
+            acp.set_properties("127.0.0.1", "pw", {"usrd": b"data", "usbF": 4}, port=12345)
+        create.assert_called_once_with(("127.0.0.1", 12345), timeout=25.0)
+        self.assertTrue(sock.closed)
+
     def test_header_key_matches_legacy_acp_algorithm(self) -> None:
         self.assertEqual(
             acp._generate_acp_header_key("password").hex(),
