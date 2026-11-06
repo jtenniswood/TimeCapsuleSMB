@@ -56,6 +56,15 @@ diff --git a/source3/passdb/pdb_smbpasswd.c b/source3/passdb/pdb_smbpasswd.c
  	unsigned char *p;
  	long uidval;
  	size_t linebuf_len;
+@@ -456,7 +458,7 @@ static struct smb_passwd *getsmbfilepwent(struct smbpasswd_privates *smbpasswd_s
+ 		 * LCT-(8 hex digits) is the time_t value of the last change time.
+ 		 */
+ 
+-		if (linebuf[0] == '#' || linebuf[0] == '\0') {
++		if ((linebuf[0] == '#' && !smbpasswd_state->tc_airport) || linebuf[0] == '\0') {
+ 			DEBUG(6, ("getsmbfilepwent: skipping comment or blank line\n"));
+ 			continue;
+ 		}
 @@ -466,6 +468,9 @@ static struct smb_passwd *getsmbfilepwent(struct smbpasswd_privates *smbpasswd_s
  			continue;
  		}
@@ -211,15 +220,16 @@ diff --git a/source3/passdb/pdb_smbpasswd.c b/source3/passdb/pdb_smbpasswd.c
 diff --git a/source3/smbd/share_access.c b/source3/smbd/share_access.c
 --- a/source3/smbd/share_access.c
 +++ b/source3/smbd/share_access.c
-@@ -21,6 +21,7 @@
+@@ -21,6 +21,8 @@
  #include "smbd/smbd.h"
  #include "smbd/globals.h"
  #include "../libcli/security/security.h"
 +#include "passdb.h"
++#include "auth.h"
  
  /*
   * Check whether a user is contained in the list provided.
-@@ -179,6 +180,16 @@ bool is_share_read_only_for_token(const char *username,
+@@ -179,6 +181,16 @@ bool is_share_read_only_for_token(const char *username,
  		  "%s\n", lp_servicename(talloc_tos(), lp_sub, snum),
  		  read_only ? "read-only" : "read-write", username));
  

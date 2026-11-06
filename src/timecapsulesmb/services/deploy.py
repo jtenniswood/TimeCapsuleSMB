@@ -798,6 +798,7 @@ def prepare_deploy_preflight(
     *,
     callbacks: OperationCallbacks | None = None,
     device_reading: AirportAcpReading | None = None,
+    airport_accounts_enabled: bool = False,
 ) -> DeployPreflight:
     callbacks = callbacks or OperationCallbacks()
 
@@ -808,6 +809,16 @@ def prepare_deploy_preflight(
 
     callbacks.stage("check_compatibility")
     compatibility = require_supported_payload(target, allow_unsupported=options.allow_unsupported)
+    # The NetBSD 4 payloads still contain the original password backend.
+    # Refuse account mode before any device changes rather than silently
+    # installing a server that would accept the device password instead.
+    if airport_accounts_enabled and is_netbsd4_payload_family(compatibility.payload_family):
+        raise DeployDeviceError(
+            "AirPort sharing accounts require the newer Time Capsule payload. "
+            "This older device's bundled server does not support account passwords yet; "
+            "no device changes were made.",
+            code=ErrorCode.UNSUPPORTED_DEVICE,
+        )
     if not options.dry_run:
         # Deploy ends in an ACP reboot: refuse a password ACP would reject, or
         # an ACPd that would not restart the device, before the confirmation,

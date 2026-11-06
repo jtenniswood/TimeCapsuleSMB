@@ -235,6 +235,7 @@ def deploy_operation(params: dict[str, object], context: AppOperationContext) ->
             deploy_options,
             callbacks=context.to_operation_callbacks(),
             device_reading=context.reading_at(connection),
+            airport_accounts_enabled=bool(config.get("TC_SMB_AIRPORT_ACCOUNT", "")),
         )
     except DeployArtifactValidationError as exc:
         raise AppOperationError(str(exc), code=ErrorCode.VALIDATION_FAILED) from exc

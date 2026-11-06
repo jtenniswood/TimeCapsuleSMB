@@ -129,6 +129,24 @@ def test_ambiguous_names_are_never_silently_merged(account_reader):
     assert result.returncode != 0 and accounts == {}
 
 
+def test_distinct_names_with_colliding_ids_reject_the_whole_snapshot(account_reader):
+    # These names share the bounded FNV identity used for Samba's user SID.
+    users = [dict(name=name, password="secret", fileSharingAccess=access)
+             for name, access in [("collision-19324", 0), ("collision-58640", 1)]]
+    _, first = account_set(account_reader, users[:1])
+    _, second = account_set(account_reader, users[1:])
+    assert next(iter(first.values()))[0] == next(iter(second.values()))[0]
+    result, accounts = account_set(account_reader, users)
+    assert result.returncode != 0 and accounts == {} and result.stderr == b""
+
+
+def test_leading_hash_is_an_account_name(account_reader):
+    result, accounts = account_set(account_reader, [
+        dict(name="#family", password="secret", fileSharingAccess=0),
+    ])
+    assert result.returncode == 0 and "#family" in accounts
+
+
 def test_account_count_and_capture_are_bounded(account_reader):
     users = [dict(name=f"user-{i}", password="secret", fileSharingAccess=0) for i in range(128)]
     result, accounts = account_set(account_reader, users)

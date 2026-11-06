@@ -78,8 +78,9 @@ Checkup reads the account password over SSH in memory and uses it for SMB
 checks. It continues to use the device password for SSH and administration, and
 skips write checks for a read-only account.
 
-Both the native `service` and Samba binaries must be rebuilt from this version
-before this setting works. The dedicated account backend makes an older Samba
+Account mode requires the updated native `service` and Samba binaries, currently
+provided for NetBSD 6 devices. Installation refuses account mode on older NetBSD
+4 devices until matching binaries are available. The dedicated account backend makes an older Samba
 binary reject account mode instead of ignoring its permissions. Files are still
 accessed with the root filesystem credentials required by the Time Capsule
 kernel; no system or SSH accounts are created, and this does not create private
