@@ -77,7 +77,7 @@ public struct ContentView: View {
             }
         }
         .frame(minWidth: 760, minHeight: 580)
-        .background(Color(nsColor: UtilityStyle.windowBackground))
+        .background(Color(nsColor: .windowBackgroundColor))
         .navigationTitle(appStore.route == .activity ? L10n.string("sidebar.activity") : appStore.selectedProfile?.title ?? "TimeCapsuleSMB")
         .font(UtilityStyle.body)
         .controlSize(.regular)

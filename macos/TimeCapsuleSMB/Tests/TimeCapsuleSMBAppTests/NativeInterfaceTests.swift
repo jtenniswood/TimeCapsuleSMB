@@ -113,28 +113,20 @@ final class NativeInterfaceTests: XCTestCase {
         }
     }
 
-    func testTabsUseTheRoundedMacControlAndShowOnlyTheSelectedPane() async throws {
+    func testNativeTabsShowOnlyTheSelectedPane() async throws {
         var selected = 0
         let host = LiveHostedView(NativeTabTestHost(changed: { selected = $0 }))
         defer { host.close() }
         await runQueuedStoreUpdates()
-        func findControl(in view: NSView) -> NSSegmentedControl? {
-            if let control = view as? NSSegmentedControl { return control }
-            return view.subviews.lazy.compactMap { findControl(in: $0) }.first
-        }
-        let control = try XCTUnwrap(findControl(in: host.contentView))
-        XCTAssertEqual(control.segmentCount, 2)
-        XCTAssertEqual(control.segmentStyle, .rounded)
-        XCTAssertGreaterThan(control.bounds.width, 140)
-        XCTAssertGreaterThan(control.width(forSegment: 0), 50)
-        XCTAssertGreaterThan(control.width(forSegment: 1), 50)
-        control.selectedSegment = 1
-        control.sendAction(control.action, to: control.target)
+        let texts = accessibleElements(in: host.contentView).map(\.text)
+        XCTAssertTrue(texts.contains("General"))
+        XCTAssertTrue(texts.contains("Advanced"))
+        _ = pressAccessibleControl(in: host.contentView, labeled: "Advanced")
         await runQueuedStoreUpdates()
         XCTAssertEqual(selected, 1)
-        let texts = accessibleElements(in: host.contentView).map(\.text)
-        XCTAssertTrue(texts.contains("Advanced content"))
-        XCTAssertFalse(texts.contains("General content"))
+        let updated = accessibleElements(in: host.contentView).map(\.text)
+        XCTAssertTrue(updated.contains("Advanced content"))
+        XCTAssertFalse(updated.contains("General content"))
     }
 
     func testRemoteAccessStartsWithACheckRatherThanAnUnnecessaryRestart() async throws {

@@ -110,6 +110,9 @@ private struct DiskSmartReadingsView: View {
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+            } else {
+                Text(L10n.string("disk_health.details_unavailable"))
+                    .font(UtilityStyle.secondary).foregroundStyle(.secondary)
             }
         }
     }

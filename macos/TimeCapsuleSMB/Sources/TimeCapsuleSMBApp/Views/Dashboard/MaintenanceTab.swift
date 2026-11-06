@@ -78,7 +78,7 @@ struct MaintenanceToolSheet: View {
         }
         .font(UtilityStyle.body).controlSize(.regular)
         .frame(width: 620, height: 460)
-        .background(Color(nsColor: UtilityStyle.windowBackground))
+        .background(Color(nsColor: .windowBackgroundColor))
         .task(id: presentation.workflow) {
             guard !store.isBusy else { return }
             if presentation.workflow == .fsck && store.fsckTargets.isEmpty {

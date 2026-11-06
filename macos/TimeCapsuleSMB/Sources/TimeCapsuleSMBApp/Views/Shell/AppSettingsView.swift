@@ -39,7 +39,7 @@ struct AppSettingsView: View {
             }
         }
         .font(UtilityStyle.body)
-        .background(Color(nsColor: UtilityStyle.windowBackground))
+        .background(Color(nsColor: .windowBackgroundColor))
         .onAppear {
             editor.sync(settings: appSettingsStore.settings)
             automaticUpdates = updater.automaticallyChecksForUpdates

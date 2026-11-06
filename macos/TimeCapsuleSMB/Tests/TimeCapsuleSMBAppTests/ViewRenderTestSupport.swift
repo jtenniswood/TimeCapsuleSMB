@@ -121,7 +121,8 @@ final class LiveHostedView {
             defer: false
         )
         window.isReleasedWhenClosed = false
-        window.contentView = NSHostingView(rootView: view)
+        window.contentViewController = NSHostingController(rootView: view)
+        window.contentView = window.contentViewController!.view
     }
 
     var contentView: NSView {
@@ -144,9 +145,12 @@ struct AccessibleElement: Equatable {
 /// words and enabled controls on screen instead of comparing pixels.
 @MainActor
 func accessibleElements<V: View>(_ view: V, size: CGSize = CGSize(width: 1200, height: 800)) -> [AccessibleElement] {
-    let host = NSHostingView(rootView: view)
-    host.frame = CGRect(origin: .zero, size: size)
-    return accessibleElements(in: host)
+    let window = NSWindow(contentRect: CGRect(origin: .zero, size: size), styleMask: [.titled], backing: .buffered, defer: false)
+    window.isReleasedWhenClosed = false
+    window.contentViewController = NSHostingController(rootView: view)
+        window.contentView = window.contentViewController!.view
+    defer { window.close() }
+    return accessibleElements(in: window.contentView!)
 }
 
 /// The texts and controls a view already on screen draws now, such as a
@@ -201,7 +205,7 @@ private func withAccessibilityTree<T>(of host: NSView, _ body: ([AnyObject]) -> 
             collect(child as AnyObject)
         }
     }
-    collect(host)
+    if let window = host.window { collect(window) } else { collect(host) }
     return body(nodes)
 }
 
