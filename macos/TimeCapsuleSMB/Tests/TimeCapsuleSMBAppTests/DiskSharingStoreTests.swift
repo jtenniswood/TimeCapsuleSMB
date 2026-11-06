@@ -3,6 +3,11 @@ import XCTest
 
 @MainActor
 final class DiskSharingStoreTests: XCTestCase {
+    private func makeProfile() throws -> DeviceProfile {
+        DeviceProfile.make(id: "sharing-test-device", configuredDevice: try testConfiguredDevice(), discoveredDevice: nil,
+            applicationSupportURL: URL(fileURLWithPath: "/tmp/timecapsulesmb-sharing-tests", isDirectory: true))
+    }
+
     private func payload(enabled: Bool = true) -> JSONValue {
         .object(["schema_version": .number(1), "enabled": .bool(enabled), "security": .string("accounts"),
             "accounts": .array([.object(["name": .string("Alex"), "access": .number(0)])]),
