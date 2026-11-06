@@ -149,6 +149,7 @@ from timecapsulesmb.services.deploy import (
     DeployCompletionMessages,
     DeployDeviceError,
     DeployPayloadContext,
+    DeployOptions,
     DeployRuntimeConfig,
     INSTALL_INTERRUPTED_MESSAGE,
     PreparedDeployPlan,
@@ -159,6 +160,7 @@ from timecapsulesmb.services.deploy import (
     device_has_no_internal_disk,
     mast_no_volume_error,
     prepare_deployment_plan,
+    prepare_deploy_preflight,
     upload_and_verify_deployment_payload,
 )
 from timecapsulesmb.services.runtime_verification import (
@@ -193,6 +195,26 @@ def removed_paths(actions) -> set[str]:
     return {path for action in actions if isinstance(action, RemovePathsAction) for path in action.paths}
 
 class DeployModuleTests(unittest.TestCase):
+    def test_airport_accounts_refuse_old_payloads_before_touching_device(self):
+        for family in ("netbsd4le_samba4", "netbsd4be_samba4"):
+            with self.subTest(family=family), ExitStack() as stack:
+                stack.enter_context(mock.patch(
+                    "timecapsulesmb.services.deploy.deploy_artifact_failures", return_value=[]))
+                stack.enter_context(mock.patch(
+                    "timecapsulesmb.services.deploy.require_supported_payload",
+                    return_value=mock.Mock(payload_family=family)))
+                acpd = stack.enter_context(mock.patch("timecapsulesmb.services.deploy.require_acpd_ready"))
+                artifacts = stack.enter_context(mock.patch("timecapsulesmb.services.deploy.resolve_deploy_artifact_paths"))
+                with self.assertRaises(DeployDeviceError) as error:
+                    prepare_deploy_preflight(
+                        mock.Mock(), mock.Mock(), REPO_ROOT,
+                        DeployOptions(dry_run=False, no_wait=False), airport_accounts_enabled=True,
+                    )
+                self.assertEqual(error.exception.code.value, "unsupported_device")
+                self.assertIn("no device changes", str(error.exception))
+                acpd.assert_not_called()
+                artifacts.assert_not_called()
+
     def setUp(self):
         from tests.test_xattr_migration import fake_inventory
         for target, kwargs in (

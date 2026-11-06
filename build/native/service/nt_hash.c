@@ -200,6 +200,17 @@ static int tc_nt_hash_utf8(const uint8_t *input, size_t len, uint8_t digest[16])
     return 0;
 }
 
+int password_nt_hash(const char *password, size_t length, char hash[33]) {
+    uint8_t digest[16];
+    size_t i;
+    hash[0] = 0;
+    if (!length || length > NT_HASH_MAX_PASSWORD_BYTES ||
+        tc_nt_hash_utf8((const uint8_t *)password, length, digest)) return -1;
+    for (i = 0; i < sizeof(digest); i++) snprintf(hash + 2*i, 3, "%02X", digest[i]);
+    memset(digest, 0, sizeof(digest));
+    return 0;
+}
+
 int print_nt_hash_from_stdin(void) {
     uint8_t input[NT_HASH_MAX_PASSWORD_BYTES + 1];
     uint8_t digest[16];

@@ -46,6 +46,46 @@ To check/change this:
 
 The current AirPort device password is the SMB password. If you change it in AirPort Utility, reboot the device so the managed runtime regenerates the RAM auth file.
 
+#### Can I use an AirPort disk-sharing account's password?
+
+Set `TC_SMB_AIRPORT_ACCOUNT='*'` in the CLI `.env` file and deploy the updated
+runtime and Samba binary. Each account created in AirPort Utility then logs in
+with its own username and password. Read/write, read-only and no-access settings
+apply to that account within the configured shared folders. Adding, changing or
+removing accounts in AirPort Utility is picked up automatically. An empty value
+restores the default device-password mode.
+
+The `*` setting lets Checkup choose an enabled account automatically, preferring
+one with write access so it can test file operations. You can instead set a
+specific account name, such as `jtenniswood`, to choose the Checkup account;
+all enabled accounts still work for normal SMB logins.
+
+Authentication does not expand a share to the disk root. Keep
+`TC_INTERNAL_SHARE_USE_DISK_ROOT=false` to export the internal disk's `ShareRoot`
+folder, which is the default. Account access applies within the configured
+share boundary.
+
+Passwords stay in AirPort's configuration. Only their NT hashes and access
+settings are staged in Samba's private RAM files. Removing or disabling an
+account disables its new SMB logins; an unavailable or
+malformed ACP response retains the last successfully applied configuration,
+without silently switching to the device password. Existing SMB sessions keep
+their access until disconnected. Changes are picked up by the manager's next
+settings poll, normally within 30 seconds. Switching authentication modes drains
+the old sessions before publishing different credentials.
+
+Checkup reads the account password over SSH in memory and uses it for SMB
+checks. It continues to use the device password for SSH and administration, and
+skips write checks for a read-only account.
+
+Account mode requires the updated native `service` and Samba binaries, currently
+provided for NetBSD 6 devices. Installation refuses account mode on older NetBSD
+4 devices until matching binaries are available. The dedicated account backend makes an older Samba
+binary reject account mode instead of ignoring its permissions. Files are still
+accessed with the root filesystem credentials required by the Time Capsule
+kernel; no system or SSH accounts are created, and this does not create private
+home folders for each account.
+
 #### Do I need to keep the TimeCapsuleSMB python folder after setup?
 
 **Yes, it is recommended to keep the TimeCapsuleSMB folder** on your Mac for maintenance purposes, if you are using the python package. While you can delete it after initial setup, keeping it allows you to:  

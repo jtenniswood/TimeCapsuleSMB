@@ -1,5 +1,6 @@
 """The same ACP process engine serves scalar, multiline, password and MaSt reads."""
 import os
+import plistlib
 import socket
 import subprocess
 
@@ -42,6 +43,15 @@ def raw_env(tmp_path, data, *, key="*", exit_code=0):
 def run_nt_hash(service, password):
     return subprocess.run([str(service), "--print-nt-hash-from-stdin"], input=password,
                           stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+
+
+def test_selected_airport_account_capture_uses_the_xml_query(capture_tools, tmp_path):
+    raw = plistlib.dumps({"users": [dict(name="jtenniswood", password="password", fileSharingAccess=0)]})
+    result = subprocess.run([str(capture_tools[1]), "--print-airport-account-nt-hash", "jtenniswood"],
+                            env=raw_env(tmp_path, raw, key="usrd"), capture_output=True, timeout=5)
+    assert result.returncode == 0
+    assert result.stdout == b"0 8846F7EAEE8FB117AD06BDD830B7586C\n"
+    assert result.stderr == b""
 
 
 @pytest.mark.parametrize("password,expected", [

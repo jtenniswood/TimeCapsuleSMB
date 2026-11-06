@@ -1,0 +1,299 @@
+diff --git a/source3/auth/server_info_sam.c b/source3/auth/server_info_sam.c
+--- a/source3/auth/server_info_sam.c
++++ b/source3/auth/server_info_sam.c
+@@ -72,7 +72,10 @@ NTSTATUS make_server_info_sam(TALLOC_CTX *mem_ctx,
+ 		goto out;
+ 	}
+ 
+-	pwd = Get_Pwnam_alloc(tmp_ctx, username);
++	/* Virtual AirPort identities retain their own SID/password, while the
++	 * old Time Capsule kernel requires root for filesystem operations. */
++	pwd = Get_Pwnam_alloc(tmp_ctx,
++		pdb_is_tc_airport() ? "root" : username);
+ 	if (pwd == NULL) {
+ 		DEBUG(1, ("User %s in passdb, but getpwnam() fails!\n",
+ 			  pdb_get_username(sampass)));
+diff --git a/source3/include/passdb.h b/source3/include/passdb.h
+--- a/source3/include/passdb.h
++++ b/source3/include/passdb.h
+@@ -23,6 +23,11 @@
+ #ifndef _PASSDB_H
+ #define _PASSDB_H
+ 
++/* Virtual AirPort read-only group, outside the account ID/RID range.
++ * This is an SMB token marker, never a system or SSH account/group. */
++#define TC_AIRPORT_READONLY_RID 0x7ffffff0u
++bool pdb_is_tc_airport(void);
++
+ #ifndef NT_HASH_LEN
+ #define NT_HASH_LEN 16
+ #endif
+diff --git a/source3/passdb/pdb_get_set.c b/source3/passdb/pdb_get_set.c
+--- a/source3/passdb/pdb_get_set.c
++++ b/source3/passdb/pdb_get_set.c
+@@ -548,6 +548,17 @@ bool pdb_set_group_sid(struct samu *sampass, const struct dom_sid *g_sid, enum p
+ 
+ 	sid_compose(&dug_sid, get_global_sam_sid(), DOMAIN_RID_USERS);
+ 
++	/* tc_airport's read-only SID is a token permission marker, not a Unix
++	 * group. Preserve it when copying a samu as well as when first loaded. */
++	if (pdb_is_tc_airport()) {
++		struct dom_sid readonly_sid;
++		sid_compose(&readonly_sid, get_global_sam_sid(), TC_AIRPORT_READONLY_RID);
++		if (dom_sid_equal(&readonly_sid, g_sid)) {
++			sid_copy(sampass->group_sid, g_sid);
++			return pdb_set_init_flags(sampass, PDB_GROUPSID, flag);
++		}
++	}
++
+ 	if (dom_sid_equal(&dug_sid, g_sid)) {
+ 		sid_copy(sampass->group_sid, &dug_sid);
+ 	} else if (sid_to_gid( g_sid, &gid ) ) {
+diff --git a/source3/passdb/pdb_interface.c b/source3/passdb/pdb_interface.c
+--- a/source3/passdb/pdb_interface.c
++++ b/source3/passdb/pdb_interface.c
+@@ -239,6 +239,13 @@ static struct pdb_methods *pdb_get_methods(void)
+ 	return pdb;
+ }
+ 
++/* The samu methods field is backend-private and is not populated by
++ * smbpasswd. Consult the selected provider for virtual Unix identity rules. */
++bool pdb_is_tc_airport(void)
++{
++	return strcmp(pdb_get_methods()->name, "tc_airport") == 0;
++}
++
+ struct pdb_domain_info *pdb_get_domain_info(TALLOC_CTX *mem_ctx)
+ {
+ 	struct pdb_methods *pdb = pdb_get_methods();
+@@ -1739,6 +1746,12 @@ static NTSTATUS pdb_default_enum_group_memberships(struct pdb_methods *methods,
+ 	struct passwd *pw;
+ 	const char *username = pdb_get_username(user);
+ 
++	/* AirPort identities have distinct SMB SIDs but share the appliance's
++	 * root filesystem credentials. Group lookup must use that Unix identity. */
++	if (strcmp(methods->name, "tc_airport") == 0) {
++		username = "root";
++	}
++
+ 
+ 	/* Ignore the primary group SID.  Honor the real Unix primary group.
+ 	   The primary group SID is only of real use to Windows clients */
+diff --git a/source3/passdb/pdb_smbpasswd.c b/source3/passdb/pdb_smbpasswd.c
+--- a/source3/passdb/pdb_smbpasswd.c
++++ b/source3/passdb/pdb_smbpasswd.c
+@@ -46,6 +46,7 @@ struct smb_passwd
+         const unsigned char *smb_passwd;    /* Null if no password */
+         const unsigned char *smb_nt_passwd; /* Null if no password */
+ 
++        int tc_access;
+         uint16_t acct_ctrl;             /* account info (ACB_xxxx bit-mask) */
+         time_t pass_last_set_time;    /* password last set time */
+ };
+@@ -66,6 +67,7 @@ struct smbpasswd_privates
+ 
+ 	/* retrieve-once info */
+ 	const char *smbpasswd_file;
++	bool tc_airport;
+ };
+ 
+ enum pwf_access_type { PWF_READ, PWF_UPDATE, PWF_CREATE };
+@@ -387,7 +389,7 @@ static struct smb_passwd *getsmbfilepwent(struct smbpasswd_privates *smbpasswd_s
+ 	char  *user_name = smbpasswd_state->user_name;
+ 	unsigned char *smbpwd = smbpasswd_state->smbpwd;
+ 	unsigned char *smbntpwd = smbpasswd_state->smbntpwd;
+-	char linebuf[256];
++	char linebuf[1024];
+ 	unsigned char *p;
+ 	long uidval;
+ 	size_t linebuf_len;
+@@ -456,7 +458,7 @@ static struct smb_passwd *getsmbfilepwent(struct smbpasswd_privates *smbpasswd_s
+ 		 * LCT-(8 hex digits) is the time_t value of the last change time.
+ 		 */
+ 
+-		if (linebuf[0] == '#' || linebuf[0] == '\0') {
++		if ((linebuf[0] == '#' && !smbpasswd_state->tc_airport) || linebuf[0] == '\0') {
+ 			DEBUG(6, ("getsmbfilepwent: skipping comment or blank line\n"));
+ 			continue;
+ 		}
+@@ -466,6 +468,9 @@ static struct smb_passwd *getsmbfilepwent(struct smbpasswd_privates *smbpasswd_s
+ 			continue;
+ 		}
+ 
++		if ((size_t)PTR_DIFF(p, linebuf) >= sizeof(smbpasswd_state->user_name)) {
++			continue;
++		}
+ 		strncpy(user_name, linebuf, PTR_DIFF(p, linebuf));
+ 		user_name[PTR_DIFF(p, linebuf)] = '\0';
+ 
+@@ -601,6 +606,16 @@ static struct smb_passwd *getsmbfilepwent(struct smbpasswd_privates *smbpasswd_s
+ 			}
+ 		}
+ 
++		if (smbpasswd_state->tc_airport) {
++			const char *access = strstr(linebuf, ":TCA-");
++			/* Password and access are one atomically published record. Missing
++			 * or ambiguous permissions never become a read/write account. */
++			if (access == NULL || access[5] < '0' || access[5] > '2' ||
++			    access[6] != ':' || strstr(access + 1, ":TCA-") != NULL) {
++				continue;
++			}
++			pw_buf->tc_access = access[5] - '0';
++		}
+ 		return pw_buf;
+ 	}
+ 
+@@ -1265,9 +1280,16 @@ static bool build_sam_account(struct smbpasswd_privates *smbpasswd_state,
+ 		return False;
+ 	}
+ 
+-	/* verify the user account exists */
+-
+-	if ( !(pwfile = Get_Pwnam_alloc(NULL, pw_buf->smb_name )) ) {
++	/* AirPort users are SMB identities, not operating-system accounts.
++	 * The appliance needs root filesystem credentials, but each record keeps
++	 * its own NT hash and SID. Never add UID-0 aliases to /etc/passwd/SSH. */
++	if (smbpasswd_state->tc_airport &&
++	    (pw_buf->smb_userid < 65536 ||
++	     pw_buf->smb_userid > 0x2000ffff)) {
++		return false;
++	}
++	if ( !(pwfile = Get_Pwnam_alloc(NULL,
++		smbpasswd_state->tc_airport ? "root" : pw_buf->smb_name)) ) {
+ 		DEBUG(0,("build_sam_account: smbpasswd database is corrupt!  username %s with uid "
+ 		"%u is not in unix passwd database!\n", pw_buf->smb_name, pw_buf->smb_userid));
+ 			return False;
+@@ -1278,13 +1300,29 @@ static bool build_sam_account(struct smbpasswd_privates *smbpasswd_state,
+ 
+ 	TALLOC_FREE(pwfile);
+ 
++	if (smbpasswd_state->tc_airport) {
++		struct dom_sid readonly_sid;
++		uint32_t rid = algorithmic_pdb_uid_to_user_rid(pw_buf->smb_userid);
++		if (!pdb_set_username(sam_pass, pw_buf->smb_name, PDB_SET) ||
++		    !pdb_set_nt_username(sam_pass, pw_buf->smb_name, PDB_SET) ||
++		    !pdb_set_fullname(sam_pass, pw_buf->smb_name, PDB_SET) ||
++		    !pdb_set_user_sid_from_rid(sam_pass, rid, PDB_SET)) {
++			return false;
++		}
++		if (pw_buf->tc_access == 1) {
++			sid_compose(&readonly_sid, get_global_sam_sid(), TC_AIRPORT_READONLY_RID);
++			if (!pdb_set_group_sid(sam_pass, &readonly_sid, PDB_SET)) return false;
++		}
++	}
++
+ 	/* set remaining fields */
+ 
+ 	if (!pdb_set_nt_passwd (sam_pass, pw_buf->smb_nt_passwd, PDB_SET))
+ 		return False;
+ 	if (!pdb_set_lanman_passwd (sam_pass, pw_buf->smb_passwd, PDB_SET))
+ 		return False;
+-	pdb_set_acct_ctrl (sam_pass, pw_buf->acct_ctrl, PDB_SET);
++	pdb_set_acct_ctrl(sam_pass, pw_buf->acct_ctrl |
++		(smbpasswd_state->tc_airport && pw_buf->tc_access == 2 ? ACB_DISABLED : 0), PDB_SET);
+ 	pdb_set_pass_last_set_time (sam_pass, pw_buf->pass_last_set_time, PDB_SET);
+ 	pdb_set_pass_can_change_time (sam_pass, pw_buf->pass_last_set_time, PDB_SET);
+ 
+@@ -1321,6 +1359,26 @@ static NTSTATUS smbpasswd_getsampwnam(struct pdb_methods *my_methods,
+ 		return nt_status;
+ 	}
+ 
++	if (smbpasswd_state->tc_airport) {
++		bool found = false;
++		/* Samba's Unicode case comparison is authoritative. Reject ambiguous
++		 * names instead of accepting whichever password appeared first. */
++		while ((smb_pw = getsmbfilepwent(smbpasswd_state, fp)) != NULL) {
++			if (!strequal(smb_pw->smb_name, username)) {
++				continue;
++			}
++			if (found || sam_acct == NULL ||
++			    !build_sam_account(smbpasswd_state, sam_acct, smb_pw)) {
++				nt_status = NT_STATUS_LOGON_FAILURE;
++				break;
++			}
++			found = true;
++			nt_status = NT_STATUS_OK;
++		}
++		endsmbfilepwent(fp, &smbpasswd_state->pw_file_lock_depth);
++		return nt_status;
++	}
++
+ 	while ( ((smb_pw=getsmbfilepwent(smbpasswd_state, fp)) != NULL)&& (!strequal(smb_pw->smb_name, username)) )
+ 		/* do nothing....another loop */ ;
+ 
+@@ -1744,7 +1802,45 @@ static NTSTATUS pdb_init_smbpasswd( struct pdb_methods **pdb_method, const char
+ 	return NT_STATUS_OK;
+ }
+ 
++/* AirPort Utility owns these accounts. SMB password-change/admin RPCs must
++ * not write a competing password database in RAM. */
++static NTSTATUS tc_airport_no_write(struct pdb_methods *methods, struct samu *user)
++{
++	return NT_STATUS_NOT_SUPPORTED;
++}
++
++static NTSTATUS tc_airport_no_rename(struct pdb_methods *methods,
++				    struct samu *user, const char *name)
++{
++	return NT_STATUS_NOT_SUPPORTED;
++}
++
++static NTSTATUS pdb_init_tc_airport(struct pdb_methods **methods, const char *location)
++{
++	struct smbpasswd_privates *state;
++	NTSTATUS status = pdb_init_smbpasswd(methods, location);
++	if (!NT_STATUS_IS_OK(status)) {
++		return status;
++	}
++	state = (*methods)->private_data;
++	state->tc_airport = true;
++	(*methods)->name = "tc_airport";
++	(*methods)->add_sam_account = tc_airport_no_write;
++	(*methods)->update_sam_account = tc_airport_no_write;
++	(*methods)->delete_sam_account = tc_airport_no_write;
++	(*methods)->rename_sam_account = tc_airport_no_rename;
++	return NT_STATUS_OK;
++}
++
+ NTSTATUS pdb_smbpasswd_init(TALLOC_CTX *ctx)
+ {
+-	return smb_register_passdb(PASSDB_INTERFACE_VERSION, "smbpasswd", pdb_init_smbpasswd);
++	NTSTATUS status = smb_register_passdb(PASSDB_INTERFACE_VERSION,
++					      "smbpasswd", pdb_init_smbpasswd);
++	if (!NT_STATUS_IS_OK(status)) {
++		return status;
++	}
++	/* A distinct backend name makes older binaries fail closed rather than
++	 * silently ignore account identities or per-account read-only settings. */
++	return smb_register_passdb(PASSDB_INTERFACE_VERSION,
++				   "tc_airport", pdb_init_tc_airport);
+ }
+diff --git a/source3/smbd/share_access.c b/source3/smbd/share_access.c
+--- a/source3/smbd/share_access.c
++++ b/source3/smbd/share_access.c
+@@ -21,6 +21,8 @@
+ #include "smbd/smbd.h"
+ #include "smbd/globals.h"
+ #include "../libcli/security/security.h"
++#include "passdb.h"
++#include "auth.h"
+ 
+ /*
+  * Check whether a user is contained in the list provided.
+@@ -179,6 +181,16 @@ bool is_share_read_only_for_token(const char *username,
+ 		  "%s\n", lp_servicename(talloc_tos(), lp_sub, snum),
+ 		  read_only ? "read-only" : "read-write", username));
+ 
++	/* AirPort access was captured in the authenticated token from the same
++	 * record as its password. It does not depend on a stale read-list after
++	 * an account change, nor on the root filesystem credentials. */
++	const char *backend = lp_passdb_backend();
++	if (strncasecmp_m(backend, "tc_airport", 10) == 0 &&
++	    (backend[10] == ':' || backend[10] == '\0')) {
++		struct dom_sid readonly_sid;
++		sid_compose(&readonly_sid, get_global_sam_sid(), TC_AIRPORT_READONLY_RID);
++		if (nt_token_check_sid(&readonly_sid, token)) read_only = true;
++	}
+ 	*_read_only = read_only;
+ 	return true;
+ }

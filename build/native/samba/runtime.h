@@ -1,6 +1,7 @@
 #ifndef TC_SAMBA_RUNTIME_H
 #define TC_SAMBA_RUNTIME_H
 #include "../service/service.h"
+#include "../service/airport_account.h"
 #include "../storage/shares.h"
 
 #ifndef TC_RAM_ROOT
@@ -92,6 +93,8 @@ struct tc_runtime_config {
     int debug, discovery_debug, advertise_afp;
     unsigned mount_attempts, mount_timeout, mount_poll, ata_idle;
     char ata_standby[32];
+    char smb_airport_account[64];
+    struct airport_accounts smb_accounts;
 };
 int tc_runtime_config_load(struct tc_runtime_config *);
 /* Before every smbd start, raise sbmax/maxfiles without lowering larger

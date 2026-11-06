@@ -16,6 +16,7 @@ from timecapsulesmb.checks.doctor_steps import (
     _add_bonjour_results,
     _doctor_check_usb_printer,
     _build_doctor_target,
+    _doctor_select_smb_password,
     _doctor_add_bonjour_naming_info,
     _doctor_check_active_smb_conf,
     _doctor_check_admin_password,
@@ -173,6 +174,7 @@ def run_doctor_checks(
     smb_config = _doctor_check_active_smb_conf(target, remote, sink)
     if remote.remote_checks_enabled:
         _add_active_smb_conf_results(smb_config.text, smb_config.reason, sink.add)
+    target = _doctor_select_smb_password(target, remote, smb_config, sink)
     device_smb = _doctor_check_device_smb(inputs, target, remote, smb_config, processes, password_match, sink)
     # Everything below checks the device from this computer over the network;
     # what the device already reported down is not counted against it.
