@@ -12,6 +12,7 @@ struct PendingConfirmation: Identifiable {
     /// The operation cannot help (a failing disk's warning): Cancel is the
     /// default button.
     let prefersCancel: Bool
+    var isDestructive: Bool { ["wipe-disk", "flash", "uninstall"].contains(operation) }
 
     init?(
         confirmationEvent event: BackendEvent,

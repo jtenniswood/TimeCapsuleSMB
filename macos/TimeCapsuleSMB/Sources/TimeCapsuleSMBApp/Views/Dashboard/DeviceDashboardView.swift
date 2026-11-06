@@ -1,21 +1,5 @@
 import SwiftUI
 
-private enum DeviceDashboardLayout {
-    static let actionIconSize: CGFloat = 16
-}
-
-private extension View {
-    /// The tinted box each notice above the dashboard's content sits in.
-    func dashboardNotice(_ tint: Color) -> some View {
-        padding(.vertical, 10)
-            .padding(.leading, 14)
-            .padding(.trailing, 18)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(tint.opacity(0.12))
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-    }
-}
-
 struct DeviceDashboardView: View {
     let profile: DeviceProfile
     @ObservedObject var session: DeviceDashboardSession
@@ -30,99 +14,27 @@ struct DeviceDashboardView: View {
     let showDiagnostics: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Picker(L10n.string("simple.device_settings"), selection: $session.selectedTab) {
-                ForEach(DeviceDashboardTab.allCases) { tab in
-                    Text(tab.title).tag(tab)
+        UtilityTabs(tabs: DeviceDashboardTab.allCases.map { (id: $0, title: $0.title) }, selection: $session.selectedTab) { tab in
+                VStack(alignment: .leading, spacing: 16) {
+                    if justSaved { DashboardSavedNoticeView(deviceName: profile.title) }
+                    if let notice = session.staleEndpointNotice(for: profile) {
+                        DashboardStaleEndpointNoticeView(notice: notice) {
+                            session.updateConfiguredAddressFromDiscovery(profile: profile)
+                        }
+                    }
+                    if let notice = session.sshAccessNotice(for: profile) {
+                        DashboardSSHAccessNoticeView(notice: notice,
+                                                   open: { session.openSSHAccess(profile: profile) },
+                                                   enable: { session.enableSSHAccess(profile: profile) })
+                    }
+                    tabContent(tab)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 }
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .frame(maxWidth: 680)
-            .padding(.horizontal, 24)
-            .padding(.vertical, 18)
-
-            Divider()
-
-            if justSaved {
-                DashboardSavedNoticeView(deviceName: profile.title)
-                    .padding(.horizontal)
-                    .padding(.top)
-            }
-
-            if let notice = session.staleEndpointNotice(for: profile) {
-                DashboardStaleEndpointNoticeView(
-                    notice: notice,
-                    update: {
-                        session.updateConfiguredAddressFromDiscovery(profile: profile)
-                    }
-                )
-                .padding(.horizontal)
-                .padding(.top)
-            }
-
-            if let notice = session.sshAccessNotice(for: profile) {
-                DashboardSSHAccessNoticeView(
-                    notice: notice,
-                    open: {
-                        session.openSSHAccess(profile: profile)
-                    },
-                    enable: {
-                        session.enableSSHAccess(profile: profile)
-                    }
-                )
-                .padding(.horizontal)
-                .padding(.top)
-            }
-
-            Group {
-                switch session.selectedTab {
-                case .overview:
-                    OverviewTab(profile: profile, session: session, reachabilityStore: reachabilityStore)
-                case .install:
-                    InstallTab(
-                        profile: profile,
-                        session: session,
-                        operationCoordinator: operationCoordinator,
-                        showDiagnostics: showDiagnostics,
-                        diagnosticsText: diagnosticsText
-                    )
-                case .checkup:
-                    CheckupTab(
-                        profile: profile,
-                        session: session,
-                        operationCoordinator: operationCoordinator,
-                        appSettings: appSettingsStore.settings,
-                        showDiagnostics: showDiagnostics,
-                        diagnosticsText: diagnosticsText
-                    )
-                case .maintenance:
-                    MaintenanceTab(
-                        profile: profile,
-                        session: session,
-                        showDiagnostics: showDiagnostics,
-                        diagnosticsText: diagnosticsText
-                    )
-                case .settings:
-                    ScrollView {
-                        SettingsTab(
-                            profile: profile,
-                            session: session,
-                            appStore: appStore,
-                            backend: backend
-                        )
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                }
-            }
-            .padding(24)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding(UtilityStyle.panePadding)
         }
-        .background(Color(nsColor: .controlBackgroundColor))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(.quaternary))
-        .padding(.horizontal, 24)
-        .padding(.top, 12)
+        .font(UtilityStyle.body)
+        .padding(.horizontal, 20)
+        .padding(.top, 16)
         // Keyed by device: switching straight from one device to another keeps
         // this view, so onAppear would not run for the second.
         .task(id: profile.id) {
@@ -136,6 +48,24 @@ struct DeviceDashboardView: View {
             Button(L10n.string("action.ok"), role: .cancel) {}
         } message: {
             Text(L10n.string("flash.manual_power_cycle.message"))
+        }
+    }
+
+    @ViewBuilder
+    private func tabContent(_ tab: DeviceDashboardTab) -> some View {
+        switch tab {
+        case .overview:
+            OverviewTab(profile: profile, session: session, reachabilityStore: reachabilityStore)
+        case .install:
+            InstallTab(profile: profile, session: session, operationCoordinator: operationCoordinator,
+                       showDiagnostics: showDiagnostics, diagnosticsText: diagnosticsText)
+        case .checkup:
+            CheckupTab(profile: profile, session: session, operationCoordinator: operationCoordinator,
+                       appSettings: appSettingsStore.settings, showDiagnostics: showDiagnostics, diagnosticsText: diagnosticsText)
+        case .maintenance:
+            MaintenanceTab(profile: profile, session: session, showDiagnostics: showDiagnostics, diagnosticsText: diagnosticsText)
+        case .settings:
+            ScrollView { SettingsTab(profile: profile, session: session, appStore: appStore, backend: backend) }
         }
     }
 
@@ -161,47 +91,22 @@ private struct DashboardSSHAccessNoticeView: View {
     let enable: () -> Void
 
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "key")
-                .foregroundStyle(.orange)
-                .frame(width: DeviceDashboardLayout.actionIconSize, height: DeviceDashboardLayout.actionIconSize)
-            VStack(alignment: .leading, spacing: 6) {
-                Text(L10n.format("ssh_access_notice.title", notice.deviceName))
-                    .font(.body.weight(.medium))
-                Text(L10n.format("ssh_access_notice.message", notice.host))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                HStack {
-                    Button {
-                        open()
-                    } label: {
-                        Label(L10n.string("ssh_access_notice.open_action"), systemImage: "wrench.and.screwdriver")
-                    }
-                    Button {
-                        enable()
-                    } label: {
-                        Label(L10n.string("ssh_access_notice.enable_action"), systemImage: "key")
-                    }
-                }
-                .controlSize(.small)
+        UtilityNotice {
+            Text(L10n.string("utility.connection.allow_message"))
+            Button(L10n.string("utility.connection.allow"), action: enable)
+            DashboardDisclosureSection(title: L10n.string("utility.details")) {
+                Text(L10n.format("ssh_access_notice.message", notice.host)).font(UtilityStyle.secondary).foregroundStyle(.secondary)
+                Button(L10n.string("ssh_access_notice.open_action"), action: open)
             }
         }
-        .dashboardNotice(.orange)
     }
 }
 
 private struct DashboardSavedNoticeView: View {
     let deviceName: String
-
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "checkmark.circle")
-                .foregroundStyle(.green)
-                .frame(width: DeviceDashboardLayout.actionIconSize, height: DeviceDashboardLayout.actionIconSize)
-            Text(L10n.format("add_device.saved", deviceName))
-                .font(.body.weight(.medium))
-        }
-        .dashboardNotice(.green)
+        Label(L10n.format("add_device.saved", deviceName), systemImage: "checkmark.circle")
+            .font(UtilityStyle.secondary).foregroundStyle(.secondary)
     }
 }
 
@@ -210,29 +115,13 @@ private struct DashboardStaleEndpointNoticeView: View {
     let update: () -> Void
 
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "network")
-                .foregroundStyle(.orange)
-                .frame(width: DeviceDashboardLayout.actionIconSize, height: DeviceDashboardLayout.actionIconSize)
-            VStack(alignment: .leading, spacing: 6) {
-                Text(L10n.format("stale_endpoint.title", notice.deviceName, notice.currentHost))
-                    .font(.body.weight(.medium))
+        UtilityNotice {
+            Text(L10n.string("utility.connection.address_changed"))
+            Button(L10n.string("utility.connection.reconnect"), action: update)
+            DashboardDisclosureSection(title: L10n.string("utility.details")) {
                 Text(L10n.format("stale_endpoint.message", notice.configuredHost, notice.currentHost))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                if notice.matchedByName {
-                    Text(L10n.format("stale_endpoint.name_match", notice.discoveredDevice.name))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Button {
-                    update()
-                } label: {
-                    Label(L10n.string("stale_endpoint.update_action"), systemImage: "arrow.triangle.2.circlepath")
-                }
-                .controlSize(.small)
+                if notice.matchedByName { Text(L10n.format("stale_endpoint.name_match", notice.discoveredDevice.name)) }
             }
         }
-        .dashboardNotice(.orange)
     }
 }

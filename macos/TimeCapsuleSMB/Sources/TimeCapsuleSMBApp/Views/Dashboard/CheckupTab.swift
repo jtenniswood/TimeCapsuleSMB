@@ -83,17 +83,17 @@ private struct CheckupHeaderView: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline) {
                 Text(L10n.string("simple.tab.connection"))
-                    .font(.title2.weight(.semibold))
+                    .font(UtilityStyle.title)
                 Spacer()
                 Text(presentation.stateTitle)
-                    .font(.caption.weight(.medium))
+                    .font(UtilityStyle.secondary.weight(.medium))
                     .padding(.horizontal, 8)
                     .padding(.vertical, 5)
                     .background(.quaternary)
                     .clipShape(Capsule())
             }
             Text(presentation.headline)
-                .font(.callout)
+                .font(UtilityStyle.body)
                 .foregroundStyle(.secondary)
         }
     }
@@ -111,17 +111,17 @@ private struct CheckupDomainView: View {
                         .accessibilityLabel(domain.status.title)
                     Text(domain.title)
                 }
-                .font(.headline)
+                .font(UtilityStyle.heading)
                 Spacer()
                 Text(domain.status.title)
-                    .font(.caption)
+                    .font(UtilityStyle.secondary)
                     .foregroundStyle(.secondary)
             }
             ForEach(domain.attentionRows) { row in
                 checkRow(row)
             }
             DashboardDisclosureSection(title: L10n.string("simple.show_details")) {
-                Text(domain.countSummary).font(.caption).foregroundStyle(.secondary)
+                Text(domain.countSummary).font(UtilityStyle.secondary).foregroundStyle(.secondary)
                 ForEach(domain.rows) { row in checkRow(row) }
             }
 
@@ -137,7 +137,7 @@ private struct CheckupDomainView: View {
                 .foregroundStyle(iconColor(for: row.status))
                 .accessibilityLabel(row.status.title)
                 .frame(width: 16)
-            Text(row.message).font(.callout).fixedSize(horizontal: false, vertical: true)
+            Text(row.message).font(UtilityStyle.body).fixedSize(horizontal: false, vertical: true)
         }
     }
 

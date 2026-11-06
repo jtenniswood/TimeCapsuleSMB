@@ -27,7 +27,6 @@ struct DeviceAdvancedSettingsFields: View {
                 }
             }
             group("settings.group.sharing") {
-                note("settings.note.nbns")
                 option("toggle.enable_rsync", note: "settings.note.rsync", isOn: $rsyncEnabled)
                 option("toggle.smb_browse_compatibility", note: "settings.note.browsing", isOn: $smbBrowseCompatibility)
                 option("toggle.mdns_advertise_afp", note: "settings.note.afp", isOn: $mdnsAdvertiseAFP)
@@ -60,39 +59,27 @@ struct DeviceAdvancedSettingsFields: View {
 
     private func group<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(L10n.string(title)).font(.headline)
+            Text(L10n.string(title)).font(UtilityStyle.heading)
             VStack(alignment: .leading, spacing: 10, content: content)
                 .padding(.leading, 14)
         }
     }
 
-    private func note(_ key: String) -> some View {
-        Text(L10n.string(key))
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            .fixedSize(horizontal: false, vertical: true)
-    }
-
     private func option(_ title: String, note key: String, isOn: Binding<Bool>) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Toggle(L10n.string(title), isOn: isOn)
-                .toggleStyle(.checkbox)
-            note(key).padding(.leading, 20)
-        }
+        Toggle(L10n.string(title), isOn: isOn)
+            .toggleStyle(.checkbox)
+            .help(L10n.string(key))
     }
 
     private func timing(_ title: String, note key: String, text: Binding<String>, placeholder: String = "") -> some View {
         GridRow(alignment: .firstTextBaseline) {
-            Text(L10n.string(title)).foregroundStyle(.secondary)
-            VStack(alignment: .leading, spacing: 3) {
-                HStack(spacing: 6) {
-                    TextField(placeholder, text: text)
-                        .accessibilityLabel(L10n.string(title))
-                        .frame(width: 110)
-                    Text(L10n.string("settings.seconds")).foregroundStyle(.secondary)
-                }
-                note(key)
+            Text(L10n.string(title)).gridColumnAlignment(.trailing)
+            HStack(spacing: 8) {
+                TextField(placeholder, text: text)
+                    .accessibilityLabel(L10n.string(title)).frame(width: 100)
+                Text(L10n.string("settings.seconds")).foregroundStyle(.secondary)
             }
+            .help(L10n.string(key))
         }
     }
 

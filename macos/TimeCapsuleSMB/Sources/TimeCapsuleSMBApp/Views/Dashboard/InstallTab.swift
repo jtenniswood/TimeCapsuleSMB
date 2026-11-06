@@ -35,7 +35,7 @@ struct InstallTab: View {
 
                     ForEach(presentation.notices, id: \.self) { notice in
                         Label(notice, systemImage: "exclamationmark.triangle")
-                            .font(.caption)
+                            .font(UtilityStyle.secondary)
                             .foregroundStyle(.yellow)
                     }
 
@@ -99,11 +99,11 @@ private struct InstallHeaderView: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(alignment: .firstTextBaseline) {
                 Text(L10n.string("simple.sharing.title"))
-                    .font(.title2.weight(.semibold))
+                    .font(UtilityStyle.title)
                 Spacer()
                 if !isIdle {
                     Text(presentation.stateTitle)
-                        .font(.caption.weight(.medium))
+                        .font(UtilityStyle.secondary.weight(.medium))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 5)
                         .background(.quaternary)
@@ -112,7 +112,7 @@ private struct InstallHeaderView: View {
             }
             if !isIdle {
                 Text(presentation.statusMessage)
-                    .font(.callout)
+                    .font(UtilityStyle.body)
                     .foregroundStyle(.secondary)
             }
         }
@@ -159,12 +159,12 @@ private struct InstallCompletionView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(presentation.title)
-                .font(.headline)
+                .font(UtilityStyle.heading)
             SummaryGrid(rows: presentation.rows.map { ($0.label, $0.value) })
             ForEach(presentation.warnings) { warning in
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Label(warning.text, systemImage: "exclamationmark.triangle")
-                        .font(.caption)
+                        .font(UtilityStyle.secondary)
                         .foregroundStyle(.yellow)
                     if let action = warning.action {
                         Button {
@@ -204,7 +204,7 @@ private struct InstallExecutionOptionsView: View {
                 }
                 GridRow {
                     Text(L10n.string("install.advanced_options.no_wait_note"))
-                        .font(.caption)
+                        .font(UtilityStyle.secondary)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                         .gridCellColumns(2)
@@ -215,7 +215,7 @@ private struct InstallExecutionOptionsView: View {
                 }
                 GridRow {
                     Text(L10n.string("install.advanced_options.rsync_note"))
-                        .font(.caption)
+                        .font(UtilityStyle.secondary)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                         .gridCellColumns(2)

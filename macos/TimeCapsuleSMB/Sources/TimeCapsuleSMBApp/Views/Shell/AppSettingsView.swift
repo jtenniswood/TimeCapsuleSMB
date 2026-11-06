@@ -5,191 +5,106 @@ struct AppSettingsView: View {
     @ObservedObject var appSettingsStore: AppSettingsStore
     @ObservedObject var editor: AppSettingsEditorStore
     @ObservedObject var updater: AppUpdater
-
-    private let contentWidth: CGFloat = 760
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
-                header
-                    .frame(maxWidth: contentWidth, alignment: .leading)
-
-                SettingsFormSection(title: L10n.string("app_settings.section.general"), contentWidth: contentWidth) {
-                    SettingsFormRow(title: L10n.string("app_settings.language")) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Picker("", selection: $editor.draft.language) {
-                                ForEach(AppLanguage.allCases) { language in
-                                    Text(language.title)
-                                        .tag(language)
-                                }
-                            }
-                            .labelsHidden()
-                            .frame(width: 220, alignment: .leading)
-                            .id("language-\(savedLanguageIdentity)")
-                            Text(L10n.string("app_settings.language_relaunch_notice"))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                    SettingsFormRow(title: L10n.string("app_settings.appearance")) {
-                        Picker("", selection: $editor.draft.appearance) {
-                            ForEach(AppAppearance.allCases) { appearance in
-                                Text(appearance.title)
-                                    .tag(appearance)
-                            }
-                        }
-                        .labelsHidden()
-                        .frame(width: 220, alignment: .leading)
-                        .id("appearance-\(savedLanguageIdentity)")
-                    }
-                }
-
-                DashboardDisclosureSection(title: L10n.string("profile_editor.advanced")) {
-                    SettingsFormSection(title: L10n.string("app_settings.section.defaults"), contentWidth: contentWidth) {
-                        SettingsFormRow(title: L10n.string("app_settings.default_bonjour_timeout")) {
-                            TextField("", text: $editor.draft.defaultBonjourTimeoutSeconds)
-                                .frame(width: 120)
-                        }
-                        DeviceAdvancedSettingsFields(
-                            rsyncEnabled: $editor.draft.rsyncEnabled,
-                            internalShareUseDiskRoot: $editor.draft.internalShareUseDiskRoot,
-                            smbBrowseCompatibility: $editor.draft.smbBrowseCompatibility,
-                            mdnsAdvertiseAFP: $editor.draft.mdnsAdvertiseAFP,
-                            anyProtocol: $editor.draft.anyProtocol,
-                            requireSMBSigning: $editor.draft.requireSMBSigning,
-                            requireSMBEncryption: $editor.draft.requireSMBEncryption,
-                            disableSMBEncryption: $editor.draft.disableSMBEncryption,
-                            fruitMetadataNetatalk: $editor.draft.fruitMetadataNetatalk,
-                            vfsAIOForkEnabled: $editor.draft.vfsAIOForkEnabled,
-                            debugLogging: $editor.draft.debugLogging,
-                            mountWaitSeconds: $editor.draft.mountWaitSeconds,
-                            ataIdleSeconds: $editor.draft.ataIdleSeconds,
-                            ataStandby: $editor.draft.ataStandby
-                        )
-                    }
-
-                    SettingsFormSection(title: L10n.string("app_settings.section.diagnostics"), contentWidth: contentWidth) {
-                        SettingsFormRow(title: L10n.string("app_settings.helper_path")) {
-                            TextField(L10n.string("value.auto"), text: $editor.draft.helperPathOverride)
-                                .frame(maxWidth: 420)
-                        }
-                        Toggle(L10n.string("app_settings.show_raw_events"), isOn: $editor.draft.showRawBackendEventsByDefault)
-                    }
-
-                }
-
-                // Sparkle keeps this setting itself, so it applies at once
-                // rather than with Save.
-                SettingsFormSection(title: L10n.string("app_settings.section.updates"), contentWidth: contentWidth) {
-                    Toggle(L10n.string("app_settings.automatic_updates"), isOn: $updater.automaticallyChecksForUpdates)
-                }
-
-                SettingsFormSection(title: L10n.string("app_settings.section.privacy"), contentWidth: contentWidth) {
-                    Toggle(isOn: $editor.draft.telemetryEnabled) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(L10n.string("app_settings.telemetry_enabled"))
-                            Text(L10n.string("app_settings.telemetry_deploy_notice"))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                }
-
-                SettingsFormSection(title: L10n.string("app_settings.section.time_machine"), contentWidth: contentWidth) {
-                    Toggle(L10n.string("app_settings.time_machine_warnings"), isOn: $editor.draft.timeMachineWarningsEnabled)
-                }
-
-                if let message = editor.validationError ?? editor.errorMessage ?? appSettingsStore.error?.localizedDescription {
-                    Text(message)
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                        .frame(maxWidth: contentWidth, alignment: .leading)
-                }
-
-                actionBar
-                    .frame(maxWidth: contentWidth, alignment: .leading)
-            }
-            .padding()
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    }
-
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(L10n.string("app_settings.title"))
-                .font(.title2.weight(.semibold))
-            Text(L10n.string("app_settings.subtitle"))
-                .foregroundStyle(.secondary)
-        }
-    }
-
-    private var savedLanguageIdentity: String {
-        appSettingsStore.settings.language.id
-    }
-
-    private var actionBar: some View {
-        HStack(spacing: 10) {
-            Button {
-                Task { await editor.save(appStore: appStore) }
-            } label: {
-                Label(L10n.string("app_settings.save"), systemImage: "checkmark.circle")
-            }
-            .buttonStyle(.borderedProminent)
-            .disabled(!editor.canSave)
-
-            Button(L10n.string("app_settings.reset_saved")) {
-                editor.resetDraft()
-            }
-            .disabled(editor.isSaving || !editor.hasChanges)
-
-            Button(L10n.string("app_settings.restore_defaults")) {
-                editor.restoreDefaultsDraft()
-            }
-            .disabled(editor.isSaving)
-
-            if editor.isSaving {
-                ProgressView()
-                    .controlSize(.small)
-            }
-        }
-    }
-}
-
-private struct SettingsFormSection<Content: View>: View {
-    let title: String
-    let contentWidth: CGFloat
-    @ViewBuilder let content: () -> Content
+    @Environment(\.dismiss) private var dismiss
+    @State private var selectedPane = 0
+    @State private var automaticUpdates = true
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            VStack(alignment: .leading, spacing: 10) {
-                Text(title)
-                    .font(.headline)
-                VStack(alignment: .leading, spacing: 8) {
-                    content()
+        VStack(spacing: 0) {
+            UtilityTabs(tabs: [(id: 0, title: L10n.string("app_settings.section.general")),
+                               (id: 1, title: L10n.string("profile_editor.advanced"))], selection: $selectedPane) { pane in
+                if pane == 0 { general } else { advanced }
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 20)
+            if let message = editor.validationError ?? editor.errorMessage ?? appSettingsStore.error?.localizedDescription {
+                Text(message).font(UtilityStyle.secondary).foregroundStyle(.red).padding(.horizontal, 24)
+            }
+            UtilityFooter {
+                if editor.isSaving { ProgressView().controlSize(.small) }
+                Spacer()
+                Button(L10n.string("action.cancel")) { editor.resetDraft(); dismiss() }
+                    .keyboardShortcut(.cancelAction).disabled(editor.isSaving)
+                Button(L10n.string("utility.save")) {
+                    Task { @MainActor in
+                        await editor.save(appStore: appStore)
+                        if editor.errorMessage == nil && editor.validationError == nil {
+                            updater.automaticallyChecksForUpdates = automaticUpdates
+                            dismiss()
+                        }
+                    }
+                }
+                .keyboardShortcut(.defaultAction)
+                .disabled(editor.isSaving || editor.validationError != nil || (!editor.hasChanges && automaticUpdates == updater.automaticallyChecksForUpdates))
+            }
+        }
+        .font(UtilityStyle.body)
+        .onAppear {
+            editor.sync(settings: appSettingsStore.settings)
+            automaticUpdates = updater.automaticallyChecksForUpdates
+        }
+        .onDisappear { editor.resetDraft() }
+        .onChange(of: appSettingsStore.settings) { _, settings in editor.sync(settings: settings) }
+    }
+
+    private var general: some View {
+        UtilityPane {
+            VStack(spacing: 12) {
+                UtilityFormRow(title: L10n.string("app_settings.language")) {
+                    Picker("", selection: $editor.draft.language) {
+                        ForEach(AppLanguage.allCases) { Text($0.title).tag($0) }
+                    }
+                    .labelsHidden().frame(width: 220)
+                    .accessibilityLabel(L10n.string("app_settings.language"))
+                    .help(L10n.string("app_settings.language_relaunch_notice"))
+                    .id("language-\(appSettingsStore.settings.language.id)")
+                }
+                UtilityFormRow(title: L10n.string("app_settings.appearance")) {
+                    Picker("", selection: $editor.draft.appearance) {
+                        ForEach(AppAppearance.allCases) { Text($0.title).tag($0) }
+                    }
+                    .labelsHidden().frame(width: 220).accessibilityLabel(L10n.string("app_settings.appearance"))
                 }
             }
-            .frame(maxWidth: contentWidth, alignment: .leading)
-            Divider()
+            VStack(alignment: .leading, spacing: 12) {
+                Toggle(L10n.string("app_settings.automatic_updates"), isOn: $automaticUpdates)
+                Toggle(L10n.string("utility.settings.time_machine"), isOn: $editor.draft.timeMachineWarningsEnabled)
+                    .help(L10n.string("app_settings.time_machine_warnings"))
+                Toggle(L10n.string("utility.settings.usage"), isOn: $editor.draft.telemetryEnabled)
+                    .help(L10n.string("app_settings.telemetry_deploy_notice"))
+            }
+            .padding(.leading, 172)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
-}
 
-private struct SettingsFormRow<Content: View>: View {
-    let title: String
-    @ViewBuilder let content: () -> Content
-
-    var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 16) {
-            Text(title)
-                .frame(width: 220, alignment: .leading)
-                .foregroundStyle(.secondary)
-            content()
-            Spacer(minLength: 0)
+    private var advanced: some View {
+        UtilityPane {
+            DashboardDisclosureSection(title: L10n.string("app_settings.section.defaults")) {
+                DeviceAdvancedSettingsFields(
+                    rsyncEnabled: $editor.draft.rsyncEnabled,
+                    internalShareUseDiskRoot: $editor.draft.internalShareUseDiskRoot,
+                    smbBrowseCompatibility: $editor.draft.smbBrowseCompatibility,
+                    mdnsAdvertiseAFP: $editor.draft.mdnsAdvertiseAFP,
+                    anyProtocol: $editor.draft.anyProtocol,
+                    requireSMBSigning: $editor.draft.requireSMBSigning,
+                    requireSMBEncryption: $editor.draft.requireSMBEncryption,
+                    disableSMBEncryption: $editor.draft.disableSMBEncryption,
+                    fruitMetadataNetatalk: $editor.draft.fruitMetadataNetatalk,
+                    vfsAIOForkEnabled: $editor.draft.vfsAIOForkEnabled,
+                    debugLogging: $editor.draft.debugLogging,
+                    mountWaitSeconds: $editor.draft.mountWaitSeconds,
+                    ataIdleSeconds: $editor.draft.ataIdleSeconds,
+                    ataStandby: $editor.draft.ataStandby
+                )
+            }
+            UtilityFormRow(title: L10n.string("app_settings.default_bonjour_timeout")) {
+                TextField("", text: $editor.draft.defaultBonjourTimeoutSeconds).frame(width: 100)
+            }
+            UtilityFormRow(title: L10n.string("app_settings.helper_path")) {
+                TextField(L10n.string("value.auto"), text: $editor.draft.helperPathOverride)
+            }
+            Toggle(L10n.string("app_settings.show_raw_events"), isOn: $editor.draft.showRawBackendEventsByDefault)
+            Button(L10n.string("app_settings.restore_defaults")) { editor.restoreDefaultsDraft() }.disabled(editor.isSaving)
         }
     }
 }

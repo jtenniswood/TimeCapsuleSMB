@@ -19,7 +19,7 @@ struct DeviceSidebarRow: View {
                             .lineLimit(1)
                     }
                 }
-                .font(.caption2)
+                .font(UtilityStyle.secondary)
                 .foregroundStyle(.secondary)
             }
             Spacer(minLength: 6)

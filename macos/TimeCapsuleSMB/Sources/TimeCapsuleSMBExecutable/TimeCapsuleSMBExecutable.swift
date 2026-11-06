@@ -10,8 +10,10 @@ struct TimeCapsuleSMBExecutable: App {
     // StateObject read before SwiftUI installs it is a throwaway copy that
     // would leave the installed updater unstarted. The App struct is made once.
     private let updater = AppUpdater()
+    private let application: ApplicationModel
 
     init() {
+        application = ApplicationModel(updater: updater)
         if CommandLine.arguments.contains("--validate-resources") {
             if let error = AppLaunchResourceValidation.validate() {
                 fputs("\(error)\n", stderr)
@@ -30,14 +32,19 @@ struct TimeCapsuleSMBExecutable: App {
     }
 
     var body: some Scene {
-        WindowGroup {
-            ContentView(updater: updater)
+        Window("TimeCapsuleSMB", id: "main") {
+            ContentView(application: application)
         }
         .defaultSize(width: 900, height: 660)
         .commands {
+            ApplicationCommands(application: application)
             CommandGroup(after: .appInfo) {
                 CheckForUpdatesCommand(updater: updater)
             }
         }
+        Settings {
+            AppSettingsWindow(application: application)
+        }
+        .windowResizability(.contentSize)
     }
 }

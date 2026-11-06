@@ -167,7 +167,7 @@ func accessibleElements(in host: NSView) -> [AccessibleElement] {
 @discardableResult
 func pressAccessibleControl(in host: NSView, labeled label: String) -> Bool {
     withAccessibilityTree(of: host) { nodes in
-        guard let node = nodes.first(where: { ($0.accessibilityLabel?() ?? nil) == label }) else { return false }
+        guard let node = nodes.first(where: { accessibleText(of: $0) == label }) else { return false }
         return node.accessibilityPerformPress?() ?? false
     }
 }
@@ -222,7 +222,8 @@ private func accessibleText(of node: AnyObject) -> String? {
         return label
     }
     let value = (node.accessibilityValue as (() -> Any?)?)?() ?? nil
-    return (value as? String).flatMap { $0.isEmpty ? nil : $0 }
+    if let value = value as? String, !value.isEmpty { return value }
+    return (node.accessibilityTitle?() ?? nil).flatMap { $0.isEmpty ? nil : $0 }
 }
 
 private enum ViewRenderError: Error {

@@ -110,7 +110,7 @@ final class ContentViewSmokeTests: XCTestCase {
         try await waitUntilStoreState { checked() == ["office", "den"] }
         // Away and back to the same device: only the page reappearing checks again.
         fixture.appStore.navigate(to: .allDevices)
-        let allDevicesTitle = L10n.string("simple.select_device")
+        let allDevicesTitle = L10n.string("simple.other_devices")
         try await waitUntilStoreState {
             accessibleElements(in: host.contentView).contains { $0.text == allDevicesTitle }
         }
@@ -150,7 +150,7 @@ final class ContentViewSmokeTests: XCTestCase {
         XCTAssertEqual(runs(), ["set-ssh:office", "reachability:office", "set-ssh:den", "reachability:den"])
         // Back within a minute: SSH again, reachability not.
         fixture.appStore.navigate(to: .allDevices)
-        let allDevicesTitle = L10n.string("simple.select_device")
+        let allDevicesTitle = L10n.string("simple.other_devices")
         try await waitUntilStoreState { accessibleElements(in: host.contentView).contains { $0.text == allDevicesTitle } }
         await runQueuedStoreUpdates()
         fixture.appStore.navigate(to: .device(den.id))

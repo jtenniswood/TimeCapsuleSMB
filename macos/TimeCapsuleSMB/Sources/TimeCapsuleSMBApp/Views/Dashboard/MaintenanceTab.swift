@@ -14,12 +14,12 @@ struct MaintenanceTab: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 Text(L10n.string("simple.tab.disks"))
-                    .font(.title2.weight(.semibold))
+                    .font(UtilityStyle.title)
 
                 DiskHealthView(report: profile.lastCheckup?.diskHealth, checkedAt: profile.lastCheckup?.checkedAt)
                 HStack {
                     Text(L10n.string("simple.disk.refresh_message"))
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(UtilityStyle.secondary).foregroundStyle(.secondary)
                     Spacer()
                     Button(L10n.string("simple.disk.refresh")) {
                         session.runCheckup(profile: profile)
@@ -104,18 +104,18 @@ private struct MaintenanceCardsView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
                             Text(card.title)
-                                .font(.headline)
+                                .font(UtilityStyle.heading)
                             Spacer()
                             Image(systemName: card.isSelected ? "checkmark.circle.fill" : "circle")
                         }
                         // No line limit: longer translations need more lines
                         // in four narrow columns than a fixed limit allows.
                         Text(card.subtitle)
-                            .font(.caption)
+                            .font(UtilityStyle.secondary)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                         Text(card.stateTitle)
-                            .font(.caption.weight(.medium))
+                            .font(UtilityStyle.secondary.weight(.medium))
                             .foregroundStyle(.secondary)
                     }
                     .background {
@@ -156,14 +156,14 @@ private struct MaintenanceDetailView: View {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(presentation.title)
-                        .font(.headline)
+                        .font(UtilityStyle.heading)
                     Text(presentation.subtitle)
-                        .font(.caption)
+                        .font(UtilityStyle.secondary)
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
                 Text(presentation.stateTitle)
-                    .font(.caption.weight(.medium))
+                    .font(UtilityStyle.secondary.weight(.medium))
                     .padding(.horizontal, 8)
                     .padding(.vertical, 5)
                     .background(.quaternary)
@@ -171,10 +171,10 @@ private struct MaintenanceDetailView: View {
             }
 
             Label(presentation.risk, systemImage: "exclamationmark.triangle")
-                .font(.caption)
+                .font(UtilityStyle.secondary)
                 .foregroundStyle(.secondary)
             AnimatedProgressText(message: presentation.statusMessage, isRunning: presentation.isRunning)
-                .font(.callout)
+                .font(UtilityStyle.body)
                 .foregroundStyle(.secondary)
 
             ForEach(presentation.warnings, id: \.self) { warning in
@@ -189,7 +189,7 @@ private struct MaintenanceDetailView: View {
                     BootHookFirmwareOptionsView(store: store.bootHookStore, chooseFirmwareTemplate: chooseFirmwareTemplate)
                 } label: {
                     Label(L10n.string("flash.options.apple_firmware"), systemImage: "gearshape")
-                        .font(.subheadline.weight(.medium))
+                        .font(UtilityStyle.heading)
                 }
             case .sshAccess, .activate, .uninstall, .wipeDisk:
                 EmptyView()
@@ -271,7 +271,7 @@ private struct FsckTargetListView: View {
         VStack(alignment: .leading, spacing: 6) {
             if store.fsckTargets.isEmpty {
                 Text(L10n.string("maintenance.fsck.no_volumes"))
-                    .font(.caption)
+                    .font(UtilityStyle.secondary)
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(store.fsckTargets) { target in
@@ -297,7 +297,7 @@ private struct MaintenancePlanView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(presentation.title)
-                .font(.headline)
+                .font(UtilityStyle.heading)
             SummaryGrid(rows: presentation.rows.map { ($0.label, $0.value) })
             ForEach(presentation.warnings, id: \.self) { warning in
                 MaintenanceWarningLabel(text: warning)
@@ -372,7 +372,7 @@ private struct MaintenanceWarningLabel: View {
             Image(systemName: "exclamationmark.triangle")
                 .foregroundStyle(.orange)
         }
-        .font(.caption)
+        .font(UtilityStyle.secondary)
     }
 }
 
@@ -391,7 +391,7 @@ private struct BootHookRowsView: View {
                         .multilineTextAlignment(.trailing)
                         .textSelection(.enabled)
                 }
-                .font(.caption)
+                .font(UtilityStyle.secondary)
             }
         }
     }
@@ -426,7 +426,7 @@ private struct MaintenanceCompletionView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(presentation.title)
-                .font(.headline)
+                .font(UtilityStyle.heading)
             SummaryGrid(rows: presentation.rows.map { ($0.label, $0.value) })
         }
     }

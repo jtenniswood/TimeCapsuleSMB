@@ -21,14 +21,14 @@ struct BlockingProgressOverlay<Progress: BlockingProgressPresenting>: View {
                 ProgressView()
                     .controlSize(.large)
                 Text(progress.title)
-                    .font(.headline)
+                    .font(UtilityStyle.heading)
                 Text(progress.message)
-                    .font(.caption)
+                    .font(UtilityStyle.secondary)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
                 Text(progress.detail ?? "")
-                    .font(.caption2)
+                    .font(UtilityStyle.secondary)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
@@ -58,7 +58,7 @@ struct InlineOperationProgress<Progress: BlockingProgressPresenting>: View {
                 Text(progress.title).fontWeight(.medium)
                 Text(progress.message).foregroundStyle(.secondary)
                 if let detail = progress.detail {
-                    Text(detail).font(.caption).foregroundStyle(.secondary)
+                    Text(detail).font(UtilityStyle.secondary).foregroundStyle(.secondary)
                 }
             }
         }

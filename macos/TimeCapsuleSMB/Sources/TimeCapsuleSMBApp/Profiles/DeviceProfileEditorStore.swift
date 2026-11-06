@@ -75,6 +75,14 @@ fileprivate struct DeviceProfileEditorDraftValidation {
 struct DeviceProfileEditorDraft: Equatable {
     var displayName: String
     var host: String
+    var address: String {
+        get { host.lastIndex(of: "@").map { String(host[host.index(after: $0)...]) } ?? host }
+        set {
+            if newValue.contains("@") { host = newValue; return }
+            let prefix = host.firstIndex(of: "@").map { String(host[...$0]) } ?? ""
+            host = newValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "" : prefix + newValue
+        }
+    }
     var rsyncEnabled: Bool
     var internalShareUseDiskRoot: Bool
     var smbBrowseCompatibility: Bool
@@ -273,6 +281,8 @@ final class DeviceProfileEditorStore: ObservableObject {
     var canSave: Bool {
         !isRunning && hasPendingChanges
     }
+
+    var hasChanges: Bool { hasPendingChanges }
 
     private var hasPendingPasswordChange: Bool {
         !replacementPassword.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty

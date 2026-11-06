@@ -3,26 +3,21 @@ import SwiftUI
 
 struct ErrorBlock: View {
     let presentation: RecoveryGuidancePresentation
+    private let title: String
 
     init(error: BackendErrorViewModel) {
-        // Only the title and message show here: no steps to look up facts for.
-        self.presentation = RecoveryGuidancePresentation(error: error)
+        presentation = RecoveryGuidancePresentation(error: error)
+        title = UtilityErrorPresentation.title(for: error)
     }
 
     init(presentation: RecoveryGuidancePresentation) {
         self.presentation = presentation
+        title = presentation.title
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(presentation.title)
-                .font(.body.weight(.medium))
-            if let message = presentation.message {
-                Text(message)
-                    .font(.caption)
-            }
-        }
-        .foregroundStyle(.red)
+        Label(title, systemImage: "exclamationmark.circle")
+            .font(UtilityStyle.body).foregroundStyle(.red)
     }
 }
 
@@ -30,111 +25,52 @@ struct ErrorRecoveryView: View {
     let error: BackendErrorViewModel
     let guidance: String?
     let diagnosticsText: (() -> String)?
-    /// What the screen does for each action, or nil for one it cannot carry
-    /// out. The box shows a button only for an action that does something, so
-    /// no button sits idle; it copies diagnostics itself.
+    let omittedActions: [RecoveryActionKind]
     let perform: (RecoveryActionKind) -> (() -> Void)?
 
-    init(
-        error: BackendErrorViewModel,
-        guidance: String? = nil,
-        diagnosticsText: (() -> String)? = nil,
-        perform: @escaping (RecoveryActionKind) -> (() -> Void)?
-    ) {
+    init(error: BackendErrorViewModel, guidance: String? = nil, diagnosticsText: (() -> String)? = nil,
+         omittedActions: [RecoveryActionKind] = [], perform: @escaping (RecoveryActionKind) -> (() -> Void)?) {
         self.error = error
         self.guidance = guidance
         self.diagnosticsText = diagnosticsText
+        self.omittedActions = omittedActions
         self.perform = perform
     }
 
     var body: some View {
         let presentation = RecoveryGuidancePresentation(error: error, localNetworkFacts: .current())
-        VStack(alignment: .leading, spacing: 6) {
-            ErrorBlock(presentation: presentation)
-            if let guidance {
-                Text(guidance)
-                    .font(.caption)
-                    .foregroundStyle(.red)
+        let actions = RecoveryActionMapper.actions(for: error) { perform($0) != nil }
+            .filter { !omittedActions.contains($0.kind) }
+        let primary = actions.first { $0.kind != .copyDiagnostics && $0.kind != .diagnostics }
+        VStack(alignment: .leading, spacing: 12) {
+            ErrorBlock(error: error)
+            if let guidance { Text(guidance).foregroundStyle(.red) }
+            if let key = error.recovery?.localizationKey,
+               key.contains("disk_failing") || key.contains("disk_unreadable"), let message = presentation.message {
+                Text(message).foregroundStyle(.red)
             }
-            if !presentation.steps.isEmpty {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(L10n.string("recovery.guidance.next_steps"))
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(.secondary)
-                    ForEach(Array(presentation.steps.enumerated()), id: \.offset) { index, step in
-                        Text("\(index + 1). \(step)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+            if let primary {
+                Button(UtilityErrorPresentation.actionTitle(primary)) { perform(primary.kind)?() }
+            }
+            DashboardDisclosureSection(title: L10n.string("utility.details")) {
+                if presentation.title != UtilityErrorPresentation.title(for: error) { Text(presentation.title) }
+                if let message = presentation.message { Text(message) }
+                ForEach(Array(presentation.steps.enumerated()), id: \.offset) { _, step in Text(step) }
+                if let details = presentation.details { Text(details).textSelection(.enabled) }
+                HStack(spacing: 8) {
+                    ForEach(actions.filter { $0.id != primary?.id && $0.kind != .copyDiagnostics }) { action in
+                        Button(UtilityErrorPresentation.actionTitle(action)) { perform(action.kind)?() }
                     }
+                    Button(L10n.string("utility.copy_details"), action: copyDiagnostics)
                 }
             }
-            if let details = presentation.details {
-                Text(details)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .textSelection(.enabled)
-            }
-            let actions = RecoveryActionMapper.actions(for: error) { perform($0) != nil }
-            if !actions.isEmpty {
-                HStack {
-                    ForEach(actions) { action in
-                        Button {
-                            if action.kind == .copyDiagnostics {
-                                copyDiagnostics()
-                            } else {
-                                perform(action.kind)?()
-                            }
-                        } label: {
-                            Label(action.title, systemImage: icon(for: action.kind))
-                        }
-                        .disabled(!isActionable(action))
-                    }
-                }
-            }
+            .font(UtilityStyle.secondary).foregroundStyle(.secondary)
         }
-    }
-
-    private func isActionable(_ action: RecoveryAction) -> Bool {
-        action.kind != .generic
     }
 
     private func copyDiagnostics() {
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
-        pasteboard.setString(
-            diagnosticsText?() ?? "\(error.operation) \(error.code): \(error.diagnosticMessage ?? error.message)",
-            forType: .string
-        )
-    }
-
-    private func icon(for kind: RecoveryActionKind) -> String {
-        switch kind {
-        case .retry:
-            return "arrow.clockwise"
-        case .runCheckup:
-            return "stethoscope"
-        case .installSMB:
-            return "square.and.arrow.down.on.square"
-        case .startSMB:
-            return "play.circle"
-        case .uninstall:
-            return "trash"
-        case .diskRepair:
-            return "externaldrive.badge.exclamationmark"
-        case .wipeDisk:
-            return "externaldrive.badge.xmark"
-        case .replacePassword:
-            return "key"
-        case .copyDiagnostics:
-            return "doc.on.doc"
-        case .diagnostics:
-            return "wrench.and.screwdriver"
-        case .openSystemSettings:
-            return "gearshape"
-        case .openSSHAccess:
-            return "key"
-        case .generic:
-            return "arrow.right.circle"
-        }
+        pasteboard.setString(diagnosticsText?() ?? "\(error.operation) \(error.code): \(error.diagnosticMessage ?? error.message)", forType: .string)
     }
 }

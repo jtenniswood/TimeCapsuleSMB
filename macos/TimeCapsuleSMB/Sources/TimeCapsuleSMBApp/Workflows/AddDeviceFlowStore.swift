@@ -188,7 +188,7 @@ final class AddDeviceFlowStore: ObservableObject {
     /// The assistant advances only once there is a supported connection target.
     /// The same target validation is shared with the actual Configure action.
     var canContinueToPassword: Bool {
-        !isRunning && currentTarget()?.isEmpty == false
+        !isAdding && !setupWorkflow.isRunning && currentTarget()?.isEmpty == false
             && !(entryMode == .discover && selectedDevice?.isUnsupportedModel == true)
     }
 

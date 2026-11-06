@@ -22,13 +22,13 @@ struct OperationTimelineListView: View {
         VStack(alignment: .leading, spacing: 8) {
             if let title {
                 Text(title)
-                    .font(.headline)
+                    .font(UtilityStyle.heading)
             }
 
             if items.isEmpty {
                 if let emptyMessage {
                     Text(emptyMessage)
-                        .font(.caption)
+                        .font(UtilityStyle.secondary)
                         .foregroundStyle(.secondary)
                         .transition(.opacity)
                 }
@@ -66,25 +66,25 @@ struct OperationTimelineRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 AnimatedProgressText(message: item.title, isRunning: item.state == .running && !hasDetail)
-                    .font(.body.weight(.medium))
+                    .font(UtilityStyle.heading)
                     .foregroundStyle(.primary)
                 if let detail = item.detail, !detail.isEmpty {
                     AnimatedProgressText(message: detail, isRunning: item.state == .running)
-                        .font(.caption)
+                        .font(UtilityStyle.secondary)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 if let start = item.elapsedSince, item.state == .running {
                     TimelineView(.periodic(from: start, by: 15)) { context in
                         Text(OperationTimelineBuilder.elapsedText(since: start, now: context.date))
-                            .font(.caption)
+                            .font(UtilityStyle.secondary)
                             .foregroundStyle(.secondary)
                             .monospacedDigit()
                     }
                 }
                 if let note = item.note, !note.isEmpty {
                     Text(note)
-                        .font(.caption)
+                        .font(UtilityStyle.secondary)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }

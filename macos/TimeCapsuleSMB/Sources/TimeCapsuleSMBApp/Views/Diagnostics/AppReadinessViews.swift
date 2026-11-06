@@ -15,10 +15,10 @@ struct AppReadinessBannerView: View {
                 ProgressView()
                     .controlSize(.small)
                 Text(title)
-                    .font(.caption)
+                    .font(UtilityStyle.secondary)
                 if let stage = currentStageText {
                     Text(stage)
-                        .font(.caption)
+                        .font(UtilityStyle.secondary)
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
@@ -31,7 +31,7 @@ struct AppReadinessBannerView: View {
                 Image(systemName: "exclamationmark.triangle")
                     .foregroundStyle(.yellow)
                 Text(issues.first?.message ?? L10n.string("readiness.warning.default"))
-                    .font(.caption)
+                    .font(UtilityStyle.secondary)
                 Spacer()
                 Button(L10n.string("toolbar.diagnostics"), action: showDiagnostics)
             }
@@ -73,7 +73,7 @@ struct AppReadinessBlockedView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Label(L10n.string("readiness.blocked.title"), systemImage: "exclamationmark.octagon")
-                .font(.title2.weight(.semibold))
+                .font(UtilityStyle.title)
                 .foregroundStyle(.red)
             if case .blocked(let issue) = store.state {
                 Text(issue.message)
@@ -112,11 +112,11 @@ struct AppDiagnosticsView: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 Text(L10n.string("diagnostics.title"))
-                    .font(.title2.weight(.semibold))
+                    .font(UtilityStyle.title)
                 Spacer()
                 if let exportStatus {
                     Text(exportStatus)
-                        .font(.caption)
+                        .font(UtilityStyle.secondary)
                         .foregroundStyle(.secondary)
                 }
                 Button {
@@ -161,25 +161,25 @@ struct AppDiagnosticsView: View {
                     }
                 }
             }
-            .font(.caption)
+            .font(UtilityStyle.secondary)
 
             if !store.issues.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(L10n.string("diagnostics.runtime_issues"))
-                        .font(.headline)
+                        .font(UtilityStyle.heading)
                     ForEach(store.issues) { issue in
                         VStack(alignment: .leading, spacing: 2) {
                             Text(issue.message)
                             Text(issue.recovery)
                                 .foregroundStyle(.secondary)
                         }
-                        .font(.caption)
+                        .font(UtilityStyle.secondary)
                     }
                 }
             }
 
             Toggle(L10n.string("diagnostics.backend_events"), isOn: $showBackendEvents)
-                .font(.headline)
+                .font(UtilityStyle.heading)
             if showBackendEvents {
                 EventList(events: exportContext(true).events)
             }
@@ -230,7 +230,7 @@ struct EventList: View {
             VStack(alignment: .leading, spacing: 4) {
                 // Diagnostics stay in the helper's English.
                 Text(event.logLine)
-                    .font(.body)
+                    .font(UtilityStyle.body)
                 if let payload = event.payload, event.type == "result" {
                     Text(payload.displayText)
                         .font(.system(.caption, design: .monospaced))

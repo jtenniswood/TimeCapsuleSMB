@@ -14,7 +14,7 @@ struct ActivityCompactView: View {
             Spacer()
             if let latestTimelineTitle = status.latestTimelineTitle {
                 Text(latestTimelineTitle)
-                    .font(.caption2)
+                    .font(UtilityStyle.secondary)
                     .foregroundStyle(.secondary)
             }
         }
@@ -28,10 +28,10 @@ struct ActivityCompactView: View {
         if let latestMessage = status.latestMessage, !latestMessage.isEmpty {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title(status))
-                    .font(.caption.weight(.medium))
+                    .font(UtilityStyle.secondary.weight(.medium))
                     .lineLimit(1)
                 AnimatedProgressText(message: latestMessage, isRunning: status.isRunning)
-                    .font(.caption2)
+                    .font(UtilityStyle.secondary)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .truncationMode(.middle)
@@ -39,7 +39,7 @@ struct ActivityCompactView: View {
             .frame(height: 30, alignment: .center)
         } else {
             Text(title(status))
-                .font(.caption.weight(.medium))
+                .font(UtilityStyle.secondary.weight(.medium))
                 .lineLimit(1)
                 .frame(height: 30, alignment: .center)
         }
@@ -77,11 +77,11 @@ struct ActivityDetailView: View {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(alignment: .center, spacing: 12) {
                     Image(systemName: activityStore.hasActiveActivity ? "hourglass" : "clock")
-                        .font(.title2)
+                        .font(UtilityStyle.title)
                         .foregroundStyle(activityStore.hasActiveActivity ? Color.accentColor : Color.secondary)
                     VStack(alignment: .leading, spacing: 4) {
                         Text(L10n.string("sidebar.activity"))
-                            .font(.title2.weight(.semibold))
+                            .font(UtilityStyle.title)
                         Text(activeActivityMessage)
                             .foregroundStyle(.secondary)
                     }
@@ -140,7 +140,7 @@ private struct ActivityLaneSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(.headline)
+                .font(UtilityStyle.heading)
             ForEach(snapshots) { laneSnapshot in
                 ActivityLaneCard(laneSnapshot: laneSnapshot, registry: registry)
             }
@@ -158,10 +158,10 @@ private struct ActivityLaneCard: View {
                 headerIcon
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title(laneSnapshot.snapshot))
-                        .font(.body.weight(.medium))
+                        .font(UtilityStyle.heading)
                     if let latestMessage = laneSnapshot.snapshot.latestMessage, !latestMessage.isEmpty {
                         AnimatedProgressText(message: latestMessage, isRunning: laneSnapshot.snapshot.isRunning)
-                            .font(.caption)
+                            .font(UtilityStyle.secondary)
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -171,7 +171,7 @@ private struct ActivityLaneCard: View {
             VStack(alignment: .leading, spacing: 4) {
                 if laneSnapshot.snapshot.timeline.isEmpty {
                     Text(L10n.string("activity.timeline.empty"))
-                        .font(.caption)
+                        .font(UtilityStyle.secondary)
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(laneSnapshot.snapshot.timeline) { item in

@@ -12,6 +12,7 @@ struct DeviceListOverviewView: View {
     var addManually: (() -> Void)? = nil
     let canAddDevice: Bool
     let addDiscoveredDevice: (DiscoveredDevice) -> Void
+    @Environment(\.colorScheme) private var colorScheme
     @State private var selectedDeviceID: DeviceProfile.ID?
 
     var body: some View {
@@ -31,11 +32,12 @@ struct DeviceListOverviewView: View {
                 ScrollView {
                     VStack(spacing: 18) {
                         VStack(spacing: 8) {
-                            Image(systemName: "laptopcomputer")
-                                .font(.system(size: 44, weight: .light))
-                                .foregroundStyle(.secondary)
-                            Text(L10n.string("simple.this_mac"))
-                                .foregroundStyle(.secondary)
+                            if let image = NSImage(named: NSImage.computerName) {
+                                Image(nsImage: image).resizable().scaledToFit().frame(width: 88, height: 72)
+                            } else {
+                                Image(systemName: "laptopcomputer").font(.system(size: 44))
+                            }
+                            Text(L10n.string("simple.this_mac")).font(UtilityStyle.deviceName)
                         }
                         RoundedRectangle(cornerRadius: 1)
                             .fill(.secondary.opacity(0.35))
@@ -46,10 +48,6 @@ struct DeviceListOverviewView: View {
                             }
                         }
                         .frame(maxWidth: max(280, CGFloat(deviceRegistry.profiles.count) * 280))
-                        Text(L10n.string("simple.select_device"))
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                            .padding(.top, 18)
                     }
                     .padding(.horizontal, 32)
                     .padding(.vertical, 36)
@@ -59,7 +57,9 @@ struct DeviceListOverviewView: View {
             discoveryNotice
         }
         .background(LinearGradient(
-            colors: [Color(nsColor: .controlBackgroundColor).opacity(0.4), Color(nsColor: .windowBackgroundColor)],
+            colors: colorScheme == .dark
+                ? [Color(red: 0.18, green: 0.20, blue: 0.24), Color(red: 0.42, green: 0.45, blue: 0.49)]
+                : [Color(red: 0.94, green: 0.95, blue: 0.96), Color(red: 0.81, green: 0.84, blue: 0.87)],
             startPoint: .top, endPoint: .bottom
         ))
     }
@@ -69,14 +69,9 @@ struct DeviceListOverviewView: View {
             Spacer()
             AirPortDeviceIcon().frame(width: 96, height: 120)
             Text(L10n.string("simple.welcome.title"))
-                .font(.title2.weight(.semibold))
-            Text(L10n.string("simple.welcome.message"))
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 340)
+                .font(UtilityStyle.title)
             Button(L10n.string("simple.add_device")) { appStore.showAddDevice() }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+                .keyboardShortcut(.defaultAction)
                 .padding(.top, 6)
             Spacer()
         }
@@ -90,14 +85,14 @@ struct DeviceListOverviewView: View {
             selectedDeviceID = profile.id
         } label: {
             VStack(spacing: 14) {
-                AirPortDeviceIcon(isTower: profile.deviceGeneration == "gen5" || profile.model?.contains("8,") == true)
+                AirPortDeviceIcon(isTower: profile.usesTowerArtwork)
                     .frame(width: 100, height: 120)
                 HStack(spacing: 7) {
                     DeviceStatusLight(status: summary.displayStatus)
-                    Text(profile.title).font(.headline).multilineTextAlignment(.center)
+                    Text(profile.title).font(UtilityStyle.deviceName).multilineTextAlignment(.center)
                 }
                 Text(summary.displayStatus.title)
-                    .font(.callout)
+                    .font(UtilityStyle.body)
                     .foregroundStyle(.secondary)
             }
             .padding(14)
@@ -134,7 +129,7 @@ struct DeviceListOverviewView: View {
         } label: {
             Text(L10n.string("simple.other_devices"))
         }
-        .menuStyle(.borderlessButton)
+        .menuStyle(.borderedButton)
         .fixedSize()
     }
 
@@ -148,7 +143,7 @@ struct DeviceListOverviewView: View {
             .padding(.horizontal, 24)
             .padding(.bottom, 16)
         } else if let warning = deviceDiscovery.warning {
-            Text(warning).font(.caption).foregroundStyle(.orange).padding(.horizontal, 24)
+            Text(warning).font(UtilityStyle.secondary).foregroundStyle(.orange).padding(.horizontal, 24)
         }
     }
 }
@@ -175,48 +170,35 @@ struct NearbyAirPortMenuItems: View {
 
 struct AirPortDeviceIcon: View {
     var isTower = true
+
     var body: some View {
-        GeometryReader { geometry in
-            let width = geometry.size.width * (isTower ? 0.68 : 0.94)
-            let height = geometry.size.height * (isTower ? 0.88 : 0.28)
-            let capHeight = max(6, geometry.size.height * 0.09)
-            ZStack(alignment: .top) {
-                RoundedRectangle(cornerRadius: width * 0.12)
-                    .fill(LinearGradient(colors: [Color(white: 0.86), .white, Color(white: 0.94), Color(white: 0.78)], startPoint: .leading, endPoint: .trailing))
-                    .overlay(RoundedRectangle(cornerRadius: width * 0.12).strokeBorder(.black.opacity(0.14), lineWidth: 0.5))
-                    .padding(.top, capHeight * 0.5)
-                AirPortTopFace()
-                    .fill(LinearGradient(colors: [.white, Color(white: 0.88)], startPoint: .top, endPoint: .bottom))
-                    .frame(height: capHeight)
-                Image(systemName: "apple.logo")
-                    .font(.system(size: width * 0.13))
-                    .foregroundStyle(Color(white: 0.22))
-                    .scaleEffect(y: 0.55)
-                    .offset(y: capHeight * 0.03)
-                Circle().fill(Color(white: 0.45)).frame(width: max(1, width * 0.018), height: max(1, width * 0.018))
-                    .offset(x: width * 0.33, y: height * 0.92)
+        Group {
+            if let image = AirPortArtwork.image(isTower: isTower) {
+                Image(nsImage: image).resizable().scaledToFit()
+            } else {
+                Image(systemName: isTower ? "airport.extreme.tower" : "airport.extreme")
+                    .resizable().scaledToFit().foregroundStyle(.secondary)
             }
-            .frame(width: width, height: height)
-            .shadow(color: .black.opacity(0.22), radius: 4, y: 4)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .accessibilityHidden(true)
     }
 }
 
-private struct AirPortTopFace: Shape {
-    func path(in rect: CGRect) -> Path {
-        Path { path in
-            path.move(to: CGPoint(x: rect.width * 0.12, y: 0))
-            path.addLine(to: CGPoint(x: rect.width * 0.88, y: 0))
-            path.addQuadCurve(to: CGPoint(x: rect.width, y: rect.height * 0.75), control: CGPoint(x: rect.width * 0.96, y: 0))
-            path.addQuadCurve(to: CGPoint(x: rect.width * 0.94, y: rect.height), control: CGPoint(x: rect.width, y: rect.height))
-            path.addLine(to: CGPoint(x: rect.width * 0.06, y: rect.height))
-            path.addQuadCurve(to: CGPoint(x: 0, y: rect.height * 0.75), control: CGPoint(x: 0, y: rect.height))
-            path.addQuadCurve(to: CGPoint(x: rect.width * 0.12, y: 0), control: CGPoint(x: rect.width * 0.04, y: 0))
-            path.closeSubpath()
-        }
+/// Use system-provided hardware artwork when available. It is never copied
+/// into our distribution; systems without AirPort Utility use SF Symbols.
+@MainActor
+private enum AirPortArtwork {
+    private static let bundle = Bundle(path: "/System/Applications/Utilities/AirPort Utility.app")
+    private static let tower = load("AirPort-8-3D-cropped~mac")
+    private static let flat = load("TimeCapsule-3D-cropped~mac")
+    static func image(isTower: Bool) -> NSImage? { isTower ? tower : flat }
+    private static func load(_ name: String) -> NSImage? {
+        bundle?.url(forResource: name, withExtension: "tiff").flatMap { NSImage(contentsOf: $0) }
     }
+}
+
+extension DeviceProfile {
+    var usesTowerArtwork: Bool { syap == "119" || syap == "120" || payloadFamily == "netbsd6_samba4" }
 }
 
 struct DeviceStatusLight: View {
@@ -243,7 +225,7 @@ struct DeviceQuickInfoView: View {
 
     var body: some View {
         VStack(spacing: 18) {
-            Text(profile.title).font(.headline).multilineTextAlignment(.center)
+            Text(profile.title).font(UtilityStyle.deviceName).multilineTextAlignment(.center)
             HStack(spacing: 7) {
                 DeviceStatusLight(status: summary.displayStatus)
                 Text(summary.displayStatus.title).foregroundStyle(.secondary)
@@ -253,14 +235,8 @@ struct DeviceQuickInfoView: View {
                     Text(L10n.string("simple.address")).foregroundStyle(.secondary)
                     Text(profile.connectionTarget).textSelection(.enabled)
                 }
-                if let model = profile.model {
-                    GridRow {
-                        Text(L10n.string("dashboard.overview.model")).foregroundStyle(.secondary)
-                        Text(model)
-                    }
-                }
             }
-            .font(.callout)
+            .font(UtilityStyle.body)
             HStack {
                 Button(L10n.string("simple.open_disk"), action: openDisk)
                     .disabled(!DashboardActionPolicy.isEnabled(.openFinder, for: summary))

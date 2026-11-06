@@ -7,28 +7,11 @@ struct SettingsTab: View {
     @ObservedObject var backend: BackendClient
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(L10n.string("dashboard.tab.settings"))
-                .font(.title2.weight(.semibold))
-            DeviceProfileEditorView(
-                profile: profile,
-                store: session.profileEditorStore,
-                recoveryAction: { kind, error in session.recoveryAction(kind, error: error, profile: profile) },
-                diagnosticsText: {
-                    DiagnosticsExportBuilder().build(context: appStore.diagnosticsExportContext(includeBackendEvents: true))
-                }
-            )
-            DashboardDisclosureSection(title: L10n.string("simple.technical_details")) {
-                SummaryGrid(rows: [
-                    (L10n.string("advanced.profile_id"), profile.id),
-                    (L10n.string("advanced.config"), profile.configPath),
-                    (L10n.string("advanced.helper"), backend.helperPath.isEmpty ? L10n.string("value.auto") : backend.helperPath)
-                ], valueLineLimit: nil)
-                .textSelection(.enabled)
-                .fixedSize(horizontal: false, vertical: true)
-                EventList(events: session.events)
-            }
-        }
+        DeviceProfileEditorView(profile: profile, store: session.profileEditorStore,
+                                recoveryAction: { kind, error in session.recoveryAction(kind, error: error, profile: profile) },
+                                diagnosticsText: {
+            DiagnosticsExportBuilder().build(context: appStore.diagnosticsExportContext(includeBackendEvents: true))
+        })
     }
 }
 
@@ -39,114 +22,25 @@ private struct DeviceProfileEditorView: View {
     let diagnosticsText: () -> String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
-                GridRow {
-                    Text(L10n.string("profile_editor.display_name"))
-                        .foregroundStyle(.secondary)
-                    TextField(L10n.string("profile_editor.display_name"), text: $store.draft.displayName)
-                        .frame(maxWidth: 360)
+        VStack(alignment: .leading, spacing: 24) {
+            VStack(spacing: 12) {
+                UtilityFormRow(title: L10n.string("utility.device.name")) {
+                    TextField("", text: $store.draft.displayName).accessibilityLabel(L10n.string("utility.device.name"))
                 }
-                GridRow {
-                    Text(L10n.string("simple.address"))
-                        .foregroundStyle(.secondary)
-                    TextField(L10n.string("dashboard.overview.host"), text: $store.draft.host)
-                        .frame(maxWidth: 360)
+                UtilityFormRow(title: L10n.string("simple.address")) {
+                    TextField("", text: $store.draft.address).accessibilityLabel(L10n.string("simple.address"))
                 }
-                GridRow {
-                    Text(L10n.string("dashboard.password.title"))
-                        .foregroundStyle(.secondary)
-                    RevealablePasswordField(
-                        L10n.string("dashboard.replacement_password"),
-                        text: $store.replacementPassword
-                    ) {
-                        guard store.canSave else { return }
-                        Task { @MainActor in
-                            await store.save(profile: profile)
-                        }
-                    }
-                    .frame(maxWidth: 360)
+                UtilityFormRow(title: L10n.string("simple.setup.password")) {
+                    RevealablePasswordField(L10n.string("dashboard.replacement_password"), text: $store.replacementPassword)
                 }
             }
-
-            if let passwordError = store.passwordError {
-                Text(passwordError)
-                    .font(.caption)
-                    .foregroundStyle(.red)
-            }
-
-            DeviceProfileAdvancedSettingsView(store: store)
-
-            Divider()
-
-            HStack(spacing: 10) {
-                Button {
-                    Task { @MainActor in
-                        await store.save(profile: profile)
-                    }
-                } label: {
-                    Label(L10n.string("profile_editor.save"), systemImage: "square.and.arrow.down")
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(!store.canSave)
-
-                Button {
-                    store.reset(to: profile)
-                } label: {
-                    Label(L10n.string("profile_editor.reset"), systemImage: "arrow.counterclockwise")
-                }
-                .disabled(store.isRunning)
-
-                if store.state != .clean && store.state != .saved {
-                    Text(store.state.title).foregroundStyle(.secondary)
-                }
-            }
-
-            ForEach(store.validationErrors, id: \.self) { validationError in
-                Text(validationError.localizedDescription)
-                    .font(.caption)
-                    .foregroundStyle(.red)
-            }
-
-            if let stage = store.currentStage {
-                StageLine(stage: stage)
-            }
+            .disabled(store.isRunning)
+            if let passwordError = store.passwordError { Text(passwordError).foregroundStyle(.red) }
             if let error = store.error {
-                // Save runs it again, so the box has no Retry.
-                ErrorRecoveryView(error: error, diagnosticsText: diagnosticsText) { recoveryAction($0, error) }
+                ErrorRecoveryView(error: error, diagnosticsText: diagnosticsText, omittedActions: [.retry, .replacePassword]) { recoveryAction($0, error) }
             }
-        }
-        .onAppear {
-            store.sync(to: profile)
-        }
-        .onChange(of: profile) { _, profile in
-            store.sync(to: profile)
-        }
-        .padding(.bottom, 8)
-    }
-}
-
-private struct DeviceProfileAdvancedSettingsView: View {
-    @ObservedObject var store: DeviceProfileEditorStore
-
-    var body: some View {
-        DashboardDisclosureSection(title: L10n.string("profile_editor.advanced")) {
-            VStack(alignment: .leading, spacing: 8) {
-                Label {
-                    Text(L10n.string("profile_editor.advanced.deploy_notice"))
-                        .fixedSize(horizontal: false, vertical: true)
-                } icon: {
-                    Image(systemName: "info.circle")
-                        .foregroundStyle(.tint)
-                }
-                .font(.callout)
-                .padding(.vertical, 10)
-                .padding(.leading, 14)
-                .padding(.trailing, 18)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.accentColor.opacity(0.12))
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-
+            ForEach(store.validationErrors, id: \.self) { error in Text(error.localizedDescription).foregroundStyle(.red) }
+            DashboardDisclosureSection(title: L10n.string("profile_editor.advanced")) {
                 DeviceAdvancedSettingsFields(
                     rsyncEnabled: $store.draft.rsyncEnabled,
                     internalShareUseDiskRoot: $store.draft.internalShareUseDiskRoot,
@@ -163,8 +57,12 @@ private struct DeviceProfileAdvancedSettingsView: View {
                     ataIdleSeconds: $store.draft.ataIdleSeconds,
                     ataStandby: $store.draft.ataStandby
                 )
+                .help(L10n.string("profile_editor.advanced.deploy_notice")).disabled(store.isRunning)
             }
-            .frame(maxWidth: 680, alignment: .leading)
         }
+        .frame(maxWidth: 560, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .top)
+        .onAppear { store.sync(to: profile) }
+        .onChange(of: profile) { _, profile in store.sync(to: profile) }
     }
 }

@@ -20,7 +20,7 @@ enum DeviceDashboardTab: String, CaseIterable, Equatable, Identifiable {
         case .maintenance:
             return L10n.string("simple.tab.disks")
         case .settings:
-            return L10n.string("dashboard.tab.settings")
+            return L10n.string("utility.tab.base_station")
         }
     }
 }

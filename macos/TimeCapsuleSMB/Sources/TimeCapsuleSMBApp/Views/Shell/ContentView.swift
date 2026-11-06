@@ -12,11 +12,9 @@ public struct ContentView: View {
     @StateObject private var addDeviceStore: AddDeviceFlowStore
     @StateObject private var appSettingsEditorStore: AppSettingsEditorStore
     @StateObject private var dashboardStore: DashboardStore
-    @State private var diagnosticsPresented = false
+    @ObservedObject private var presentation: ApplicationPresentationStore
     @State private var diagnosticsShowBackendEvents = true
-    @State private var profilePendingDeletion: DeviceProfile?
     @State private var deleteErrorMessage: String?
-    @State private var systemColorScheme = SystemAppearance.currentColorScheme
     private let startsAutomatically: Bool
     private let updater: AppUpdater
 
@@ -26,7 +24,13 @@ public struct ContentView: View {
     }
 
     @MainActor
-    init(composition: AppViewComposition, startsAutomatically: Bool = true, updater: AppUpdater? = nil) {
+    public init(application: ApplicationModel) {
+        self.init(composition: application.composition, updater: application.updater, presentation: application.presentation)
+    }
+
+    @MainActor
+    init(composition: AppViewComposition, startsAutomatically: Bool = true, updater: AppUpdater? = nil, presentation: ApplicationPresentationStore? = nil) {
+        _presentation = ObservedObject(wrappedValue: presentation ?? ApplicationPresentationStore())
         _appStore = StateObject(wrappedValue: composition.appStore)
         _appReadinessStore = ObservedObject(wrappedValue: composition.appStore.appReadinessStore)
         _appSettingsStore = ObservedObject(wrappedValue: composition.appStore.appSettingsStore)
@@ -47,11 +51,11 @@ public struct ContentView: View {
         VStack(spacing: 0) {
             if case .blocked = appReadinessStore.state {
                 AppReadinessBlockedView(store: appReadinessStore) {
-                    diagnosticsPresented = true
+                    presentation.diagnosticsPresented = true
                 }
             } else {
                 AppReadinessBannerView(store: appReadinessStore) {
-                    diagnosticsPresented = true
+                    presentation.diagnosticsPresented = true
                 }
                 if let message = deviceRegistry.identityErrorMessage {
                     VStack(alignment: .leading, spacing: 6) {
@@ -75,31 +79,12 @@ public struct ContentView: View {
         .frame(minWidth: 760, minHeight: 580)
         .background(Color(nsColor: .windowBackgroundColor))
         .navigationTitle(appStore.selectedProfile?.title ?? "TimeCapsuleSMB")
-        .toolbar {
-            ToolbarItem {
-                Menu {
-                    Button(L10n.string("sidebar.activity")) { appStore.navigate(to: .activity) }
-                    Button(L10n.string("sidebar.settings")) { appStore.navigate(to: .appSettings) }
-                    Divider()
-                    Button(L10n.string("toolbar.diagnostics")) { diagnosticsPresented = true }
-                    if let profile = appStore.selectedProfile {
-                        Divider()
-                        Button(L10n.string("toolbar.forget"), role: .destructive) {
-                            profilePendingDeletion = profile
-                        }
-                        .disabled(operationCoordinator.isDeviceBusy(profile))
-                    }
-                } label: {
-                    Label(L10n.string("simple.tools"), systemImage: "ellipsis.circle")
-                }
-                .help(L10n.string("simple.tools"))
-            }
-        }
-        .preferredColorScheme(appSettingsStore.settings.appearance.preferredColorScheme(systemColorScheme: systemColorScheme))
+        .font(UtilityStyle.body)
+        .controlSize(.regular)
+        .preferredColorScheme(appSettingsStore.settings.appearance == .system ? nil : appSettingsStore.settings.appearance.preferredColorScheme(systemColorScheme: .light))
         .background(WindowCloseGuardInstaller())
         .onAppear {
             configureCloseGuard()
-            systemColorScheme = SystemAppearance.currentColorScheme
         }
         .task {
             if startsAutomatically {
@@ -123,18 +108,14 @@ public struct ContentView: View {
             addDeviceStore.clearHandoffs()
         }
         .onChange(of: appSettingsStore.settings) { _, settings in
-            systemColorScheme = SystemAppearance.currentColorScheme
             addDeviceStore.applyAppSettings(settings)
             appSettingsEditorStore.sync(settings: settings)
         }
-        .onReceive(DistributedNotificationCenter.default().publisher(for: SystemAppearance.didChangeNotification)) { _ in
-            systemColorScheme = SystemAppearance.currentColorScheme
-        }
-        .onChange(of: diagnosticsPresented) { _, isPresented in
+        .onChange(of: presentation.diagnosticsPresented) { _, isPresented in
             guard isPresented else { return }
             diagnosticsShowBackendEvents = appSettingsStore.settings.showRawBackendEventsByDefault
         }
-        .sheet(isPresented: $diagnosticsPresented) {
+        .sheet(isPresented: $presentation.diagnosticsPresented) {
             AppDiagnosticsView(
                 store: appReadinessStore,
                 exportContext: { includeBackendEvents in
@@ -150,20 +131,20 @@ public struct ContentView: View {
         .confirmationDialog(
             L10n.string("dialog.forget.title"),
             isPresented: deleteConfirmationPresented,
-            presenting: profilePendingDeletion
+            presenting: presentation.profilePendingDeletion
         ) { profile in
             Button(L10n.format("dialog.forget.action", profile.title), role: .destructive) {
                 Task { @MainActor in
                     do {
                         try await appStore.forget(profile)
-                        profilePendingDeletion = nil
+                        presentation.profilePendingDeletion = nil
                     } catch {
                         deleteErrorMessage = error.localizedDescription
                     }
                 }
             }
             Button(L10n.string("action.cancel"), role: .cancel) {
-                profilePendingDeletion = nil
+                presentation.profilePendingDeletion = nil
             }
         } message: { profile in
             Text(L10n.format("dialog.forget.message", profile.title))
@@ -180,7 +161,7 @@ public struct ContentView: View {
             isPresented: confirmationPresented,
             presenting: operationCoordinator.readyConfirmation
         ) { confirmation in
-            Button(confirmation.actionTitle, role: .destructive) {
+            Button(confirmation.actionTitle, role: confirmation.isDestructive ? .destructive : nil) {
                 operationCoordinator.confirm(confirmation)
             }
             if confirmation.prefersCancel {
@@ -200,10 +181,10 @@ public struct ContentView: View {
 
     private var deleteConfirmationPresented: Binding<Bool> {
         Binding(
-            get: { profilePendingDeletion != nil },
+            get: { presentation.profilePendingDeletion != nil },
             set: { isPresented in
                 if !isPresented {
-                    profilePendingDeletion = nil
+                    presentation.profilePendingDeletion = nil
                 }
             }
         )
@@ -238,27 +219,35 @@ public struct ContentView: View {
         }
     }
 
+    @ViewBuilder
     private var windowFooter: some View {
-        VStack(spacing: 0) {
-            if activityStore.hasActiveActivity {
-                ActivityCompactView(activityStore: activityStore, registry: deviceRegistry, context: activityDisplayContext)
-            }
-            HStack(spacing: 16) {
-                if appStore.route == .allDevices {
-                    Button(L10n.string("sidebar.activity")) { appStore.navigate(to: .activity) }
-                    Button(L10n.string("sidebar.settings")) { appStore.navigate(to: .appSettings) }
-                } else if appStore.canCancelSelectedOperation {
-                    Button(L10n.string("toolbar.cancel")) { appStore.cancelSelectedOperation() }
+        if appStore.route != .allDevices || activityStore.hasActiveActivity {
+            VStack(spacing: 0) {
+                if activityStore.hasActiveActivity && !isShowingActiveOperation {
+                    ActivityCompactView(activityStore: activityStore, registry: deviceRegistry, context: activityDisplayContext)
                 }
-                Spacer()
-                if appStore.route != .allDevices {
-                    Button(L10n.string("action.done")) { appStore.navigate(to: .allDevices) }
-                        .keyboardShortcut(.cancelAction)
+                if let profile = appStore.selectedProfile {
+                    DeviceEditorFooter(profile: profile, session: dashboardStore.session(for: profile), appStore: appStore)
+                } else if appStore.route != .allDevices {
+                    UtilityFooter {
+                        Spacer()
+                        Button(L10n.string("action.done")) { appStore.navigate(to: .allDevices) }
+                            .keyboardShortcut(.cancelAction)
+                    }
                 }
             }
-            .controlSize(.regular)
-            .padding(.horizontal, 24)
-            .padding(.vertical, 14)
+        }
+    }
+
+    private var isShowingActiveOperation: Bool {
+        guard let profile = appStore.selectedProfile else { return appStore.showingActivity }
+        let session = dashboardStore.session(for: profile)
+        switch session.selectedTab {
+        case .install: return session.deployStore.isBusy
+        case .checkup: return session.doctorStore.isRunning
+        case .maintenance: return session.maintenanceStore.isBusy
+        case .settings: return session.profileEditorStore.isRunning
+        case .overview: return false
         }
     }
 
@@ -300,7 +289,7 @@ public struct ContentView: View {
                     operationCoordinator: operationCoordinator,
                     backend: appBackend,
                     showDiagnostics: {
-                        diagnosticsPresented = true
+                        presentation.diagnosticsPresented = true
                     }
                 )
             } else {
@@ -338,7 +327,7 @@ public struct ContentView: View {
     }
 }
 
-private extension AppAppearance {
+extension AppAppearance {
     func preferredColorScheme(systemColorScheme: ColorScheme) -> ColorScheme? {
         switch self {
         case .system:
@@ -351,10 +340,43 @@ private extension AppAppearance {
     }
 }
 
-private enum SystemAppearance {
-    static let didChangeNotification = Notification.Name("AppleInterfaceThemeChangedNotification")
+private struct DeviceEditorFooter: View {
+    let profile: DeviceProfile
+    @ObservedObject var session: DeviceDashboardSession
+    @ObservedObject var appStore: AppStore
+    @ObservedObject private var editor: DeviceProfileEditorStore
 
-    static var currentColorScheme: ColorScheme {
-        UserDefaults.standard.string(forKey: "AppleInterfaceStyle") == "Dark" ? .dark : .light
+    init(profile: DeviceProfile, session: DeviceDashboardSession, appStore: AppStore) {
+        self.profile = profile
+        self.session = session
+        self.appStore = appStore
+        editor = session.profileEditorStore
+    }
+
+    var body: some View {
+        UtilityFooter {
+            if appStore.canCancelSelectedOperation {
+                Button(L10n.string("toolbar.cancel")) { appStore.cancelSelectedOperation() }
+            }
+            Spacer()
+            if (session.selectedTab == .settings || editor.hasChanges) && !editor.isRunning {
+                Button(L10n.string("action.cancel")) {
+                    editor.reset(to: profile)
+                    appStore.navigate(to: .allDevices)
+                }
+                .keyboardShortcut(.cancelAction)
+                Button(L10n.string("utility.update")) {
+                    Task { @MainActor in
+                        await editor.save(profile: profile)
+                        if editor.state == .saved { appStore.navigate(to: .allDevices) }
+                    }
+                }
+                .keyboardShortcut(.defaultAction)
+                .disabled(!editor.canSave)
+            } else {
+                Button(L10n.string("action.done")) { appStore.navigate(to: .allDevices) }
+                    .keyboardShortcut(.cancelAction)
+            }
+        }
     }
 }
