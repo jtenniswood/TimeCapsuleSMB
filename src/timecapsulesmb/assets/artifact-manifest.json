@@ -14,7 +14,7 @@
     },
     "smbd": {
       "path": "bin/samba4/smbd",
-      "sha256": "f3ccc88c9f25f5f2384bd347646cd4e87d419e86bb1046550281d11cccb3867a"
+      "sha256": "76b9d5c467b8f6e770ef0474447641f0deb1266e2d47ef14f0b03746eea7b081"
     },
     "smbd-netbsd4le": {
       "path": "bin/samba4-netbsd4le/smbd",
@@ -38,7 +38,7 @@
     },
     "service": {
       "path": "bin/service/service",
-      "sha256": "5867abecba4642a760b23cbf480f1672efc64f17caec5232556ed99a1e406b14"
+      "sha256": "5eb332a83e213e9e2c70b6553f862fcf20662477148bef140ab7fa4021b21c0b"
     },
     "service-netbsd4le": {
       "path": "bin/service-netbsd4le/service",

@@ -1,7 +1,7 @@
 diff --git a/source3/auth/server_info_sam.c b/source3/auth/server_info_sam.c
 --- a/source3/auth/server_info_sam.c
 +++ b/source3/auth/server_info_sam.c
-@@ -72,7 +72,11 @@ NTSTATUS make_server_info_sam(TALLOC_CTX *mem_ctx,
+@@ -72,7 +72,10 @@ NTSTATUS make_server_info_sam(TALLOC_CTX *mem_ctx,
  		goto out;
  	}
  
@@ -9,25 +9,76 @@ diff --git a/source3/auth/server_info_sam.c b/source3/auth/server_info_sam.c
 +	/* Virtual AirPort identities retain their own SID/password, while the
 +	 * old Time Capsule kernel requires root for filesystem operations. */
 +	pwd = Get_Pwnam_alloc(tmp_ctx,
-+		sampass->methods != NULL && sampass->methods->name != NULL &&
-+		strcmp(sampass->methods->name, "tc_airport") == 0 ? "root" : username);
++		pdb_is_tc_airport() ? "root" : username);
  	if (pwd == NULL) {
  		DEBUG(1, ("User %s in passdb, but getpwnam() fails!\n",
  			  pdb_get_username(sampass)));
 diff --git a/source3/include/passdb.h b/source3/include/passdb.h
 --- a/source3/include/passdb.h
 +++ b/source3/include/passdb.h
-@@ -23,6 +23,10 @@
+@@ -23,6 +23,11 @@
  #ifndef _PASSDB_H
  #define _PASSDB_H
  
 +/* Virtual AirPort read-only group, outside the account ID/RID range.
 + * This is an SMB token marker, never a system or SSH account/group. */
 +#define TC_AIRPORT_READONLY_RID 0x7ffffff0u
++bool pdb_is_tc_airport(void);
 +
  #ifndef NT_HASH_LEN
  #define NT_HASH_LEN 16
  #endif
+diff --git a/source3/passdb/pdb_get_set.c b/source3/passdb/pdb_get_set.c
+--- a/source3/passdb/pdb_get_set.c
++++ b/source3/passdb/pdb_get_set.c
+@@ -548,6 +548,17 @@ bool pdb_set_group_sid(struct samu *sampass, const struct dom_sid *g_sid, enum p
+ 
+ 	sid_compose(&dug_sid, get_global_sam_sid(), DOMAIN_RID_USERS);
+ 
++	/* tc_airport's read-only SID is a token permission marker, not a Unix
++	 * group. Preserve it when copying a samu as well as when first loaded. */
++	if (pdb_is_tc_airport()) {
++		struct dom_sid readonly_sid;
++		sid_compose(&readonly_sid, get_global_sam_sid(), TC_AIRPORT_READONLY_RID);
++		if (dom_sid_equal(&readonly_sid, g_sid)) {
++			sid_copy(sampass->group_sid, g_sid);
++			return pdb_set_init_flags(sampass, PDB_GROUPSID, flag);
++		}
++	}
++
+ 	if (dom_sid_equal(&dug_sid, g_sid)) {
+ 		sid_copy(sampass->group_sid, &dug_sid);
+ 	} else if (sid_to_gid( g_sid, &gid ) ) {
+diff --git a/source3/passdb/pdb_interface.c b/source3/passdb/pdb_interface.c
+--- a/source3/passdb/pdb_interface.c
++++ b/source3/passdb/pdb_interface.c
+@@ -239,6 +239,13 @@ static struct pdb_methods *pdb_get_methods(void)
+ 	return pdb;
+ }
+ 
++/* The samu methods field is backend-private and is not populated by
++ * smbpasswd. Consult the selected provider for virtual Unix identity rules. */
++bool pdb_is_tc_airport(void)
++{
++	return strcmp(pdb_get_methods()->name, "tc_airport") == 0;
++}
++
+ struct pdb_domain_info *pdb_get_domain_info(TALLOC_CTX *mem_ctx)
+ {
+ 	struct pdb_methods *pdb = pdb_get_methods();
+@@ -1739,6 +1746,12 @@ static NTSTATUS pdb_default_enum_group_memberships(struct pdb_methods *methods,
+ 	struct passwd *pw;
+ 	const char *username = pdb_get_username(user);
+ 
++	/* AirPort identities have distinct SMB SIDs but share the appliance's
++	 * root filesystem credentials. Group lookup must use that Unix identity. */
++	if (strcmp(methods->name, "tc_airport") == 0) {
++		username = "root";
++	}
++
+ 
+ 	/* Ignore the primary group SID.  Honor the real Unix primary group.
+ 	   The primary group SID is only of real use to Windows clients */
 diff --git a/source3/passdb/pdb_smbpasswd.c b/source3/passdb/pdb_smbpasswd.c
 --- a/source3/passdb/pdb_smbpasswd.c
 +++ b/source3/passdb/pdb_smbpasswd.c

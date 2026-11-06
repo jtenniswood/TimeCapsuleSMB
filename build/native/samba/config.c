@@ -135,6 +135,7 @@ int tc_samba_render(FILE *file, const struct tc_runtime_config *config,
     fprintf(file,
             "    server multi channel support = no\n    load printers = no\n    disable spoolss = yes\n"
             "    dfree command = /mnt/Flash/dfree.sh\n    pid directory = " TC_RAM_ROOT "/var\n"
+            "    ncalrpc dir = " TC_RAM_ROOT "/var/ncalrpc\n"
             "    lock directory = " TC_LOCKS_ROOT "\n    state directory = " TC_RAM_ROOT "/var\n"
             "    cache directory = %s%s\n    private dir = " TC_RAM_ROOT "/private\n"
             "    dbwrap_tdb_max_dead:* = 0\n    log file = %s/logs/log.smbd\n    max log size = %d\n",
