@@ -19,16 +19,21 @@ struct SummaryGrid: View {
     var valueLineLimit: Int? = 2
 
     var body: some View {
-        Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 8) {
+        VStack(alignment: .leading, spacing: 8) {
             ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
-                GridRow {
-                    Text(row.0).foregroundStyle(.secondary).gridColumnAlignment(.trailing)
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
+                    Text(row.0).foregroundStyle(.secondary)
+                        .multilineTextAlignment(.trailing)
+                        .frame(width: 160, alignment: .trailing)
                     Text(row.1)
                         .lineLimit(valueLineLimit)
                         .truncationMode(.middle)
+                        .textSelection(.enabled)
+                    Spacer(minLength: 0)
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .font(UtilityStyle.body)
     }
 }

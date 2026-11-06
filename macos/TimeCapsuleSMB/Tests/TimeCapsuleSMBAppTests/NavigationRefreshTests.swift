@@ -123,9 +123,9 @@ final class NavigationRefreshTests: XCTestCase {
         let disk = DiskHealthDisk(device: "wd0", label: "Disk 1", builtin: true, smartStatus: "failing", partitions: [],
                                   details: DiskSmartDetails(state: "available", attributes: []))
         let texts = accessibleElements(DiskHealthView(report: DiskHealthReport(error: nil, disks: [disk]), checkedAt: nil)).map(\.text)
-        XCTAssertTrue(texts.contains(L10n.string("disk_health.failure_advice")))
+        XCTAssertTrue(texts.contains(L10n.string("utility.disk.failure_advice")))
         XCTAssertTrue(texts.contains(L10n.string("simple.technical_details")))
-        XCTAssertFalse(texts.contains(L10n.string("disk_health.power_on_hours")))
+        XCTAssertTrue(texts.contains(L10n.string("disk_health.power_on_hours")))
     }
 
     func testHomeAndDeviceEditorHaveClearReturnNavigationAtMinimumSize() async throws {

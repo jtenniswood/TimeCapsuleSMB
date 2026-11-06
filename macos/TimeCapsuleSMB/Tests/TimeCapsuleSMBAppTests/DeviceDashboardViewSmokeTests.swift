@@ -277,14 +277,12 @@ final class DeviceDashboardViewSmokeTests: XCTestCase {
         let maintenance = session.maintenanceStore
         maintenance.selectedWorkflow = .bootHook
         // The tab alone: the dashboard around it starts device checks of its own.
-        let host = LiveHostedView(MaintenanceTab(profile: profile, session: session, showDiagnostics: {}, diagnosticsText: { "" }))
+        let host = LiveHostedView(MaintenanceToolSheet(profile: profile, session: session, showDiagnostics: {}, diagnosticsText: { "" }))
         defer { host.close() }
         func isEnabled(_ label: String) -> Bool? {
             accessibleElements(in: host.contentView).first { $0.text == label }?.isEnabled
         }
 
-        XCTAssertTrue(pressAccessibleControl(in: host.contentView, labeled: L10n.string("simple.utilities")))
-        await runQueuedStoreUpdates()
         // The boot hook's own options replace the other panels' Advanced Options.
         let texts = accessibleElements(in: host.contentView).map(\.text)
         XCTAssertTrue(texts.contains(L10n.string("utility.details")), "\(texts)")
@@ -316,15 +314,13 @@ final class DeviceDashboardViewSmokeTests: XCTestCase {
         // An empty field has no text to find it by.
         maintenance.bootHookStore.firmwareVersion = "7.8.1"
         maintenance.bootHookStore.firmwareTemplatePath = "/tmp/firmware.basebinary"
-        let host = LiveHostedView(MaintenanceTab(profile: profile, session: session, showDiagnostics: {}, diagnosticsText: { "" }))
+        let host = LiveHostedView(MaintenanceToolSheet(profile: profile, session: session, showDiagnostics: {}, diagnosticsText: { "" }))
         defer { host.close() }
         func enabledStates() -> [Bool] {
             let fields = ["7.8.1", "/tmp/firmware.basebinary", "Choose"]
             return accessibleElements(in: host.contentView).filter { fields.contains($0.text) }.map(\.isEnabled)
         }
 
-        XCTAssertTrue(pressAccessibleControl(in: host.contentView, labeled: L10n.string("simple.utilities")))
-        await runQueuedStoreUpdates()
         XCTAssertTrue(pressAccessibleControl(in: host.contentView, labeled: L10n.string("utility.details")))
         try await waitUntilStoreState { enabledStates().count == 3 }
         XCTAssertEqual(enabledStates(), [true, true, true], "\(accessibleElements(in: host.contentView).map(\.text))")

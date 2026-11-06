@@ -113,4 +113,28 @@ final class NativeInterfaceTests: XCTestCase {
         }
     }
 
+    func testTabsUseTheMacTabViewAndSelectionShowsOnlyTheSelectedPane() async throws {
+        var selection = 0
+        let host = LiveHostedView(UtilityTabs(tabs: [(id: 0, title: "General"), (id: 1, title: "Advanced")],
+            selection: Binding(get: { selection }, set: { selection = $0 })) { index in
+            Text(index == 0 ? "General content" : "Advanced content")
+        })
+        defer { host.close() }
+        func nativeTabView(in view: NSView) -> NSTabView? {
+            if let tabs = view as? NSTabView { return tabs }
+            return view.subviews.lazy.compactMap { nativeTabView(in: $0) }.first
+        }
+        await runQueuedStoreUpdates()
+        let tabs = try XCTUnwrap(nativeTabView(in: host.contentView))
+        XCTAssertEqual(tabs.numberOfTabViewItems, 2)
+        XCTAssertEqual(tabs.tabViewType, .topTabsBezelBorder)
+        XCTAssertEqual(tabs.font.pointSize, NSFont.systemFontSize)
+        tabs.selectTabViewItem(at: 1)
+        await runQueuedStoreUpdates()
+        XCTAssertEqual(selection, 1)
+        let texts = accessibleElements(in: host.contentView).map(\.text)
+        XCTAssertTrue(texts.contains("Advanced content"))
+        XCTAssertFalse(texts.contains("General content"))
+    }
+
 }

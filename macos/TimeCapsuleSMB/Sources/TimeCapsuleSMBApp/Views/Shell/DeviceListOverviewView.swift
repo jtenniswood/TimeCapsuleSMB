@@ -33,9 +33,9 @@ struct DeviceListOverviewView: View {
                     VStack(spacing: 18) {
                         VStack(spacing: 8) {
                             if let image = NSImage(named: NSImage.computerName) {
-                                Image(nsImage: image).resizable().scaledToFit().frame(width: 88, height: 72)
+                                Image(nsImage: image).resizable().scaledToFit().frame(width: 144, height: 104)
                             } else {
-                                Image(systemName: "laptopcomputer").font(.system(size: 44))
+                                Image(systemName: "laptopcomputer").font(.system(size: 72))
                             }
                             Text(L10n.string("simple.this_mac")).font(UtilityStyle.deviceName)
                         }

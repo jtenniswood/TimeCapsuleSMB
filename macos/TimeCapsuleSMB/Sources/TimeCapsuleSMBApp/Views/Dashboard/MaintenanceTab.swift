@@ -8,69 +8,76 @@ struct MaintenanceTab: View {
     let diagnosticsText: () -> String
 
     var body: some View {
-        let store = session.maintenanceStore
-        let presentation = MaintenanceDashboardPresentation(store: store, profile: profile)
-
+        let busy = session.appStore.operationCoordinator.isDeviceBusy(profile)
         ScrollView {
-            VStack(alignment: .leading, spacing: UtilityStyle.sectionSpacing) {
-                DiskHealthView(report: profile.lastCheckup?.diskHealth, checkedAt: profile.lastCheckup?.checkedAt)
-                HStack {
+            VStack(alignment: .leading, spacing: 24) {
+                HStack(spacing: 8) {
+                    Button(L10n.string("utility.disk.repair")) { open(.fsck) }
+                    Button(L10n.string("utility.disk.erase")) { open(.wipeDisk) }
                     Spacer()
                     Button(L10n.string("simple.disk.refresh")) {
                         session.runCheckup(profile: profile)
-                        // Refresh readings without sending the user to a different page.
                         if session.selectedTab == .checkup { session.selectedTab = .maintenance }
                     }
-                    .disabled(session.appStore.operationCoordinator.isDeviceBusy(profile))
                 }
-                DisclosureGroup(L10n.string("simple.utilities"), isExpanded: $session.maintenanceUtilitiesExpanded) {
-                    UtilityFormRow(title: L10n.string("utility.tools.choose")) {
-                        Picker(L10n.string("utility.tools.choose"), selection: Binding(get: { presentation.detail.workflow }, set: { store.selectedWorkflow = $0 })) {
-                            ForEach(presentation.cards.map(\.workflow)) { workflow in
-                                Text(workflow.utilityTitle).tag(workflow)
-                            }
-                        }
-                        .labelsHidden()
-                        .disabled(store.isBusy)
-                    }
-                    .padding(.vertical, 16)
-
-                    MaintenanceDetailView(
-                        presentation: presentation.detail,
-                        store: store,
-                        performAction: { action in
-                            session.performMaintenanceAction(action, profile: profile, showDiagnostics: showDiagnostics)
-                        },
-                        chooseFirmwareTemplate: {
-                            chooseFirmwareTemplate(store: store.bootHookStore)
-                        }
-                    )
-                }
-                .onAppear {
-                    if presentation.detail.isRunning || presentation.detail.error != nil {
-                        session.maintenanceUtilitiesExpanded = true
-                    }
-                }
-                .onChange(of: presentation.detail.isRunning) { _, isRunning in
-                    if isRunning { session.maintenanceUtilitiesExpanded = true }
-                }
-                .onChange(of: presentation.detail.error) { _, error in
-                    if error != nil { session.maintenanceUtilitiesExpanded = true }
-                }
-
-                if let error = presentation.detail.error {
-                    ErrorRecoveryView(
-                        error: error,
-                        diagnosticsText: diagnosticsText
-                    ) { recoveryAction($0, error: error) }
-                }
+                .disabled(busy)
+                DiskHealthView(report: profile.lastCheckup?.diskHealth, checkedAt: profile.lastCheckup?.checkedAt)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .sheet(isPresented: $session.maintenanceUtilitiesExpanded) {
+            MaintenanceToolSheet(profile: profile, session: session, showDiagnostics: showDiagnostics, diagnosticsText: diagnosticsText)
+        }
     }
 
-    private func recoveryAction(_ kind: RecoveryActionKind, error: BackendErrorViewModel) -> (() -> Void)? {
-        kind == .diagnostics ? { showDiagnostics() } : session.recoveryAction(kind, error: error, profile: profile)
+    private func open(_ workflow: MaintenanceWorkflow) {
+        session.maintenanceStore.selectedWorkflow = workflow
+        session.maintenanceUtilitiesExpanded = true
+    }
+}
+
+/// Each tool opens in its own native sheet; no unrelated utility picker.
+struct MaintenanceToolSheet: View {
+    let profile: DeviceProfile
+    @ObservedObject var session: DeviceDashboardSession
+    let showDiagnostics: () -> Void
+    let diagnosticsText: () -> String
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        let store = session.maintenanceStore
+        let presentation = MaintenanceDashboardPresentation(store: store, profile: profile).detail
+        VStack(alignment: .leading, spacing: 0) {
+            Text(presentation.workflow.utilityTitle).font(UtilityStyle.title)
+                .padding(.horizontal, 24).padding(.top, 24).padding(.bottom, 20)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    MaintenanceDetailView(presentation: presentation, store: store,
+                        performAction: { session.performMaintenanceAction($0, profile: profile, showDiagnostics: showDiagnostics) },
+                        chooseFirmwareTemplate: { chooseFirmwareTemplate(store: store.bootHookStore) })
+                    if let error = presentation.error {
+                        ErrorRecoveryView(error: error, diagnosticsText: diagnosticsText) { kind in
+                            kind == .diagnostics ? { showDiagnostics() } : session.recoveryAction(kind, error: error, profile: profile)
+                        }
+                    }
+                }
+                .padding(.horizontal, 24).padding(.bottom, 20)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            UtilityFooter {
+                if store.isBusy && session.appStore.canCancelSelectedOperation {
+                    Button(L10n.string("action.cancel")) { session.appStore.cancelSelectedOperation() }
+                }
+                Spacer()
+                Button(L10n.string("action.done")) {
+                    session.maintenanceUtilitiesExpanded = false
+                    dismiss()
+                }
+                .keyboardShortcut(.defaultAction)
+            }
+        }
+        .font(UtilityStyle.body).controlSize(.regular)
+        .frame(width: 620, height: 460)
     }
 
     private func chooseFirmwareTemplate(store: BootHookStore) {
@@ -80,12 +87,8 @@ struct MaintenanceTab: View {
         panel.allowsMultipleSelection = false
         panel.prompt = L10n.string("maintenance.action.choose")
         panel.begin { response in
-            guard response == .OK, let url = panel.url else {
-                return
-            }
-            Task { @MainActor in
-                store.firmwareTemplatePath = url.path
-            }
+            guard response == .OK, let url = panel.url else { return }
+            Task { @MainActor in store.firmwareTemplatePath = url.path }
         }
     }
 }

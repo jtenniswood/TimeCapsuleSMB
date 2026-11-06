@@ -28,15 +28,31 @@ final class ApplicationPresentationStore: ObservableObject {
 public struct ApplicationCommands: Commands {
     @ObservedObject private var appStore: AppStore
     @ObservedObject private var presentation: ApplicationPresentationStore
+    private let dashboardStore: DashboardStore
     @Environment(\.openWindow) private var openWindow
 
     public init(application: ApplicationModel) {
         appStore = application.composition.appStore
         presentation = application.presentation
+        dashboardStore = application.composition.dashboardStore
     }
 
     public var body: some Commands {
         CommandMenu("AirPort") {
+            Menu(L10n.string("profile_editor.advanced")) {
+                ForEach(advancedWorkflows) { workflow in
+                    Button(workflow.utilityTitle) {
+                        guard let profile = appStore.selectedProfile else { return }
+                        openWindow(id: "main")
+                        let session = dashboardStore.session(for: profile)
+                        session.maintenanceStore.selectedWorkflow = workflow
+                        session.selectedTab = .maintenance
+                        session.maintenanceUtilitiesExpanded = true
+                    }
+                }
+            }
+            .disabled(appStore.selectedProfile.map { appStore.operationCoordinator.isDeviceBusy($0) } ?? true)
+            Divider()
             Button(L10n.string("toolbar.forget")) {
                 openWindow(id: "main")
                 presentation.profilePendingDeletion = appStore.selectedProfile
@@ -50,6 +66,11 @@ public struct ApplicationCommands: Commands {
             Button(L10n.string("utility.support")) { openWindow(id: "main"); presentation.diagnosticsPresented = true }
         }
     }
+    private var advancedWorkflows: [MaintenanceWorkflow] {
+        guard let profile = appStore.selectedProfile else { return [] }
+        return MaintenanceWorkflowAvailability.workflows(for: profile).filter { $0 != .fsck && $0 != .wipeDisk }
+    }
+
 }
 
 public struct AppSettingsWindow: View {

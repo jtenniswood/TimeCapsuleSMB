@@ -6,7 +6,7 @@ struct DiskHealthView: View {
     let checkedAt: Date?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 24) {
             if let report, report.error == nil {
                 if report.disks.isEmpty {
                     Text(L10n.string("disk_health.no_disks"))
@@ -39,7 +39,7 @@ private struct DiskSmartReadingsView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 16) {
                 if let artwork = DiskArtwork.image {
                     Image(nsImage: artwork).resizable().scaledToFit().frame(width: 48, height: 48)
@@ -49,16 +49,13 @@ private struct DiskSmartReadingsView: View {
                         .font(.system(size: 32)).foregroundStyle(.secondary).accessibilityHidden(true)
                 }
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(disk.label).font(UtilityStyle.heading)
+                    Text(disk.partitions.first?.name ?? disk.label).font(UtilityStyle.heading)
                     Label(L10n.string(statusKey), systemImage: disk.reportsFailure ? "exclamationmark.triangle" :
                         disk.smartStatus == "verified" ? "checkmark.circle" : "questionmark.circle")
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                if let temperature = disk.temperatureCelsius {
-                    Text(temperature).foregroundStyle(.secondary)
-                        .help(L10n.string("disk_health.temperature"))
-                }
+
             }
             if disk.reportsFailure {
                 Text(L10n.string("utility.disk.failure_advice"))
@@ -80,7 +77,7 @@ private struct DiskSmartReadingsView: View {
                 }
             }
             if disk.details.state == "available" {
-                DisclosureGroup(L10n.string("utility.details")) {
+                VStack(alignment: .leading, spacing: 20) {
                     SummaryGrid(rows: [
                         (L10n.string("disk_health.temperature"), disk.temperatureCelsius ?? L10n.string("value.unknown")),
                         (L10n.string("disk_health.power_on_hours"), disk.metric(9, named: "Power-on hours count") ?? L10n.string("value.unknown")),
@@ -106,10 +103,12 @@ private struct DiskSmartReadingsView: View {
                         }
                             .width(min: 110)
                     }
-                    .frame(height: 220)
+                    .font(UtilityStyle.secondary)
+                    .frame(height: 260)
                     Text(L10n.string("disk_health.vendor_values"))
                         .font(UtilityStyle.secondary)
                         .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }
