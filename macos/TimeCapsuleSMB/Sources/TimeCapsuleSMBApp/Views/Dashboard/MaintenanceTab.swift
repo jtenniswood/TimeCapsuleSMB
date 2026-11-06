@@ -78,6 +78,15 @@ struct MaintenanceToolSheet: View {
         }
         .font(UtilityStyle.body).controlSize(.regular)
         .frame(width: 620, height: 460)
+        .background(Color(nsColor: UtilityStyle.windowBackground))
+        .task(id: presentation.workflow) {
+            guard !store.isBusy else { return }
+            if presentation.workflow == .fsck && store.fsckTargets.isEmpty {
+                session.performMaintenanceAction(.findVolumes, profile: profile, showDiagnostics: showDiagnostics)
+            } else if presentation.workflow == .sshAccess && store.sshAccessPayload == nil {
+                session.performMaintenanceAction(.checkSSHAccess, profile: profile, showDiagnostics: showDiagnostics)
+            }
+        }
     }
 
     private func chooseFirmwareTemplate(store: BootHookStore) {

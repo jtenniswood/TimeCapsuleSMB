@@ -17,25 +17,32 @@ struct InstallTab: View {
 
         ScrollView {
             VStack(alignment: .leading, spacing: UtilityStyle.sectionSpacing) {
-                if let progress = InstallProgressPresentation(state: store.state, currentStage: store.currentStage) {
-                    InlineOperationProgress(progress: progress, title: L10n.string("simple.sharing.title"))
-                } else if presentation.error == nil {
-                    Text(presentation.completion != nil ? L10n.string("utility.sharing.ready") :
-                        session.summary(for: profile).displayStatus.title)
+                VStack(alignment: .leading, spacing: 16) {
+                    if let progress = InstallProgressPresentation(state: store.state, currentStage: store.currentStage) {
+                        InlineOperationProgress(progress: progress, title: L10n.string("simple.sharing.title"))
+                    } else if presentation.error == nil {
+                        UtilityFormRow(title: L10n.string("simple.sharing.title")) {
+                            Text(session.summary(for: profile).displayStatus.title)
+                        }
+                    }
+                    if !firstInstall && !store.isBusy {
+                        UtilityFormRow(title: L10n.string("dashboard.overview.installed_version")) {
+                            Text(DeviceDashboardHeaderPresentation.installedVersionValue(runtimeState: profile.runtimeState?.state,
+                                payload: DeviceDashboardHeaderPresentation.currentVersionPayload(
+                                    session.appStore.reachabilityStore.snapshot(for: profile), profile: profile)))
+                        }
+                    }
+                    if !store.isBusy {
+                        UtilityFormRow(title: "") {
+                            Button(L10n.string(firstInstall ? "simple.sharing.set_up" : "simple.sharing.update")) {
+                                session.performInstallAction(.installUpdate, profile: profile, showDiagnostics: showDiagnostics)
+                            }
+                            .disabled(!InstallActionAvailabilityPolicy.isEnabled(.installUpdate, store: store, isDeviceBusy: isDeviceBusy))
+                        }
+                    }
                 }
                 ForEach(presentation.notices, id: \.self) { notice in
                     UtilityNotice { Text(notice) }
-                }
-                if !store.isBusy {
-                    HStack(spacing: 8) {
-                        Button(L10n.string(firstInstall ? "simple.sharing.set_up" : "simple.sharing.update")) {
-                            session.performInstallAction(.installUpdate, profile: profile, showDiagnostics: showDiagnostics)
-                        }
-                        .disabled(!InstallActionAvailabilityPolicy.isEnabled(.installUpdate, store: store, isDeviceBusy: isDeviceBusy))
-                        if presentation.completion != nil {
-                            Button(L10n.string("simple.open_disk")) { perform(.openFinder) }
-                        }
-                    }
                 }
                 if let completion = presentation.completion {
                     ForEach(completion.warnings) { warning in
@@ -85,14 +92,7 @@ private struct InstallExecutionOptionsView: View {
             VStack(alignment: .leading, spacing: 12) {
                 Toggle(L10n.string("toggle.no_wait"), isOn: $store.noWait)
                     .help(L10n.string("install.advanced_options.no_wait_note"))
-                Toggle(L10n.string("toggle.enable_rsync"), isOn: $store.rsyncEnabled)
-                    .help(L10n.string("install.advanced_options.rsync_note"))
-                HStack(spacing: 12) {
-                    Text(L10n.string("field.mount_wait"))
-                    TextField("", text: $store.mountWait)
-                        .frame(width: 70)
-                        .accessibilityLabel(L10n.string("field.mount_wait"))
-                }
+
             }
             .padding(.top, 8)
         }

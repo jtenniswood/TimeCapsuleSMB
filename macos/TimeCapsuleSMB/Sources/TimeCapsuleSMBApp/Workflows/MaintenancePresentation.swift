@@ -324,6 +324,7 @@ struct MaintenanceWorkflowDetailPresentation: Equatable {
     let warnings: [String]
     let actionRows: [[MaintenanceUserAction]]
     let enabledActions: Set<MaintenanceUserAction>
+    let sshAccessIsReachable: Bool?
     let bootHookRows: [PresentationRow]
     let plan: MaintenancePlanPresentation?
     let completion: MaintenanceCompletionPresentation?
@@ -357,6 +358,7 @@ struct MaintenanceWorkflowDetailPresentation: Equatable {
         self.isRunning = store.isRunning(for: workflow)
         self.actionRows = MaintenanceActionPolicy.actionRows(for: workflow, store: store)
         self.enabledActions = MaintenanceActionPolicy.enabledActions(workflow: workflow, store: store)
+        self.sshAccessIsReachable = store.sshAccessPayload.map { $0.sshFinalReachable ?? $0.sshPortReachable }
         self.plan = Self.plan(workflow: workflow, store: store)
         self.completion = Self.completion(workflow: workflow, store: store)
         self.timeline = Self.timeline(workflow: workflow, state: state, store: store)

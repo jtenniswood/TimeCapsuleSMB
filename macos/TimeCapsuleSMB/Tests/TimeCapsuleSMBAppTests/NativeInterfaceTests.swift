@@ -113,28 +113,54 @@ final class NativeInterfaceTests: XCTestCase {
         }
     }
 
-    func testTabsUseTheMacTabViewAndSelectionShowsOnlyTheSelectedPane() async throws {
-        var selection = 0
-        let host = LiveHostedView(UtilityTabs(tabs: [(id: 0, title: "General"), (id: 1, title: "Advanced")],
-            selection: Binding(get: { selection }, set: { selection = $0 })) { index in
-            Text(index == 0 ? "General content" : "Advanced content")
-        })
+    func testTabsUseTheRoundedMacControlAndShowOnlyTheSelectedPane() async throws {
+        var selected = 0
+        let host = LiveHostedView(NativeTabTestHost(changed: { selected = $0 }))
         defer { host.close() }
-        func nativeTabView(in view: NSView) -> NSTabView? {
-            if let tabs = view as? NSTabView { return tabs }
-            return view.subviews.lazy.compactMap { nativeTabView(in: $0) }.first
+        await runQueuedStoreUpdates()
+        func findControl(in view: NSView) -> NSSegmentedControl? {
+            if let control = view as? NSSegmentedControl { return control }
+            return view.subviews.lazy.compactMap { findControl(in: $0) }.first
         }
+        let control = try XCTUnwrap(findControl(in: host.contentView))
+        XCTAssertEqual(control.segmentCount, 2)
+        XCTAssertEqual(control.segmentStyle, .rounded)
+        XCTAssertGreaterThan(control.bounds.width, 140)
+        XCTAssertGreaterThan(control.width(forSegment: 0), 50)
+        XCTAssertGreaterThan(control.width(forSegment: 1), 50)
+        control.selectedSegment = 1
+        control.sendAction(control.action, to: control.target)
         await runQueuedStoreUpdates()
-        let tabs = try XCTUnwrap(nativeTabView(in: host.contentView))
-        XCTAssertEqual(tabs.numberOfTabViewItems, 2)
-        XCTAssertEqual(tabs.tabViewType, .topTabsBezelBorder)
-        XCTAssertEqual(tabs.font.pointSize, NSFont.systemFontSize)
-        tabs.selectTabViewItem(at: 1)
-        await runQueuedStoreUpdates()
-        XCTAssertEqual(selection, 1)
+        XCTAssertEqual(selected, 1)
         let texts = accessibleElements(in: host.contentView).map(\.text)
         XCTAssertTrue(texts.contains("Advanced content"))
         XCTAssertFalse(texts.contains("General content"))
     }
 
+    func testRemoteAccessStartsWithACheckRatherThanAnUnnecessaryRestart() async throws {
+        let fixture = try await AppViewFixture()
+        let profile = try await fixture.saveProfile(id: "remote-access")
+        let store = fixture.dashboardSession(for: profile).maintenanceStore
+        let presentation = MaintenanceWorkflowDetailPresentation(store: store, workflow: .sshAccess)
+        XCTAssertEqual(MaintenanceGuidePolicy.primaryAction(presentation: presentation), .checkSSHAccess)
+    }
+
+    func testBriefConnectionResultsKeepUrgentDiskPrecautionsVisible() {
+        XCTAssertTrue(UtilityCheckupLayout.isUrgent("runtime-disk-volumes-in-memory"))
+        XCTAssertTrue(UtilityCheckupLayout.isUrgent("0:FAIL:disk_check_not_responding"))
+        XCTAssertTrue(UtilityCheckupLayout.isUrgent("0:WARN:disk_smart_failing"))
+        XCTAssertFalse(UtilityCheckupLayout.isUrgent("0:WARN:smb_not_advertised"))
+    }
+
+}
+
+private struct NativeTabTestHost: View {
+    let changed: (Int) -> Void
+    @State private var selection = 0
+    var body: some View {
+        UtilityTabs(tabs: [(id: 0, title: "General"), (id: 1, title: "Advanced")], selection:
+            Binding(get: { selection }, set: { selection = $0; changed($0) })) { index in
+            Text(index == 0 ? "General content" : "Advanced content")
+        }
+    }
 }

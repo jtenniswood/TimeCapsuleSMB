@@ -13,6 +13,15 @@ enum UtilityStyle {
     static let sectionSpacing: CGFloat = 24
     static let rowSpacing: CGFloat = 12
     static let fieldWidth: CGFloat = 320
+    static let windowBackground = NSColor(name: nil) { appearance in
+        NSColor(white: appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? 0.14 : 0.925, alpha: 1)
+    }
+    static let paneBackground = NSColor(name: nil) { appearance in
+        NSColor(white: appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? 0.16 : 0.965, alpha: 1)
+    }
+    static let paneBorder = NSColor(name: nil) { appearance in
+        NSColor(white: appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? 0.29 : 0.74, alpha: 1)
+    }
 }
 
 struct UtilityPane<Content: View>: View {

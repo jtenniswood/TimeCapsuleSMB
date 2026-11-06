@@ -28,3 +28,23 @@ app Settings; empty, active and completed Activity; startup failures, support
 details and confirmation dialogs. Review light and dark appearances, the minimum
 window size, and longer translated labels. Operating-system password prompts
 and Sparkle's update windows retain their native presentation.
+
+Each editor pane has one job:
+
+- Overview: identify the device, show its status, and open the shared disk or
+  offer the next setup step. Keep urgent disk precautions visible.
+- Sharing: show sharing status and installed version, with one setup/update
+  action. Persistent disk and sharing options belong in Base Station.
+- Connection: show the latest check result and its time, with one check action.
+  Individual checks live in Details; urgent disk precautions stay visible.
+- Disks: show disk health, space and detailed SMART readings immediately.
+  Repair and erase open focused native sheets. Unrelated device tools belong
+  in the AirPort menu.
+- Base Station: edit the name, address and saved password. Keep advanced device
+  settings grouped under one disclosure and save them with the bottom Update.
+
+The tab strip uses NSSegmentedControl with explicit label widths. AppKit owns
+selection, focus, hit testing and accessibility. The selected cell's subtle
+bevel and the inset pane colors follow the older AirPort Utility reference.
+Only the selected SwiftUI pane is hosted: switching tabs must never leave an
+old pane visible underneath it.

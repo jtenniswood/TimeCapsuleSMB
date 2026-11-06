@@ -224,28 +224,32 @@ struct DeviceQuickInfoView: View {
     let edit: () -> Void
 
     var body: some View {
-        VStack(spacing: 18) {
-            Text(profile.title).font(UtilityStyle.deviceName).multilineTextAlignment(.center)
-            HStack(spacing: 7) {
-                DeviceStatusLight(status: summary.displayStatus)
-                Text(summary.displayStatus.title).foregroundStyle(.secondary)
-            }
-            Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 8) {
-                GridRow {
-                    Text(L10n.string("simple.address")).foregroundStyle(.secondary)
-                    Text(DeviceEndpointPolicy.hostComponent(profile.connectionTarget) ?? profile.displayTarget).textSelection(.enabled)
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(profile.title).font(UtilityStyle.heading)
+                    .fixedSize(horizontal: false, vertical: true)
+                HStack(spacing: 7) {
+                    DeviceStatusLight(status: summary.displayStatus)
+                    Text(summary.displayStatus.title).foregroundStyle(.secondary)
                 }
             }
-            .font(UtilityStyle.body)
-            HStack {
+            Divider()
+            HStack(spacing: 12) {
+                Text(L10n.string("simple.address")).foregroundStyle(.secondary)
+                Spacer(minLength: 0)
+                Text(DeviceEndpointPolicy.hostComponent(profile.connectionTarget) ?? profile.displayTarget)
+                    .textSelection(.enabled).monospacedDigit()
+            }
+            HStack(spacing: 8) {
                 Button(L10n.string("simple.open_disk"), action: openDisk)
                     .disabled(!DashboardActionPolicy.isEnabled(.openFinder, for: summary))
-                Spacer()
+                Spacer(minLength: 8)
                 Button(L10n.string("simple.edit"), action: edit)
                     .keyboardShortcut(.defaultAction)
             }
         }
+        .font(UtilityStyle.body).controlSize(.regular)
         .padding(20)
-        .frame(width: 340)
+        .frame(width: 300)
     }
 }

@@ -14,26 +14,37 @@ struct CheckupTab: View {
             currentStage: store.currentStage, hostWarning: HostCompatibilityPolicy.warning(enabled: appSettings.timeMachineWarningsEnabled),
             localNetworkFacts: .current())
 
+        let effectiveState = store.state == .idle ? profile.lastCheckup?.state ?? .idle : store.state
         ScrollView {
             VStack(alignment: .leading, spacing: UtilityStyle.sectionSpacing) {
                 if let progress = CheckupProgressPresentation(state: store.state, currentStage: store.currentStage) {
                     InlineOperationProgress(progress: progress, title: L10n.string("simple.check_connection"))
                 } else if store.error == nil {
-                    Label(L10n.string(statusKey(store.state)), systemImage: store.state == .passed ? "checkmark.circle.fill" : "network")
-                        .foregroundStyle(store.state == .passed ? Color.primary : Color.secondary)
+                    Label(L10n.string(statusKey(effectiveState)), systemImage: effectiveState == .passed ? "checkmark.circle.fill" : "network")
+                        .foregroundStyle(effectiveState == .passed ? Color.primary : Color.secondary)
                 }
-                if let warning = presentation.hostWarning { WarningBanner(warning: warning) }
                 if !store.isRunning {
                     Button(L10n.string("simple.check_connection")) {
                         session.performCheckupAction(.runCheckup, profile: profile, showDiagnostics: showDiagnostics)
                     }
                     .disabled(operationCoordinator.isDeviceBusy(profile))
                 }
-                // Problems are never hidden in the diagnostic transcript.
+                if !presentation.domains.isEmpty {
+                    SummaryGrid(rows: presentation.domains.map { ($0.title, UtilityCheckupLayout.statusTitle($0.status)) })
+                }
+                if let checkedAt = profile.lastCheckup?.checkedAt {
+                    Text(L10n.format("disk_health.checked_at", checkedAt.formatted(date: .abbreviated, time: .shortened)))
+                        .font(UtilityStyle.secondary).foregroundStyle(.secondary)
+                }
+                if let warning = presentation.hostWarning { WarningBanner(warning: warning) }
                 ForEach(presentation.domains) { domain in
-                    ForEach(domain.attentionRows) { row in
+                    ForEach(domain.attentionRows.filter { UtilityCheckupLayout.isUrgent($0.id) }) { row in
                         UtilityNotice(color: row.status == .failed ? .red : .orange) { Text(row.message) }
                     }
+                }
+                if store.summary?.diskHealth?.disks.contains(where: \.reportsFailure) == true,
+                   !presentation.domains.flatMap(\.attentionRows).contains(where: { UtilityCheckupLayout.isUrgent($0.id) }) {
+                    UtilityNotice(color: .red) { Text(L10n.string("utility.disk.failure_advice")) }
                 }
                 if let error = store.error {
                     ErrorRecoveryView(error: error, diagnosticsText: diagnosticsText, omittedActions: [.retry, .runCheckup]) { kind in
@@ -57,7 +68,8 @@ struct CheckupTab: View {
                 }
                 CheckupAdvancedOptionsView(store: store)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: 560, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .top)
         }
     }
 

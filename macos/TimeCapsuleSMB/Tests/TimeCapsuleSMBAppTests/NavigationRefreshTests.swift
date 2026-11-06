@@ -119,12 +119,12 @@ final class NavigationRefreshTests: XCTestCase {
         XCTAssertEqual(domain.rows.count, 4)
     }
 
-    func testDiskWarningIsVisibleWhileDetailedReadingsStartCollapsed() throws {
+    func testDiskWarningAndDetailedReadingsAreVisibleImmediately() throws {
         let disk = DiskHealthDisk(device: "wd0", label: "Disk 1", builtin: true, smartStatus: "failing", partitions: [],
                                   details: DiskSmartDetails(state: "available", attributes: []))
         let texts = accessibleElements(DiskHealthView(report: DiskHealthReport(error: nil, disks: [disk]), checkedAt: nil)).map(\.text)
         XCTAssertTrue(texts.contains(L10n.string("utility.disk.failure_advice")))
-        XCTAssertTrue(texts.contains(L10n.string("simple.technical_details")))
+        XCTAssertTrue(texts.contains(L10n.string("disk_health.attributes")))
         XCTAssertTrue(texts.contains(L10n.string("disk_health.power_on_hours")))
     }
 

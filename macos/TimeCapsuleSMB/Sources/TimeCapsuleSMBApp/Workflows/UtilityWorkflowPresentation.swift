@@ -12,6 +12,8 @@ extension MaintenanceUserAction {
         case .runActivation: return L10n.string("utility.sharing.start")
         case .runUninstall: return L10n.string("utility.sharing.remove")
         case .runWipeDisk: return L10n.string("utility.disk.erase")
+        case .planFsck, .planPatch: return L10n.string("simple.continue")
+        case .runFsck: return L10n.string("utility.disk.repair")
         case .installSMB: return L10n.string("simple.sharing.set_up")
         case .viewDiagnostics: return L10n.string("utility.support")
         default: return title
@@ -23,7 +25,7 @@ extension MaintenanceUserAction {
 enum MaintenanceGuidePolicy {
     static func primaryAction(presentation: MaintenanceWorkflowDetailPresentation) -> MaintenanceUserAction {
         switch presentation.workflow {
-        case .sshAccess: return .enableSSHAccess
+        case .sshAccess: return presentation.sshAccessIsReachable == false ? .enableSSHAccess : .checkSSHAccess
         case .activate: return .runActivation
         case .uninstall: return .runUninstall
         case .wipeDisk: return .runWipeDisk
@@ -56,5 +58,24 @@ enum UtilityOperationTitle {
         default: return fallback
         }
         return L10n.string(key)
+    }
+}
+
+/// Keep data-loss and interrupted-repair precautions visible beside the result.
+/// Routine individual checks stay in the connection transcript.
+enum UtilityCheckupLayout {
+    static func isUrgent(_ identifier: String) -> Bool {
+        ["disk-failing", "disk_failing", "smart_failing", "disk-unreadable", "unreadable",
+         "volumes-in-memory", "volumes_in_memory", "not-responding", "not_responding",
+         "not-mounting", "not_mounting", "acpd-gone", "acpd_gone"]
+            .contains { identifier.contains($0) }
+    }
+
+    static func statusTitle(_ status: CheckupStatusPresentation) -> String {
+        switch status {
+        case .passed, .info: return L10n.string("utility.status.working")
+        case .warning, .failed: return L10n.string("utility.status.attention")
+        case .notChecked, .unknown: return L10n.string("utility.status.unchecked")
+        }
     }
 }

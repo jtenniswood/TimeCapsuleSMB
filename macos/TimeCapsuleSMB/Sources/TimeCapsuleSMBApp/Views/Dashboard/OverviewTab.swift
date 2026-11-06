@@ -26,26 +26,23 @@ struct OverviewTab: View {
                 }
                 .padding(.vertical, 8)
 
-                // A ready disk is opened from its device popover. Other states
-                // offer the next step here, without repeating it in a button strip.
-                if presentation.primaryAction != .openSMB {
-                    Button(primaryActionTitle(presentation.primaryAction)) {
-                        if presentation.primaryAction == .installSMB { session.selectedTab = .install }
-                        else { session.performPrimaryAction(presentation.primaryAction, profile: profile) }
-                    }
-                    .disabled(!presentation.isPrimaryActionEnabled)
+                Button(summary.displayStatus == .activationNeeded ? L10n.string("utility.sharing.start") : primaryActionTitle(presentation.primaryAction)) {
+                    if summary.displayStatus == .activationNeeded { session.performSecondaryAction(.startSMB, profile: profile) }
+                    else if presentation.primaryAction == .installSMB { session.selectedTab = .install }
+                    else { session.performPrimaryAction(presentation.primaryAction, profile: profile) }
                 }
+                .disabled(summary.displayStatus == .activationNeeded ? !presentation.isEnabled(.startSMB) : !presentation.isPrimaryActionEnabled)
+                // Only urgent disk precautions interrupt the overview. All
+                // connection and software checks have their home in Connection.
                 ForEach(presentation.healthSections) { section in
-                    ForEach(section.rows.filter { $0.status == .warning || $0.status == .failed }) { row in
+                    ForEach(section.rows.filter { UtilityCheckupLayout.isUrgent($0.id) }) { row in
                         UtilityNotice(color: row.status == .failed ? .red : .orange) {
-                            Text(row.title).font(UtilityStyle.heading)
-                            Text(row.detail).font(UtilityStyle.secondary).foregroundStyle(.secondary)
-                            if let action = row.action {
-                                Button(action.title) { session.performSecondaryAction(action, profile: profile) }
-                                    .disabled(!presentation.isEnabled(action))
-                            }
+                            Text(row.detail)
                         }
                     }
+                }
+                if profile.lastCheckup?.diskHealth?.disks.contains(where: \.reportsFailure) == true {
+                    UtilityNotice(color: .red) { Text(L10n.string("utility.disk.failure_advice")) }
                 }
                 if let warning = presentation.hostWarning { WarningBanner(warning: warning) }
                 DashboardDisclosureSection(title: L10n.string("simple.connection_details")) {
@@ -53,7 +50,8 @@ struct OverviewTab: View {
                     Text(presentation.header.lastChecked).font(UtilityStyle.secondary).foregroundStyle(.secondary)
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: 560, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .top)
         }
     }
 
@@ -61,6 +59,8 @@ struct OverviewTab: View {
         switch action {
         case .installSMB: return L10n.string("simple.sharing.set_up")
         case .runCheckup: return L10n.string("simple.check_connection")
+        case .openSMB: return L10n.string("simple.open_disk")
+        case .replacePassword: return L10n.string("utility.password.update")
         default: return action.title
         }
     }
