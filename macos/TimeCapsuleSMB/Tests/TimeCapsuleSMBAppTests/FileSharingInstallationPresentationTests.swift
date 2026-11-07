@@ -38,9 +38,10 @@ final class FileSharingInstallationPresentationTests: XCTestCase {
         XCTAssertEqual(DeviceDashboardHeaderPresentation.friendlyModelValue(for: profile), "Apple Time Capsule, 5th Generation")
     }
 
-    func testNavigationGroupsConnectionAndDiskAccessIntoTheirPages() {
-        XCTAssertEqual(DeviceDashboardTab.allCases, [.overview, .maintenance, .settings])
+    func testRemovedPanesLeadToOverview() {
+        XCTAssertEqual(DeviceDashboardTab.allCases, [.overview, .maintenance])
         XCTAssertEqual(DeviceDashboardTab.checkup.visibleTab, .overview)
-        XCTAssertEqual(DeviceDashboardTab.install.visibleTab, .maintenance)
+        XCTAssertEqual(DeviceDashboardTab.install.visibleTab, .overview)
+        XCTAssertEqual(DeviceDashboardTab.settings.visibleTab, .overview)
     }
 }

@@ -144,6 +144,15 @@ struct DeviceDashboardHeaderPresentation: Equatable {
         return generation == L10n.string("value.unknown") ? family : family + ", " + generation
     }
 
+    static func deviceTooltip(for profile: DeviceProfile, payload: ReachabilityPayload?) -> String {
+        let values = [
+            ("simple.address", DeviceEndpointPolicy.hostComponent(profile.connectionTarget) ?? profile.displayTarget),
+            ("simple.firmware_version", payload?.firmwareVersion),
+            ("simple.serial_number", payload?.serialNumber)
+        ]
+        return values.compactMap { key, value in value.map { L10n.string(key) + ": " + $0 } }.joined(separator: "\n")
+    }
+
     private static func generationValue(for profile: DeviceProfile) -> String {
         if let syapGeneration = generationFromSyAP(profile.syap) {
             return syapGeneration

@@ -571,7 +571,7 @@
 "overview.saved_devices.title" = "Все устройства";
 "overview.discovery.add" = "Добавить";
 "overview.discovery.discovering" = "Ищем устройства...";
-"overview.discovery.empty" = "Не найдено близлежащих устройств Apple AirPort Time Capsule или AirPort Extreme.";
+"overview.discovery.empty" = "Устройства не найдены";
 "overview.discovery.failed" = "Обнаружение не удалось.";
 "overview.discovery.paused" = "Обнаружение возобновится после завершения текущей операции.";
 "overview.discovery.readiness_blocked" = "Обнаружение устройств доступно только после подготовки приложения.";
@@ -1662,3 +1662,7 @@
 "simple.firmware_version" = "Версия прошивки";
 "simple.serial_number" = "Серийный номер";
 "disk_health.space_compact" = "Свободно %@ из %@";
+
+"simple.mount" = "Подключить";
+
+"simple.manage" = "Управлять";

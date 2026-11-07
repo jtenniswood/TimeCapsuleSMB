@@ -14,7 +14,7 @@ struct UtilityTabs<Selection: Hashable, Content: View>: View {
                     Text(tab.title).tag(tab.id)
                 }
             }
-            .pickerStyle(.segmented)
+            .pickerStyle(.palette)
             .labelsHidden()
             .controlSize(.regular)
             .frame(width: CGFloat(tabs.count) * 120)

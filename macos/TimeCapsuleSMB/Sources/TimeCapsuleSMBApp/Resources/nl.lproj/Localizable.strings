@@ -571,7 +571,7 @@
 "overview.saved_devices.title" = "Alle apparaten";
 "overview.discovery.add" = "Toevoegen";
 "overview.discovery.discovering" = "Op zoek naar apparaten...";
-"overview.discovery.empty" = "Geen Apple AirPort Time Capsule of AirPort Extreme apparaten in de buurt gevonden.";
+"overview.discovery.empty" = "Geen apparaten gevonden";
 "overview.discovery.failed" = "Apparaatdetectie mislukt.";
 "overview.discovery.paused" = "Apparaatdetectie wordt hervat nadat de huidige bewerking is voltooid.";
 "overview.discovery.readiness_blocked" = "Apparaatdetectie is pas beschikbaar als de app gereed is.";
@@ -1662,3 +1662,7 @@
 "simple.firmware_version" = "Firmwareversie";
 "simple.serial_number" = "Serienummer";
 "disk_health.space_compact" = "%@ vrij van %@";
+
+"simple.mount" = "Koppel";
+
+"simple.manage" = "Beheer";

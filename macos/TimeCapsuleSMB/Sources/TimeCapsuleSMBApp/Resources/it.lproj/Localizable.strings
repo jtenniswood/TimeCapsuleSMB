@@ -571,7 +571,7 @@
 "overview.saved_devices.title" = "Tutti i dispositivi";
 "overview.discovery.add" = "Aggiungi";
 "overview.discovery.discovering" = "Ricerca dispositivi...";
-"overview.discovery.empty" = "Nessun dispositivo Apple AirPort Time Capsule o AirPort Extreme trovato nelle vicinanze.";
+"overview.discovery.empty" = "Nessun dispositivo trovato";
 "overview.discovery.failed" = "Rilevamento non riuscito.";
 "overview.discovery.paused" = "Il rilevamento riprenderà al termine dell’operazione corrente.";
 "overview.discovery.readiness_blocked" = "Il rilevamento è disponibile solo quando l’app è pronta.";
@@ -1662,3 +1662,7 @@
 "simple.firmware_version" = "Versione firmware";
 "simple.serial_number" = "Numero di serie";
 "disk_health.space_compact" = "%@ liberi di %@";
+
+"simple.mount" = "Monta";
+
+"simple.manage" = "Gestisci";

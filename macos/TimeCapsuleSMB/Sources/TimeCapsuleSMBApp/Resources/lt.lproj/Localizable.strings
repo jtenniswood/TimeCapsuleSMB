@@ -571,7 +571,7 @@
 "overview.saved_devices.title" = "Visi įrenginiai";
 "overview.discovery.add" = "Pridėti";
 "overview.discovery.discovering" = "Ieškoma įrenginių...";
-"overview.discovery.empty" = "Nerastas nė vienas Apple AirPort Time Capsule ar AirPort Extreme netoliese.";
+"overview.discovery.empty" = "Įrenginių nerasta";
 "overview.discovery.failed" = "Paieška nepavyko.";
 "overview.discovery.paused" = "Paieška bus atnaujinta, kai baigsis dabartinė operacija.";
 "overview.discovery.readiness_blocked" = "Paieška nepasiekiama, kol programos parengtis nebus pataisyta.";
@@ -1662,3 +1662,7 @@
 "simple.firmware_version" = "Programinės aparatinės įrangos versija";
 "simple.serial_number" = "Serijos numeris";
 "disk_health.space_compact" = "Laisva %@ iš %@";
+
+"simple.mount" = "Prijungti";
+
+"simple.manage" = "Tvarkyti";

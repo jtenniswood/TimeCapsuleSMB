@@ -30,7 +30,7 @@ struct DeviceListOverviewView: View {
             } else {
                 ScrollView {
                     VStack(spacing: 10) {
-                        VStack(spacing: 4) {
+                        VStack(spacing: 12) {
                             if let image = NSImage(named: NSImage.computerName) {
                                 Image(nsImage: image).resizable().scaledToFit().frame(width: 240, height: 240)
                                     .frame(width: 240, height: 140).clipped()
@@ -93,11 +93,11 @@ struct DeviceListOverviewView: View {
                     .font(UtilityStyle.body)
                     .foregroundStyle(.secondary)
                 HStack(spacing: 10) {
-                    Button(L10n.string("simple.edit")) { appStore.select(profile) }
-                    Button(L10n.string("simple.open_disk")) {
+                    Button(L10n.string("simple.mount")) {
                         dashboardStore?.session(for: profile).performSecondaryAction(.openFinder, profile: profile)
                     }
                     .disabled(!DashboardActionPolicy.isEnabled(.openFinder, for: summary))
+                    Button(L10n.string("simple.manage")) { appStore.select(profile) }
                 }.padding(.top, 4)
         }
         .padding(8).frame(maxWidth: .infinity)
@@ -230,10 +230,10 @@ struct DeviceQuickInfoView: View {
                     .textSelection(.enabled).monospacedDigit()
             }
             HStack(spacing: 8) {
-                Button(L10n.string("simple.open_disk"), action: openDisk)
+                Button(L10n.string("simple.mount"), action: openDisk)
                     .disabled(!DashboardActionPolicy.isEnabled(.openFinder, for: summary))
                 Spacer(minLength: 8)
-                Button(L10n.string("simple.edit"), action: edit)
+                Button(L10n.string("simple.manage"), action: edit)
                     .keyboardShortcut(.defaultAction)
             }
         }

@@ -55,13 +55,11 @@ struct DeviceDashboardView: View {
     @ViewBuilder
     private func tabContent(_ tab: DeviceDashboardTab) -> some View {
         switch tab {
-        case .overview, .checkup:
+        case .overview, .checkup, .install, .settings:
             OverviewTab(profile: profile, session: session, reachabilityStore: reachabilityStore,
                         showDiagnostics: showDiagnostics, diagnosticsText: diagnosticsText)
-        case .maintenance, .install:
+        case .maintenance:
             MaintenanceTab(profile: profile, session: session, showDiagnostics: showDiagnostics, diagnosticsText: diagnosticsText)
-        case .settings:
-            ScrollView { SettingsTab(profile: profile, session: session, appStore: appStore, backend: backend) }
         }
     }
 

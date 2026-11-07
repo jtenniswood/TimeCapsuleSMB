@@ -24,17 +24,8 @@ struct OverviewTab: View {
                     }
                     Spacer(minLength: 0)
                 }
-                SummaryGrid(rows: [
-                    (L10n.string("simple.address"), DeviceEndpointPolicy.hostComponent(profile.connectionTarget) ?? profile.displayTarget),
-                    (L10n.string("simple.firmware_version"), payload?.firmwareVersion ?? L10n.string("value.unknown")),
-                    (L10n.string("simple.serial_number"), payload?.serialNumber ?? L10n.string("value.unknown"))
-                ])
+                .help(DeviceDashboardHeaderPresentation.deviceTooltip(for: profile, payload: payload))
                 FileSharingStatusView(profile: profile, session: session, reachability: reachabilityStore)
-                GroupBox(L10n.string("simple.tab.connection")) {
-                    CheckupTab(profile: profile, session: session, operationCoordinator: session.appStore.operationCoordinator,
-                        appSettings: session.appStore.appSettingsStore.settings, showDiagnostics: showDiagnostics, diagnosticsText: diagnosticsText)
-                        .padding(12)
-                }
             }
             .frame(maxWidth: 560, alignment: .leading).frame(maxWidth: .infinity, alignment: .top)
         }
@@ -65,8 +56,8 @@ private struct FileSharingStatusView: View {
             checking: reachability.isRefreshing(profile: profile) || session.sharingStore.loading)
         GroupBox(L10n.string("simple.sharing.title")) {
             VStack(alignment: .leading, spacing: 12) {
-                if let progress = InstallProgressPresentation(state: store.state, currentStage: store.currentStage) {
-                    InlineOperationProgress(progress: progress, title: L10n.string("simple.sharing.title"))
+                if store.isBusy {
+                    FileSharingProgressView(store: store)
                 } else {
                     HStack {
                         Label(state.statusTitle, systemImage: state.state == .upToDate ? "checkmark.circle.fill" :
@@ -88,6 +79,23 @@ private struct FileSharingStatusView: View {
                     }
                 }
             }.padding(12).frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+}
+
+struct FileSharingProgressView: View {
+    @ObservedObject var store: DeployWorkflowStore
+
+    var body: some View {
+        HStack(spacing: 16) {
+            if let progress = InstallProgressPresentation(state: store.state, currentStage: store.currentStage) {
+                InlineOperationProgress(progress: progress, title: L10n.string("simple.sharing.title"))
+            } else {
+                ProgressView().controlSize(.small)
+                Text(L10n.string("simple.sharing.title"))
+            }
+            Spacer(minLength: 8)
+            Button(L10n.string("toolbar.cancel")) { store.cancel() }.disabled(!store.canCancel)
         }
     }
 }

@@ -571,7 +571,7 @@
 "overview.saved_devices.title" = "所有设备";
 "overview.discovery.add" = "添加";
 "overview.discovery.discovering" = "正在查找设备…";
-"overview.discovery.empty" = "未找到附近的 Apple AirPort Time Capsule 或 AirPort Extreme 设备。";
+"overview.discovery.empty" = "未找到设备";
 "overview.discovery.failed" = "设备发现失败。";
 "overview.discovery.paused" = "当前操作完成后将恢复设备发现。";
 "overview.discovery.readiness_blocked" = "应用恢复就绪后才能发现设备。";
@@ -1662,3 +1662,7 @@
 "simple.firmware_version" = "固件版本";
 "simple.serial_number" = "序列号";
 "disk_health.space_compact" = "可用 %@，共 %@";
+
+"simple.mount" = "挂载";
+
+"simple.manage" = "管理";

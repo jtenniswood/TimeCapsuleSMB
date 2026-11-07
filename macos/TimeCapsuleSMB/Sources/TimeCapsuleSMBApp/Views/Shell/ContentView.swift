@@ -219,9 +219,6 @@ public struct ContentView: View {
     private var windowFooter: some View {
         if appStore.route != .allDevices || activityStore.hasActiveActivity {
             VStack(spacing: 0) {
-                if activityStore.hasActiveActivity && !isShowingActiveOperation {
-                    ActivityCompactView(activityStore: activityStore, registry: deviceRegistry, context: activityDisplayContext)
-                }
                 if let profile = appStore.selectedProfile {
                     DeviceEditorFooter(profile: profile, session: dashboardStore.session(for: profile), appStore: appStore)
                 } else if appStore.route != .allDevices {
@@ -233,26 +230,6 @@ public struct ContentView: View {
                 }
             }
         }
-    }
-
-    private var isShowingActiveOperation: Bool {
-        guard let profile = appStore.selectedProfile else { return appStore.showingActivity }
-        let session = dashboardStore.session(for: profile)
-        switch session.selectedTab {
-        case .install: return session.deployStore.isBusy
-        case .checkup: return session.doctorStore.isRunning
-        case .maintenance: return session.maintenanceStore.isBusy
-        case .settings: return session.profileEditorStore.isRunning
-        case .overview: return false
-        }
-    }
-
-    private var activityDisplayContext: ActivityDisplayContext {
-        ActivityDisplayContext(
-            selectedDeviceID: appStore.selectedDeviceID,
-            showingAddDevice: appStore.showingAddDevice,
-            showingActivity: appStore.showingActivity
-        )
     }
 
     @ViewBuilder
@@ -340,50 +317,19 @@ private struct DeviceEditorFooter: View {
     let profile: DeviceProfile
     @ObservedObject var session: DeviceDashboardSession
     @ObservedObject var appStore: AppStore
-    @ObservedObject private var editor: DeviceProfileEditorStore
-    @ObservedObject private var sharing: DiskSharingStore
-
-    init(profile: DeviceProfile, session: DeviceDashboardSession, appStore: AppStore) {
-        self.profile = profile
-        self.session = session
-        self.appStore = appStore
-        editor = session.profileEditorStore
-        sharing = session.sharingStore
-    }
 
     var body: some View {
         UtilityFooter {
-            if appStore.canCancelSelectedOperation {
+            if appStore.canCancelSelectedOperation && !showsInlineCancel {
                 Button(L10n.string("toolbar.cancel")) { appStore.cancelSelectedOperation() }
             }
             Spacer()
-            if (session.selectedTab == .settings || editor.hasChanges || sharing.hasChanges) && !editor.isRunning && !sharing.saving {
-                Button(L10n.string("action.cancel")) {
-                    editor.reset(to: profile)
-                    sharing.reset()
-                    appStore.navigate(to: .allDevices)
-                }
+            Button(L10n.string("action.done")) { appStore.navigate(to: .allDevices) }
                 .keyboardShortcut(.cancelAction)
-                Button(L10n.string("utility.update")) {
-                    Task { @MainActor in
-                        if editor.hasChanges {
-                            await editor.save(profile: profile)
-                            guard editor.state == .saved else { return }
-                        }
-                        if sharing.hasChanges {
-                            guard let password = appStore.password(for: profile),
-                                  await sharing.save(profile: profile, password: password) else { return }
-                        }
-                        appStore.navigate(to: .allDevices)
-                    }
-                }
-                .keyboardShortcut(.defaultAction)
-                .disabled((editor.hasChanges && !editor.canSave) || (sharing.hasChanges && !sharing.canSave)
-                    || (!editor.hasChanges && !sharing.hasChanges) || appStore.operationCoordinator.isDeviceBusy(profile))
-            } else {
-                Button(L10n.string("action.done")) { appStore.navigate(to: .allDevices) }
-                    .keyboardShortcut(.cancelAction)
-            }
         }
+    }
+
+    private var showsInlineCancel: Bool {
+        session.selectedTab.visibleTab == .overview && session.deployStore.isBusy
     }
 }
