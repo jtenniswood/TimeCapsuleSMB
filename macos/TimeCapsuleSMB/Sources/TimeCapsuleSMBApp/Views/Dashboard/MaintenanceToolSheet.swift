@@ -17,12 +17,17 @@ struct MaintenanceToolSheet: View {
                 .padding(.horizontal, 24).padding(.top, 24).padding(.bottom, 20)
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    MaintenanceDetailView(presentation: presentation, store: store,
-                        performAction: { session.performMaintenanceAction($0, profile: profile, showDiagnostics: showDiagnostics) },
-                        chooseFirmwareTemplate: { chooseFirmwareTemplate(store: store.bootHookStore) })
-                    if let error = presentation.error {
-                        ErrorRecoveryView(error: error, diagnosticsText: diagnosticsText) { kind in
-                            kind == .diagnostics ? { showDiagnostics() } : session.recoveryAction(kind, error: error, profile: profile)
+                    if presentation.workflow == .sshAccess {
+                        SSHAccessToolView(profile: profile, session: session, status: session.appStore.sshAccessStore,
+                            operation: store.sshAccessStore, editor: session.profileEditorStore)
+                    } else {
+                        MaintenanceDetailView(presentation: presentation, store: store,
+                            performAction: { session.performMaintenanceAction($0, profile: profile, showDiagnostics: showDiagnostics) },
+                            chooseFirmwareTemplate: { chooseFirmwareTemplate(store: store.bootHookStore) })
+                        if let error = presentation.error {
+                            ErrorRecoveryView(error: error, diagnosticsText: diagnosticsText) { kind in
+                                kind == .diagnostics ? { showDiagnostics() } : session.recoveryAction(kind, error: error, profile: profile)
+                            }
                         }
                     }
                 }

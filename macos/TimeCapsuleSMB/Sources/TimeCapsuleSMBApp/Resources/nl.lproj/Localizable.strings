@@ -122,9 +122,9 @@
 "confirm.configure.enable_ssh_reboot.action" = "Verbinding toestaan";
 "confirm.configure.enable_ssh_reboot.message" = "Mag deze app %@ beheren? Uw AirPort wordt opnieuw opgestart.";
 "confirm.configure.enable_ssh_reboot.title" = "Verbinding toestaan?";
-"confirm.ssh_access.enable_reboot.action" = "Verbinding toestaan";
-"confirm.ssh_access.enable_reboot.message" = "Mag deze app %@ beheren? Uw AirPort wordt opnieuw opgestart.";
-"confirm.ssh_access.enable_reboot.title" = "Verbinding toestaan?";
+"confirm.ssh_access.enable_reboot.action" = "Schakel SSH in";
+"confirm.ssh_access.enable_reboot.message" = "SSH op %@ inschakelen? Uw AirPort wordt opnieuw opgestart.";
+"confirm.ssh_access.enable_reboot.title" = "SSH inschakelen?";
 "confirm.deploy.netbsd4.action" = "Configureer bestandsdeling";
 "confirm.deploy.netbsd4.message" = "Bestandsdeling op %@ installeren of bijwerken? Uw AirPort wordt opnieuw opgestart. Deze app start daarna bestandsdeling.";
 "confirm.deploy.netbsd4.title" = "Configureer bestandsdeling?";
@@ -1596,7 +1596,7 @@
 "utility.tab.base_station" = "Basisstation";
 "utility.sharing.ready" = "Bestandsdeling is gereed.";
 "utility.tools.choose" = "Hulpprogramma";
-"utility.tools.sshAccess" = "Toegang op afstand";
+"utility.tools.sshAccess" = "SSH-ondersteuning";
 "utility.tools.bootHook" = "Automatisch starten";
 "utility.tools.activate" = "Start bestandsdeling";
 "utility.tools.uninstall" = "Verwijder bestandsdeling";
@@ -1672,3 +1672,13 @@
 "simple.device.connected" = "Verbonden";
 
 "simple.software.checking_version" = "Versie controleren";
+
+"ssh_support.title" = "SSH-ondersteuning";
+
+"ssh_support.enabled" = "Ingeschakeld";
+
+"ssh_support.disabled" = "Niet ingeschakeld";
+
+"ssh_support.checking" = "SSH controleren";
+
+"ssh_support.enabling" = "SSH inschakelen...";

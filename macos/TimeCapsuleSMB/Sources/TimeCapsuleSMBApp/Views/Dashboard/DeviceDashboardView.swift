@@ -22,11 +22,6 @@ struct DeviceDashboardView: View {
                         session.updateConfiguredAddressFromDiscovery(profile: profile)
                     }
                 }
-                if let notice = session.sshAccessNotice(for: profile) {
-                    DashboardSSHAccessNoticeView(notice: notice,
-                                               open: { session.openSSHAccess(profile: profile) },
-                                               enable: { session.enableSSHAccess(profile: profile) })
-                }
                 OverviewTab(profile: profile, session: session, reachabilityStore: reachabilityStore,
                             showDiagnostics: showDiagnostics, diagnosticsText: diagnosticsText)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -68,23 +63,6 @@ struct DeviceDashboardView: View {
 
     private func diagnosticsText() -> String {
         DiagnosticsExportBuilder().build(context: appStore.diagnosticsExportContext(includeBackendEvents: true))
-    }
-}
-
-private struct DashboardSSHAccessNoticeView: View {
-    let notice: SSHAccessNotice
-    let open: () -> Void
-    let enable: () -> Void
-
-    var body: some View {
-        UtilityNotice {
-            Text(L10n.string("utility.connection.allow_message"))
-            Button(L10n.string("utility.connection.allow"), action: enable)
-            DashboardDisclosureSection(title: L10n.string("utility.details")) {
-                Text(L10n.format("ssh_access_notice.message", notice.host)).font(UtilityStyle.secondary).foregroundStyle(.secondary)
-                Button(L10n.string("ssh_access_notice.open_action"), action: open)
-            }
-        }
     }
 }
 

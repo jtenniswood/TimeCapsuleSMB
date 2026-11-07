@@ -122,9 +122,9 @@
 "confirm.configure.enable_ssh_reboot.action" = "Leisti prisijungti";
 "confirm.configure.enable_ssh_reboot.message" = "Leisti šiai programai valdyti %@? „AirPort“ bus paleistas iš naujo.";
 "confirm.configure.enable_ssh_reboot.title" = "Leisti prisijungti?";
-"confirm.ssh_access.enable_reboot.action" = "Leisti prisijungti";
-"confirm.ssh_access.enable_reboot.message" = "Leisti šiai programai valdyti %@? „AirPort“ bus paleistas iš naujo.";
-"confirm.ssh_access.enable_reboot.title" = "Leisti prisijungti?";
+"confirm.ssh_access.enable_reboot.action" = "Įjungti SSH";
+"confirm.ssh_access.enable_reboot.message" = "Įjungti SSH įrenginyje %@? Jūsų AirPort bus paleistas iš naujo.";
+"confirm.ssh_access.enable_reboot.title" = "Įjungti SSH?";
 "confirm.deploy.netbsd4.action" = "Nustatyti failų bendrinimą";
 "confirm.deploy.netbsd4.message" = "Įdiegti arba atnaujinti failų bendrinimą įrenginyje %@? „AirPort“ bus paleistas iš naujo. Tada ši programa paleis failų bendrinimą.";
 "confirm.deploy.netbsd4.title" = "Nustatyti failų bendrinimą?";
@@ -1596,7 +1596,7 @@
 "utility.tab.base_station" = "Bazinė stotis";
 "utility.sharing.ready" = "Failų bendrinimas parengtas.";
 "utility.tools.choose" = "Priemonė";
-"utility.tools.sshAccess" = "Nuotolinė prieiga";
+"utility.tools.sshAccess" = "SSH palaikymas";
 "utility.tools.bootHook" = "Automatinis paleidimas";
 "utility.tools.activate" = "Paleisti failų bendrinimą";
 "utility.tools.uninstall" = "Pašalinti failų bendrinimą";
@@ -1672,3 +1672,13 @@
 "simple.device.connected" = "Prisijungta";
 
 "simple.software.checking_version" = "Tikrinama versija";
+
+"ssh_support.title" = "SSH palaikymas";
+
+"ssh_support.enabled" = "Įjungta";
+
+"ssh_support.disabled" = "Neįjungta";
+
+"ssh_support.checking" = "Tikrinamas SSH";
+
+"ssh_support.enabling" = "Įjungiamas SSH...";

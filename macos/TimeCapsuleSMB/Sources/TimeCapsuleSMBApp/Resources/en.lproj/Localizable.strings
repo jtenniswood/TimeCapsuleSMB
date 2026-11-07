@@ -122,9 +122,9 @@
 "confirm.configure.enable_ssh_reboot.action" = "Allow Connection";
 "confirm.configure.enable_ssh_reboot.message" = "Allow this app to manage %@? Your AirPort will restart.";
 "confirm.configure.enable_ssh_reboot.title" = "Allow Connection?";
-"confirm.ssh_access.enable_reboot.action" = "Allow Connection";
-"confirm.ssh_access.enable_reboot.message" = "Allow this app to manage %@? Your AirPort will restart.";
-"confirm.ssh_access.enable_reboot.title" = "Allow Connection?";
+"confirm.ssh_access.enable_reboot.action" = "Enable SSH";
+"confirm.ssh_access.enable_reboot.message" = "Enable SSH on %@? Your AirPort will restart.";
+"confirm.ssh_access.enable_reboot.title" = "Enable SSH?";
 "confirm.deploy.netbsd4.action" = "Set Up File Sharing";
 "confirm.deploy.netbsd4.message" = "Install or update file sharing on %@? Your AirPort will restart. This app will then start file sharing.";
 "confirm.deploy.netbsd4.title" = "Set Up File Sharing?";
@@ -1596,7 +1596,7 @@
 "utility.tab.base_station" = "Base Station";
 "utility.sharing.ready" = "File sharing is ready.";
 "utility.tools.choose" = "Utility";
-"utility.tools.sshAccess" = "Remote Access";
+"utility.tools.sshAccess" = "SSH Support";
 "utility.tools.bootHook" = "Automatic Startup";
 "utility.tools.activate" = "Start File Sharing";
 "utility.tools.uninstall" = "Remove File Sharing";
@@ -1672,3 +1672,13 @@
 "simple.device.connected" = "Connected";
 
 "simple.software.checking_version" = "Checking version";
+
+"ssh_support.title" = "SSH Support";
+
+"ssh_support.enabled" = "Enabled";
+
+"ssh_support.disabled" = "Not enabled";
+
+"ssh_support.checking" = "Checking SSH";
+
+"ssh_support.enabling" = "Enabling SSH...";

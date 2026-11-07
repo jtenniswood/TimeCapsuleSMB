@@ -122,9 +122,9 @@
 "confirm.configure.enable_ssh_reboot.action" = "Разрешить подключение";
 "confirm.configure.enable_ssh_reboot.message" = "Разрешить приложению управлять %@? AirPort будет перезапущен.";
 "confirm.configure.enable_ssh_reboot.title" = "Разрешить подключение?";
-"confirm.ssh_access.enable_reboot.action" = "Разрешить подключение";
-"confirm.ssh_access.enable_reboot.message" = "Разрешить приложению управлять %@? AirPort будет перезапущен.";
-"confirm.ssh_access.enable_reboot.title" = "Разрешить подключение?";
+"confirm.ssh_access.enable_reboot.action" = "Включить SSH";
+"confirm.ssh_access.enable_reboot.message" = "Включить SSH на %@? AirPort будет перезагружен.";
+"confirm.ssh_access.enable_reboot.title" = "Включить SSH?";
 "confirm.deploy.netbsd4.action" = "Настроить общий доступ";
 "confirm.deploy.netbsd4.message" = "Установить или обновить общий доступ к файлам на %@? AirPort будет перезапущен. Затем приложение запустит общий доступ к файлам.";
 "confirm.deploy.netbsd4.title" = "Настроить общий доступ?";
@@ -1596,7 +1596,7 @@
 "utility.tab.base_station" = "Базовая станция";
 "utility.sharing.ready" = "Общий доступ к файлам готов.";
 "utility.tools.choose" = "Утилита";
-"utility.tools.sshAccess" = "Удаленный доступ";
+"utility.tools.sshAccess" = "Поддержка SSH";
 "utility.tools.bootHook" = "Автоматический запуск";
 "utility.tools.activate" = "Запустить общий доступ";
 "utility.tools.uninstall" = "Удалить общий доступ";
@@ -1672,3 +1672,13 @@
 "simple.device.connected" = "Подключено";
 
 "simple.software.checking_version" = "Проверка версии";
+
+"ssh_support.title" = "Поддержка SSH";
+
+"ssh_support.enabled" = "Включено";
+
+"ssh_support.disabled" = "Не включено";
+
+"ssh_support.checking" = "Проверка SSH";
+
+"ssh_support.enabling" = "Включение SSH...";

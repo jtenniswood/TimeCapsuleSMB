@@ -122,9 +122,9 @@
 "confirm.configure.enable_ssh_reboot.action" = "Permitir conexión";
 "confirm.configure.enable_ssh_reboot.message" = "¿Permitir que esta app gestione %@? Su AirPort se reiniciará.";
 "confirm.configure.enable_ssh_reboot.title" = "Permitir conexión?";
-"confirm.ssh_access.enable_reboot.action" = "Permitir conexión";
-"confirm.ssh_access.enable_reboot.message" = "¿Permitir que esta app gestione %@? Su AirPort se reiniciará.";
-"confirm.ssh_access.enable_reboot.title" = "Permitir conexión?";
+"confirm.ssh_access.enable_reboot.action" = "Activar SSH";
+"confirm.ssh_access.enable_reboot.message" = "¿Activar SSH en %@? Su AirPort se reiniciará.";
+"confirm.ssh_access.enable_reboot.title" = "¿Activar SSH?";
 "confirm.deploy.netbsd4.action" = "Configurar uso compartido";
 "confirm.deploy.netbsd4.message" = "¿Instalar o actualizar el uso compartido de archivos en %@? Su AirPort se reiniciará. Esta app iniciará después el uso compartido de archivos.";
 "confirm.deploy.netbsd4.title" = "Configurar uso compartido?";
@@ -1596,7 +1596,7 @@
 "utility.tab.base_station" = "Estación base";
 "utility.sharing.ready" = "El uso compartido de archivos está listo.";
 "utility.tools.choose" = "Utilidad";
-"utility.tools.sshAccess" = "Acceso remoto";
+"utility.tools.sshAccess" = "Compatibilidad con SSH";
 "utility.tools.bootHook" = "Inicio automático";
 "utility.tools.activate" = "Iniciar uso compartido de archivos";
 "utility.tools.uninstall" = "Eliminar uso compartido de archivos";
@@ -1672,3 +1672,13 @@
 "simple.device.connected" = "Conectado";
 
 "simple.software.checking_version" = "Comprobando versión";
+
+"ssh_support.title" = "Compatibilidad con SSH";
+
+"ssh_support.enabled" = "Activado";
+
+"ssh_support.disabled" = "Sin activar";
+
+"ssh_support.checking" = "Comprobando SSH";
+
+"ssh_support.enabling" = "Activando SSH...";

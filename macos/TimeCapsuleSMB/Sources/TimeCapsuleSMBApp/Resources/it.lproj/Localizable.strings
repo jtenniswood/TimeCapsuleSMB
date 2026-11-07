@@ -122,9 +122,9 @@
 "confirm.configure.enable_ssh_reboot.action" = "Consenti connessione";
 "confirm.configure.enable_ssh_reboot.message" = "Consentire a questa app di gestire %@? Il tuo AirPort verrà riavviato.";
 "confirm.configure.enable_ssh_reboot.title" = "Consenti connessione?";
-"confirm.ssh_access.enable_reboot.action" = "Consenti connessione";
-"confirm.ssh_access.enable_reboot.message" = "Consentire a questa app di gestire %@? Il tuo AirPort verrà riavviato.";
-"confirm.ssh_access.enable_reboot.title" = "Consenti connessione?";
+"confirm.ssh_access.enable_reboot.action" = "Attiva SSH";
+"confirm.ssh_access.enable_reboot.message" = "Attivare SSH su %@? AirPort verrà riavviato.";
+"confirm.ssh_access.enable_reboot.title" = "Attivare SSH?";
 "confirm.deploy.netbsd4.action" = "Configura condivisione file";
 "confirm.deploy.netbsd4.message" = "Installare o aggiornare la condivisione file su %@? Il tuo AirPort verrà riavviato. Questa app avvierà quindi la condivisione file.";
 "confirm.deploy.netbsd4.title" = "Configura condivisione file?";
@@ -1596,7 +1596,7 @@
 "utility.tab.base_station" = "Base";
 "utility.sharing.ready" = "La condivisione file è pronta.";
 "utility.tools.choose" = "Utility";
-"utility.tools.sshAccess" = "Accesso remoto";
+"utility.tools.sshAccess" = "Supporto SSH";
 "utility.tools.bootHook" = "Avvio automatico";
 "utility.tools.activate" = "Avvia condivisione file";
 "utility.tools.uninstall" = "Rimuovi condivisione file";
@@ -1672,3 +1672,13 @@
 "simple.device.connected" = "Connesso";
 
 "simple.software.checking_version" = "Verifica della versione";
+
+"ssh_support.title" = "Supporto SSH";
+
+"ssh_support.enabled" = "Attivato";
+
+"ssh_support.disabled" = "Non attivato";
+
+"ssh_support.checking" = "Verifica di SSH";
+
+"ssh_support.enabling" = "Attivazione di SSH...";

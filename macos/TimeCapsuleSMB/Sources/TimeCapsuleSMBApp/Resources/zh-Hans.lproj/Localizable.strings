@@ -122,9 +122,9 @@
 "confirm.configure.enable_ssh_reboot.action" = "允许连接";
 "confirm.configure.enable_ssh_reboot.message" = "允许此 App 管理 %@ 吗？AirPort 将重新启动。";
 "confirm.configure.enable_ssh_reboot.title" = "允许连接？";
-"confirm.ssh_access.enable_reboot.action" = "允许连接";
-"confirm.ssh_access.enable_reboot.message" = "允许此 App 管理 %@ 吗？AirPort 将重新启动。";
-"confirm.ssh_access.enable_reboot.title" = "允许连接？";
+"confirm.ssh_access.enable_reboot.action" = "启用 SSH";
+"confirm.ssh_access.enable_reboot.message" = "在 %@ 上启用 SSH？你的 AirPort 将重新启动。";
+"confirm.ssh_access.enable_reboot.title" = "启用 SSH？";
 "confirm.deploy.netbsd4.action" = "设置文件共享";
 "confirm.deploy.netbsd4.message" = "在 %@ 上安装或更新文件共享吗？AirPort 将重新启动。 此 App 随后将启动文件共享。";
 "confirm.deploy.netbsd4.title" = "设置文件共享？";
@@ -1596,7 +1596,7 @@
 "utility.tab.base_station" = "基站";
 "utility.sharing.ready" = "文件共享已就绪。";
 "utility.tools.choose" = "实用工具";
-"utility.tools.sshAccess" = "远程访问";
+"utility.tools.sshAccess" = "SSH 支持";
 "utility.tools.bootHook" = "自动启动";
 "utility.tools.activate" = "启动文件共享";
 "utility.tools.uninstall" = "移除文件共享";
@@ -1672,3 +1672,13 @@
 "simple.device.connected" = "已连接";
 
 "simple.software.checking_version" = "正在检查版本";
+
+"ssh_support.title" = "SSH 支持";
+
+"ssh_support.enabled" = "已启用";
+
+"ssh_support.disabled" = "未启用";
+
+"ssh_support.checking" = "正在检查 SSH";
+
+"ssh_support.enabling" = "正在启用 SSH…";

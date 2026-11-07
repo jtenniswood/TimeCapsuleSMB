@@ -26,6 +26,9 @@ struct OverviewTab: View {
                 }
                 .help(DeviceDashboardHeaderPresentation.deviceTooltip(for: profile, payload: payload))
                 FileSharingStatusView(profile: profile, session: session, reachability: reachabilityStore)
+                SSHSupportView(profile: profile, status: session.appStore.sshAccessStore,
+                    operation: session.maintenanceStore.sshAccessStore, coordinator: session.appStore.operationCoordinator,
+                    enable: { session.enableSSHAccess(profile: profile) })
                 VStack(alignment: .leading, spacing: 4) {
                     Text(L10n.string("simple.tab.disks"))
                         .font(UtilityStyle.secondary).padding(.leading, 10)

@@ -122,9 +122,9 @@
 "confirm.configure.enable_ssh_reboot.action" = "Verbindung erlauben";
 "confirm.configure.enable_ssh_reboot.message" = "Darf diese App %@ verwalten? Ihr AirPort wird neu gestartet.";
 "confirm.configure.enable_ssh_reboot.title" = "Verbindung erlauben?";
-"confirm.ssh_access.enable_reboot.action" = "Verbindung erlauben";
-"confirm.ssh_access.enable_reboot.message" = "Darf diese App %@ verwalten? Ihr AirPort wird neu gestartet.";
-"confirm.ssh_access.enable_reboot.title" = "Verbindung erlauben?";
+"confirm.ssh_access.enable_reboot.action" = "SSH aktivieren";
+"confirm.ssh_access.enable_reboot.message" = "SSH auf %@ aktivieren? Ihr AirPort wird neu gestartet.";
+"confirm.ssh_access.enable_reboot.title" = "SSH aktivieren?";
 "confirm.deploy.netbsd4.action" = "Dateifreigabe einrichten";
 "confirm.deploy.netbsd4.message" = "Dateifreigabe auf %@ installieren oder aktualisieren? Ihr AirPort wird neu gestartet. Diese App startet anschließend die Dateifreigabe.";
 "confirm.deploy.netbsd4.title" = "Dateifreigabe einrichten?";
@@ -1596,7 +1596,7 @@
 "utility.tab.base_station" = "Basisstation";
 "utility.sharing.ready" = "Die Dateifreigabe ist bereit.";
 "utility.tools.choose" = "Dienstprogramm";
-"utility.tools.sshAccess" = "Fernzugriff";
+"utility.tools.sshAccess" = "SSH-Unterstützung";
 "utility.tools.bootHook" = "Automatischer Start";
 "utility.tools.activate" = "Dateifreigabe starten";
 "utility.tools.uninstall" = "Dateifreigabe entfernen";
@@ -1672,3 +1672,13 @@
 "simple.device.connected" = "Verbunden";
 
 "simple.software.checking_version" = "Version wird geprüft";
+
+"ssh_support.title" = "SSH-Unterstützung";
+
+"ssh_support.enabled" = "Aktiviert";
+
+"ssh_support.disabled" = "Nicht aktiviert";
+
+"ssh_support.checking" = "SSH wird geprüft";
+
+"ssh_support.enabling" = "SSH wird aktiviert...";
