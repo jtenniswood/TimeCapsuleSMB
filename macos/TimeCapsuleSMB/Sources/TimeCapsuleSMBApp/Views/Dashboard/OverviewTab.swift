@@ -67,9 +67,14 @@ private struct FileSharingStatusView: View {
                 if store.isBusy {
                     FileSharingProgressView(store: store)
                 } else {
-                    HStack {
-                        Label(state.statusTitle, systemImage: state.state == .upToDate ? "checkmark.circle.fill" :
-                            state.needsInstall ? "arrow.down.circle" : "checkmark.circle")
+                    HStack(spacing: 12) {
+                        if state.state == .checking {
+                            ProgressView().controlSize(.small).accessibilityHidden(true)
+                            Text(state.statusTitle)
+                        } else {
+                            Label(state.statusTitle, systemImage: state.state == .upToDate ? "checkmark.circle.fill" :
+                                state.needsInstall ? "arrow.down.circle" : "checkmark.circle")
+                        }
                         Spacer()
                         if let version = state.version { Text(version).foregroundStyle(.secondary).monospacedDigit() }
                     }
