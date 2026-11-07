@@ -2,6 +2,17 @@ import XCTest
 @testable import TimeCapsuleSMBApp
 
 final class DeviceEndpointPolicyTests: XCTestCase {
+    func testTerminalSSHCommandPreservesLoginScopeAndPort() {
+        XCTAssertTrue(DeviceEndpointPolicy.terminalSSHCommand("192.0.2.24")?.hasSuffix("-- root@192.0.2.24") == true)
+        XCTAssertTrue(DeviceEndpointPolicy.terminalSSHCommand("admin@[fe80::1%en0]:2222")?.hasSuffix("-p 2222 -- admin@fe80::1%en0") == true)
+        XCTAssertNil(DeviceEndpointPolicy.terminalSSHCommand("root@host:invalid"))
+        XCTAssertNil(DeviceEndpointPolicy.terminalSSHCommand(""))
+    }
+
+    func testTerminalSSHCommandQuotesShellMetacharacters() {
+        XCTAssertTrue(DeviceEndpointPolicy.terminalSSHCommand("root@host;echo")?.hasSuffix("-- 'root@host;echo'") == true)
+    }
+
     func testAddressFamilyParsesIPLiteralForms() {
         XCTAssertEqual(DeviceEndpointPolicy.addressFamily(for: "10.0.0.2"), .ipv4)
         XCTAssertEqual(DeviceEndpointPolicy.addressFamily(for: "fd00::2"), .ipv6)

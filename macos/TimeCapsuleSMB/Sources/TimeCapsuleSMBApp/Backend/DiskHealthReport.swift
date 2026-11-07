@@ -16,6 +16,21 @@ struct DiskHealthDisk: Codable, Equatable, Identifiable {
     let details: DiskSmartDetails
 
     var id: String { device }
+    var totalCapacity: String? { formattedPartitionTotal(\.sizeMiB) }
+    var freeCapacity: String? { formattedPartitionTotal(\.freeMiB) }
+
+    private func formattedPartitionTotal(_ keyPath: KeyPath<DiskHealthPartition, Int64?>) -> String? {
+        guard !partitions.isEmpty else { return nil }
+        var total: Int64 = 0
+        for partition in partitions {
+            guard let value = partition[keyPath: keyPath], value >= 0 else { return nil }
+            let (sum, overflow) = total.addingReportingOverflow(value)
+            guard !overflow else { return nil }
+            total = sum
+        }
+        return DiskHealthPartition.bytes(total)
+    }
+
     var reportsFailure: Bool {
         smartStatus == "failing" || details.thresholdExceeded == true
             || details.attributes.contains { $0.critical && $0.reliability == "negative" }

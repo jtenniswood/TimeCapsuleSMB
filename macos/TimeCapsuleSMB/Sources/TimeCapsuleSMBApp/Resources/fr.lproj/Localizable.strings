@@ -1682,3 +1682,27 @@
 "ssh_support.checking" = "Vérification de SSH";
 
 "ssh_support.enabling" = "Activation de SSH...";
+
+"support.smb.enabled" = "Prise en charge SMB activée";
+
+"support.smb.disabled" = "Prise en charge SMB non activée";
+
+"support.smb.checking" = "Vérification de la prise en charge SMB";
+
+"support.smb.update_available" = "Mise à jour SMB disponible";
+
+"support.ssh.enabled" = "Prise en charge SSH activée";
+
+"support.ssh.disabled" = "Prise en charge SSH non activée";
+
+"support.ssh.checking" = "Vérification de la prise en charge SSH";
+
+"support.ssh.enabling" = "Activation de la prise en charge SSH...";
+
+"support.ssh.unknown" = "Prise en charge SSH non vérifiée";
+
+"disk_health.free_space" = "Espace libre";
+
+"support.ssh.connection_info" = "Informations de connexion SSH";
+
+"support.ssh.connection_help" = "Ouvrez Terminal et exécutez :\n%@\nUtilisez le mot de passe de votre borne.";

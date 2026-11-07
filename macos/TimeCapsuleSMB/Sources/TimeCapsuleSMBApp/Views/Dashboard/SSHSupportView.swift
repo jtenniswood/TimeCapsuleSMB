@@ -10,26 +10,38 @@ struct SSHSupportView: View {
     var body: some View {
         let payload = status.snapshot(for: profile)?.payload
         let enabled = payload.map { $0.sshFinalReachable ?? $0.sshPortReachable } == true
-        let enabling = operation.isBusy || operation.isPreparing
-        let checking = coordinator.activeOperation(for: .deviceWorkflow(profile.id, .sshStatus)) != nil
-        GroupBox(L10n.string("ssh_support.title")) {
-            HStack(spacing: 12) {
-                if enabling || checking {
-                    ProgressView().controlSize(.small)
-                    Text(L10n.string(enabling ? "ssh_support.enabling" : "ssh_support.checking"))
-                } else {
-                    Label(L10n.string(enabled ? "ssh_support.enabled" :
-                        payload == nil ? "value.unknown" : "ssh_support.disabled"),
-                          systemImage: enabled ? "checkmark.circle" : "terminal")
-                }
-                Spacer()
-                if !enabled && !enabling {
-                    Button(L10n.string("ssh_access_notice.enable_action"), action: enable)
-                        .disabled(checking || coordinator.isDeviceBusy(profile))
-                }
+        let checkingOperation = operation.isBusy && operation.state == .loading
+        let enabling = operation.isPreparing || (operation.isBusy && !checkingOperation)
+        let checking = checkingOperation || coordinator.activeOperation(for: .deviceWorkflow(profile.id, .sshStatus)) != nil
+        let titleKey = enabling ? "support.ssh.enabling" : checking ? "support.ssh.checking" :
+            enabled ? "support.ssh.enabled" : payload == nil ? "support.ssh.unknown" : "support.ssh.disabled"
+        HStack(spacing: 12) {
+            Label {
+                Text(L10n.string(titleKey))
+            } icon: {
+                Group {
+                    if enabling || checking {
+                        ProgressView().controlSize(.small).accessibilityHidden(true)
+                    } else {
+                        Image(systemName: enabled ? "checkmark.circle" : "terminal")
+                    }
+                }.frame(width: 16, height: 16)
             }
-            .padding(12).frame(maxWidth: .infinity, alignment: .leading)
+            if enabled && !enabling && !checking,
+               let command = DeviceEndpointPolicy.terminalSSHCommand(profile.host) {
+                Image(systemName: "info.circle")
+                    .foregroundStyle(.secondary)
+                    .padding(.vertical, 2)
+                    .help(L10n.format("support.ssh.connection_help", command))
+                    .accessibilityLabel(L10n.string("support.ssh.connection_info"))
+            }
+            Spacer()
+            if !enabled && !enabling {
+                Button(L10n.string("ssh_access_notice.enable_action"), action: enable)
+                    .disabled(checking || coordinator.isDeviceBusy(profile))
+            }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

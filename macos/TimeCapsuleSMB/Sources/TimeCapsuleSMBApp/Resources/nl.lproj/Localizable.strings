@@ -1682,3 +1682,27 @@
 "ssh_support.checking" = "SSH controleren";
 
 "ssh_support.enabling" = "SSH inschakelen...";
+
+"support.smb.enabled" = "SMB-ondersteuning ingeschakeld";
+
+"support.smb.disabled" = "SMB-ondersteuning niet ingeschakeld";
+
+"support.smb.checking" = "SMB-ondersteuning controleren";
+
+"support.smb.update_available" = "SMB-update beschikbaar";
+
+"support.ssh.enabled" = "SSH-ondersteuning ingeschakeld";
+
+"support.ssh.disabled" = "SSH-ondersteuning niet ingeschakeld";
+
+"support.ssh.checking" = "SSH-ondersteuning controleren";
+
+"support.ssh.enabling" = "SSH-ondersteuning inschakelen...";
+
+"support.ssh.unknown" = "SSH-ondersteuning niet gecontroleerd";
+
+"disk_health.free_space" = "Vrije ruimte";
+
+"support.ssh.connection_info" = "Informatie over SSH-verbinding";
+
+"support.ssh.connection_help" = "Open Terminal en voer het volgende uit:\n%@\nGebruik het wachtwoord van uw basisstation.";

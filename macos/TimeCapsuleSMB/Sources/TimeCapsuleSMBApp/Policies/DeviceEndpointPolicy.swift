@@ -2,6 +2,21 @@ import Darwin
 import Foundation
 
 enum DeviceEndpointPolicy {
+    static func terminalSSHCommand(_ target: String) -> String? {
+        guard let endpoint = parseEndpoint(target), !endpoint.host.isEmpty,
+              endpoint.invalidPort == nil,
+              endpoint.port.map({ (1...65535).contains($0) }) ?? true else { return nil }
+        let user = endpoint.user.isEmpty ? "root" : endpoint.user
+        let destination = "\(user)@\(endpoint.host)"
+        let safe = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@._:-%")
+        let quoted = destination.unicodeScalars.allSatisfy(safe.contains)
+            ? destination : "'" + destination.replacingOccurrences(of: "'", with: "'\\''") + "'"
+        var arguments = ["ssh", "-o", "HostKeyAlgorithms=+ssh-rsa", "-o", "KexAlgorithms=+diffie-hellman-group14-sha1"]
+        if let port = endpoint.port, port != 22 { arguments += ["-p", String(port)] }
+        arguments += ["--", quoted]
+        return arguments.joined(separator: " ")
+    }
+
     static func rootSSHTarget(_ target: String) -> String {
         let trimmed = target.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty,

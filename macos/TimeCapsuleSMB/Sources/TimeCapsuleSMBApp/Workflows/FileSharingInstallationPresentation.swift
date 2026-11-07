@@ -24,11 +24,11 @@ struct FileSharingInstallationPresentation: Equatable {
 
     var statusTitle: String {
         switch state {
-        case .notInstalled: return L10n.string("dashboard.overview.installed_version.not_installed")
-        case .updateAvailable: return L10n.string("simple.software.update_available")
-        case .upToDate: return L10n.string("simple.software.current")
-        case .installed: return L10n.string("simple.software.installed")
-        case .checking: return L10n.string("simple.software.checking_version")
+        case .notInstalled: return L10n.string("support.smb.disabled")
+        case .updateAvailable: return L10n.string("support.smb.update_available")
+        case .upToDate: return L10n.string("support.smb.enabled")
+        case .installed: return L10n.string("support.smb.enabled")
+        case .checking: return L10n.string("support.smb.checking")
         }
     }
 

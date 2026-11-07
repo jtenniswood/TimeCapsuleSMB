@@ -1682,3 +1682,27 @@
 "ssh_support.checking" = "Comprobando SSH";
 
 "ssh_support.enabling" = "Activando SSH...";
+
+"support.smb.enabled" = "Compatibilidad con SMB activada";
+
+"support.smb.disabled" = "Compatibilidad con SMB sin activar";
+
+"support.smb.checking" = "Comprobando compatibilidad con SMB";
+
+"support.smb.update_available" = "Actualización de SMB disponible";
+
+"support.ssh.enabled" = "Compatibilidad con SSH activada";
+
+"support.ssh.disabled" = "Compatibilidad con SSH sin activar";
+
+"support.ssh.checking" = "Comprobando compatibilidad con SSH";
+
+"support.ssh.enabling" = "Activando compatibilidad con SSH...";
+
+"support.ssh.unknown" = "Compatibilidad con SSH sin comprobar";
+
+"disk_health.free_space" = "Espacio libre";
+
+"support.ssh.connection_info" = "Información de conexión SSH";
+
+"support.ssh.connection_help" = "Abra Terminal y ejecute:\n%@\nUtilice la contraseña de su estación base.";

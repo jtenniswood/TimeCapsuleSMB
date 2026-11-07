@@ -1682,3 +1682,27 @@
 "ssh_support.checking" = "Tikrinamas SSH";
 
 "ssh_support.enabling" = "Įjungiamas SSH...";
+
+"support.smb.enabled" = "SMB palaikymas įjungtas";
+
+"support.smb.disabled" = "SMB palaikymas neįjungtas";
+
+"support.smb.checking" = "Tikrinamas SMB palaikymas";
+
+"support.smb.update_available" = "Yra SMB atnaujinimas";
+
+"support.ssh.enabled" = "SSH palaikymas įjungtas";
+
+"support.ssh.disabled" = "SSH palaikymas neįjungtas";
+
+"support.ssh.checking" = "Tikrinamas SSH palaikymas";
+
+"support.ssh.enabling" = "Įjungiamas SSH palaikymas...";
+
+"support.ssh.unknown" = "SSH palaikymas nepatikrintas";
+
+"disk_health.free_space" = "Laisva vieta";
+
+"support.ssh.connection_info" = "SSH ryšio informacija";
+
+"support.ssh.connection_help" = "Atidarykite Terminal ir paleiskite:\n%@\nNaudokite savo bazinės stoties slaptažodį.";

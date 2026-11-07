@@ -1682,3 +1682,27 @@
 "ssh_support.checking" = "Проверка SSH";
 
 "ssh_support.enabling" = "Включение SSH...";
+
+"support.smb.enabled" = "Поддержка SMB включена";
+
+"support.smb.disabled" = "Поддержка SMB не включена";
+
+"support.smb.checking" = "Проверка поддержки SMB";
+
+"support.smb.update_available" = "Доступно обновление SMB";
+
+"support.ssh.enabled" = "Поддержка SSH включена";
+
+"support.ssh.disabled" = "Поддержка SSH не включена";
+
+"support.ssh.checking" = "Проверка поддержки SSH";
+
+"support.ssh.enabling" = "Включение поддержки SSH...";
+
+"support.ssh.unknown" = "Поддержка SSH не проверена";
+
+"disk_health.free_space" = "Свободное место";
+
+"support.ssh.connection_info" = "Информация о подключении SSH";
+
+"support.ssh.connection_help" = "Откройте Терминал и выполните:\n%@\nИспользуйте пароль базовой станции.";

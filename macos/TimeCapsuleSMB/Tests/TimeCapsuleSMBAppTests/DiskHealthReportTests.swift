@@ -115,6 +115,25 @@ final class DiskHealthReportTests: XCTestCase {
         XCTAssertNotNil(DiskHealthPartition.bytes(1905681))
     }
 
+    func testCapacityCombinesTheVolumesOfOneDisk() {
+        let disk = DiskHealthDisk(device: "wd0", label: "Disk", builtin: true, smartStatus: "verified",
+            partitions: [DiskHealthPartition(name: "A", sizeMiB: 100, usedMiB: 40, freeMiB: 60),
+                         DiskHealthPartition(name: "B", sizeMiB: 200, usedMiB: 100, freeMiB: 100)],
+            details: DiskSmartDetails(state: "unavailable", attributes: []))
+        XCTAssertEqual(disk.totalCapacity, DiskHealthPartition.bytes(300))
+        XCTAssertEqual(disk.freeCapacity, DiskHealthPartition.bytes(160))
+    }
+
+    func testMissingOrOverflowingVolumeSizesDoNotBecomePartialTotals() {
+        for sizes: [Int64?] in [[100, nil], [Int64.max, 1], [-1, 100]] {
+            let disk = DiskHealthDisk(device: "wd0", label: "Disk", builtin: true, smartStatus: nil,
+                partitions: sizes.map { DiskHealthPartition(name: "Volume", sizeMiB: $0, usedMiB: nil, freeMiB: $0) },
+                details: DiskSmartDetails(state: "unavailable", attributes: []))
+            XCTAssertNil(disk.totalCapacity)
+            XCTAssertNil(disk.freeCapacity)
+        }
+    }
+
     func testRendersReportedAndUnavailableDiskHealth() throws {
         let bitmap = try renderView(
             DiskHealthView(report: report()),

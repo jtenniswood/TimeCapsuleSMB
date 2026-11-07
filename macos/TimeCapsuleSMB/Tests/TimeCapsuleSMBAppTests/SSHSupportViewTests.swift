@@ -29,7 +29,7 @@ final class SSHSupportViewTests: XCTestCase {
         coordinator.confirm(try XCTUnwrap(coordinator.readyConfirmation))
         try await waitUntilStoreState { session.maintenanceStore.sshAccessState == .succeeded && !coordinator.isDeviceBusy(profile.id) }
         let texts = accessibleElements(in: host.contentView).map(\.text)
-        XCTAssertTrue(texts.contains(L10n.string("ssh_support.enabled")))
+        XCTAssertTrue(texts.contains(L10n.string("support.ssh.enabled")))
         XCTAssertFalse(texts.contains(L10n.string("ssh_access_notice.enable_action")))
     }
 

@@ -1682,3 +1682,27 @@
 "ssh_support.checking" = "正在检查 SSH";
 
 "ssh_support.enabling" = "正在启用 SSH…";
+
+"support.smb.enabled" = "SMB 支持已启用";
+
+"support.smb.disabled" = "SMB 支持未启用";
+
+"support.smb.checking" = "正在检查 SMB 支持";
+
+"support.smb.update_available" = "有可用的 SMB 更新";
+
+"support.ssh.enabled" = "SSH 支持已启用";
+
+"support.ssh.disabled" = "SSH 支持未启用";
+
+"support.ssh.checking" = "正在检查 SSH 支持";
+
+"support.ssh.enabling" = "正在启用 SSH 支持…";
+
+"support.ssh.unknown" = "尚未检查 SSH 支持";
+
+"disk_health.free_space" = "可用空间";
+
+"support.ssh.connection_info" = "SSH 连接信息";
+
+"support.ssh.connection_help" = "打开终端并运行：\n%@\n使用你的基站密码。";

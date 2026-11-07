@@ -1682,3 +1682,27 @@
 "ssh_support.checking" = "SSH wird geprüft";
 
 "ssh_support.enabling" = "SSH wird aktiviert...";
+
+"support.smb.enabled" = "SMB-Unterstützung aktiviert";
+
+"support.smb.disabled" = "SMB-Unterstützung nicht aktiviert";
+
+"support.smb.checking" = "SMB-Unterstützung wird geprüft";
+
+"support.smb.update_available" = "SMB-Update verfügbar";
+
+"support.ssh.enabled" = "SSH-Unterstützung aktiviert";
+
+"support.ssh.disabled" = "SSH-Unterstützung nicht aktiviert";
+
+"support.ssh.checking" = "SSH-Unterstützung wird geprüft";
+
+"support.ssh.enabling" = "SSH-Unterstützung wird aktiviert...";
+
+"support.ssh.unknown" = "SSH-Unterstützung nicht geprüft";
+
+"disk_health.free_space" = "Freier Speicher";
+
+"support.ssh.connection_info" = "Informationen zur SSH-Verbindung";
+
+"support.ssh.connection_help" = "Öffnen Sie Terminal und führen Sie Folgendes aus:\n%@\nVerwenden Sie Ihr Basisstationspasswort.";

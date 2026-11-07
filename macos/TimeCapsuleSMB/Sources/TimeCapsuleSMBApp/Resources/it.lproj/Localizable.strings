@@ -1682,3 +1682,27 @@
 "ssh_support.checking" = "Verifica di SSH";
 
 "ssh_support.enabling" = "Attivazione di SSH...";
+
+"support.smb.enabled" = "Supporto SMB attivo";
+
+"support.smb.disabled" = "Supporto SMB non attivo";
+
+"support.smb.checking" = "Verifica del supporto SMB";
+
+"support.smb.update_available" = "Aggiornamento SMB disponibile";
+
+"support.ssh.enabled" = "Supporto SSH attivo";
+
+"support.ssh.disabled" = "Supporto SSH non attivo";
+
+"support.ssh.checking" = "Verifica del supporto SSH";
+
+"support.ssh.enabling" = "Attivazione del supporto SSH...";
+
+"support.ssh.unknown" = "Supporto SSH non verificato";
+
+"disk_health.free_space" = "Spazio libero";
+
+"support.ssh.connection_info" = "Informazioni sulla connessione SSH";
+
+"support.ssh.connection_help" = "Apri Terminale ed esegui:\n%@\nUsa la password della base.";

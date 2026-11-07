@@ -25,10 +25,7 @@ struct OverviewTab: View {
                     Spacer(minLength: 0)
                 }
                 .help(DeviceDashboardHeaderPresentation.deviceTooltip(for: profile, payload: payload))
-                FileSharingStatusView(profile: profile, session: session, reachability: reachabilityStore)
-                SSHSupportView(profile: profile, status: session.appStore.sshAccessStore,
-                    operation: session.maintenanceStore.sshAccessStore, coordinator: session.appStore.operationCoordinator,
-                    enable: { session.enableSSHAccess(profile: profile) })
+                SupportStatusView(profile: profile, session: session, reachability: reachabilityStore)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(L10n.string("simple.tab.disks"))
                         .font(UtilityStyle.secondary).padding(.leading, 10)
@@ -52,7 +49,26 @@ private struct OverviewRefresh: Equatable {
     let busy: Bool
 }
 
-private struct FileSharingStatusView: View {
+struct SupportStatusView: View {
+    let profile: DeviceProfile
+    @ObservedObject var session: DeviceDashboardSession
+    @ObservedObject var reachability: DeviceReachabilityStore
+
+    var body: some View {
+        GroupBox {
+            VStack(alignment: .leading, spacing: 12) {
+                SMBSupportRow(profile: profile, session: session, reachability: reachability)
+                Divider()
+                SSHSupportView(profile: profile, status: session.appStore.sshAccessStore,
+                    operation: session.maintenanceStore.sshAccessStore, coordinator: session.appStore.operationCoordinator,
+                    enable: { session.enableSSHAccess(profile: profile) })
+            }
+            .padding(12).frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+}
+
+private struct SMBSupportRow: View {
     let profile: DeviceProfile
     @ObservedObject var session: DeviceDashboardSession
     @ObservedObject var reachability: DeviceReachabilityStore
@@ -62,36 +78,34 @@ private struct FileSharingStatusView: View {
         let payload = DeviceDashboardHeaderPresentation.currentVersionPayload(reachability.snapshot(for: profile), profile: profile)
         let state = FileSharingInstallationPresentation(profile: profile, payload: payload, sharing: session.sharingStore.snapshot,
             checking: reachability.isRefreshing(profile: profile) || session.sharingStore.loading)
-        GroupBox(L10n.string("simple.sharing.title")) {
-            VStack(alignment: .leading, spacing: 12) {
-                if store.isBusy {
-                    FileSharingProgressView(store: store)
-                } else {
-                    HStack(spacing: 12) {
-                        if state.state == .checking {
-                            ProgressView().controlSize(.small).accessibilityHidden(true)
-                            Text(state.statusTitle)
-                        } else {
-                            Label(state.statusTitle, systemImage: state.state == .upToDate ? "checkmark.circle.fill" :
-                                state.needsInstall ? "arrow.down.circle" : "checkmark.circle")
-                        }
-                        Spacer()
-                        if let version = state.version { Text(version).foregroundStyle(.secondary).monospacedDigit() }
+        VStack(alignment: .leading, spacing: 12) {
+            if store.isBusy {
+                FileSharingProgressView(store: store)
+            } else {
+                HStack(spacing: 12) {
+                    Label {
+                        Text(state.statusTitle)
+                    } icon: {
+                        Group {
+                            if state.state == .checking {
+                                ProgressView().controlSize(.small).accessibilityHidden(true)
+                            } else {
+                                Image(systemName: state.needsInstall ? "arrow.down.circle" : "checkmark.circle")
+                            }
+                        }.frame(width: 16, height: 16)
                     }
+                    Spacer()
+                    if let version = state.version { Text(version).foregroundStyle(.secondary).monospacedDigit() }
                     if state.needsInstall {
-                        HStack {
-                            Text(L10n.string("sharing.update_help")).font(UtilityStyle.secondary).foregroundStyle(.secondary)
-                            Spacer()
-                            Button(L10n.string(state.state == .notInstalled ? "simple.sharing.set_up" : "simple.sharing.update")) {
-                                session.runInstall(profile: profile)
-                            }.disabled(session.appStore.operationCoordinator.isDeviceBusy(profile))
-                        }
-                    }
-                    if let error = store.error, !["cancelled", "confirmation_cancelled"].contains(error.code) {
-                        Text(error.message).foregroundStyle(.red)
+                        Button(L10n.string(state.state == .notInstalled ? "simple.sharing.set_up" : "simple.sharing.update")) {
+                            session.runInstall(profile: profile)
+                        }.disabled(session.appStore.operationCoordinator.isDeviceBusy(profile))
                     }
                 }
-            }.padding(12).frame(maxWidth: .infinity, alignment: .leading)
+                if let error = store.error, !["cancelled", "confirmation_cancelled"].contains(error.code) {
+                    Text(error.message).foregroundStyle(.red)
+                }
+            }
         }
     }
 }

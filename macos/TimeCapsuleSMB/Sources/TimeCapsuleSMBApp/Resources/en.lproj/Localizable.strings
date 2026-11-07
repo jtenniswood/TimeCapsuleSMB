@@ -1682,3 +1682,27 @@
 "ssh_support.checking" = "Checking SSH";
 
 "ssh_support.enabling" = "Enabling SSH...";
+
+"support.smb.enabled" = "SMB support enabled";
+
+"support.smb.disabled" = "SMB support not enabled";
+
+"support.smb.checking" = "Checking SMB support";
+
+"support.smb.update_available" = "SMB update available";
+
+"support.ssh.enabled" = "SSH support enabled";
+
+"support.ssh.disabled" = "SSH support not enabled";
+
+"support.ssh.checking" = "Checking SSH support";
+
+"support.ssh.enabling" = "Enabling SSH support...";
+
+"support.ssh.unknown" = "SSH support not checked";
+
+"disk_health.free_space" = "Free space";
+
+"support.ssh.connection_info" = "SSH connection information";
+
+"support.ssh.connection_help" = "Open Terminal and run:\n%@\nUse your base station password.";
