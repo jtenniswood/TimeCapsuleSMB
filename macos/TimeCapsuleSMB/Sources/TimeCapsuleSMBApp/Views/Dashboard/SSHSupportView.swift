@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct SSHSupportView: View {
@@ -27,21 +28,40 @@ struct SSHSupportView: View {
                     }
                 }.frame(width: 16, height: 16)
             }
+            Spacer()
             if enabled && !enabling && !checking,
                let command = DeviceEndpointPolicy.terminalSSHCommand(profile.host) {
-                Image(systemName: "info.circle")
-                    .foregroundStyle(.secondary)
-                    .padding(.vertical, 2)
-                    .help(L10n.format("support.ssh.connection_help", command))
-                    .accessibilityLabel(L10n.string("support.ssh.connection_info"))
+                SSHConnectionInfoIcon(help: L10n.format("support.ssh.connection_help", command))
+                    .frame(width: 20, height: 20)
             }
-            Spacer()
             if !enabled && !enabling {
                 Button(L10n.string("ssh_access_notice.enable_action"), action: enable)
                     .disabled(checking || coordinator.isDeviceBusy(profile))
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+/// Give AppKit a real view to track for the native hover tooltip.
+private struct SSHConnectionInfoIcon: NSViewRepresentable {
+    let help: String
+
+    func makeNSView(context: Context) -> NSImageView {
+        let view = NSImageView()
+        view.image = NSImage(systemSymbolName: "info.circle", accessibilityDescription: nil)?
+            .withSymbolConfiguration(NSImage.SymbolConfiguration(pointSize: 13, weight: .regular))
+        view.contentTintColor = .secondaryLabelColor
+        view.imageScaling = .scaleNone
+        view.setAccessibilityElement(true)
+        view.setAccessibilityRole(.image)
+        return view
+    }
+
+    func updateNSView(_ view: NSImageView, context: Context) {
+        view.toolTip = help
+        view.setAccessibilityLabel(L10n.string("support.ssh.connection_info"))
+        view.setAccessibilityHelp(help)
     }
 }
 

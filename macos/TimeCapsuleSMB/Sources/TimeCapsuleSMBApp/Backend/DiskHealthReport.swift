@@ -16,10 +16,17 @@ struct DiskHealthDisk: Codable, Equatable, Identifiable {
     let details: DiskSmartDetails
 
     var id: String { device }
-    var totalCapacity: String? { formattedPartitionTotal(\.sizeMiB) }
-    var freeCapacity: String? { formattedPartitionTotal(\.freeMiB) }
+    var totalCapacity: String? { DiskHealthPartition.bytes(partitionTotal(\.sizeMiB)) }
+    var freeCapacity: String? { DiskHealthPartition.bytes(partitionTotal(\.freeMiB)) }
 
-    private func formattedPartitionTotal(_ keyPath: KeyPath<DiskHealthPartition, Int64?>) -> String? {
+    var freeSpacePercentage: String? {
+        guard let size = partitionTotal(\.sizeMiB), size > 0,
+              let free = partitionTotal(\.freeMiB),
+              partitions.allSatisfy({ ($0.freeMiB ?? 0) <= ($0.sizeMiB ?? 0) }) else { return nil }
+        return (Double(free) / Double(size)).formatted(.percent.precision(.fractionLength(0)))
+    }
+
+    private func partitionTotal(_ keyPath: KeyPath<DiskHealthPartition, Int64?>) -> Int64? {
         guard !partitions.isEmpty else { return nil }
         var total: Int64 = 0
         for partition in partitions {
@@ -28,7 +35,7 @@ struct DiskHealthDisk: Codable, Equatable, Identifiable {
             guard !overflow else { return nil }
             total = sum
         }
-        return DiskHealthPartition.bytes(total)
+        return total
     }
 
     var reportsFailure: Bool {

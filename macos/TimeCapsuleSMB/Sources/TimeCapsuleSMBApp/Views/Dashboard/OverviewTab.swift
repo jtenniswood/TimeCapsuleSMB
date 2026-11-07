@@ -26,11 +26,7 @@ struct OverviewTab: View {
                 }
                 .help(DeviceDashboardHeaderPresentation.deviceTooltip(for: profile, payload: payload))
                 SupportStatusView(profile: profile, session: session, reachability: reachabilityStore)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(L10n.string("simple.tab.disks"))
-                        .font(UtilityStyle.secondary).padding(.leading, 10)
-                    DiskHealthView(report: profile.lastCheckup?.diskHealth)
-                }
+                DiskHealthView(report: profile.lastCheckup?.diskHealth)
             }
             .frame(maxWidth: 560, alignment: .leading).frame(maxWidth: .infinity, alignment: .top)
         }

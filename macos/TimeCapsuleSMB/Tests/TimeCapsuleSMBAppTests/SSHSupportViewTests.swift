@@ -1,8 +1,36 @@
+import AppKit
 import XCTest
 @testable import TimeCapsuleSMBApp
 
 @MainActor
 final class SSHSupportViewTests: XCTestCase {
+    func testEnabledConnectionHelpHasANativeTooltipAtTheTrailingEdge() async throws {
+        let fixture = try await AppViewFixture(runner: StoreTestRunner(responses: []))
+        let profile = try await fixture.saveProfile(id: "ssh-help")
+        let session = fixture.dashboardSession(for: profile)
+        fixture.appStore.sshAccessStore.apply(payload: try testSSHAccessPayload(sshPortReachable: true)
+            .decode(SSHAccessPayload.self), profile: profile)
+        let host = LiveHostedView(SSHSupportView(profile: profile, status: fixture.appStore.sshAccessStore,
+            operation: session.maintenanceStore.sshAccessStore, coordinator: fixture.appStore.operationCoordinator,
+            enable: {}), size: CGSize(width: 560, height: 80))
+        defer { host.close() }
+        await runQueuedStoreUpdates()
+        host.contentView.layoutSubtreeIfNeeded()
+
+        func nativeTooltip(in view: NSView) -> NSImageView? {
+            if let image = view as? NSImageView, image.toolTip != nil { return image }
+            return view.subviews.lazy.compactMap { nativeTooltip(in: $0) }.first
+        }
+        let icon = try XCTUnwrap(nativeTooltip(in: host.contentView))
+        let command = try XCTUnwrap(DeviceEndpointPolicy.terminalSSHCommand(profile.host))
+        XCTAssertEqual(icon.toolTip, L10n.format("support.ssh.connection_help", command))
+        XCTAssertEqual(icon.accessibilityHelp(), icon.toolTip)
+        XCTAssertGreaterThanOrEqual(icon.visibleRect.width, 20)
+        XCTAssertGreaterThanOrEqual(icon.visibleRect.height, 20)
+        let rect = icon.convert(icon.bounds, to: host.contentView)
+        XCTAssertEqual(rect.maxX, host.contentView.bounds.maxX, accuracy: 1)
+    }
+
     func testEnableTargetsTheSelectedDeviceAndWaitsForConfirmation() async throws {
         let runner = StoreTestRunner(responses: [
             .init(events: [testConfirmationRequired(operation: "set-ssh", id: "enable-ssh", presentationID: "ssh_access.enable_reboot")]),

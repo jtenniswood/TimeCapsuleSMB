@@ -58,7 +58,7 @@ private struct DiskSmartReadingsView: View {
                 Text(L10n.string("disk_health.attention_advice")).font(UtilityStyle.body)
             }
             HStack(spacing: 32) {
-                if let free = disk.freeCapacity { reading(L10n.string("disk_health.free_space"), value: free) }
+                if let free = disk.freeSpacePercentage { reading(L10n.string("disk_health.free_space"), value: free) }
                 if disk.details.state == "available" {
                     reading(L10n.string("disk_health.temperature"), value: disk.temperatureCelsius)
                     reading(L10n.string("disk_health.usage"), value: disk.metric(9, named: "Power-on hours count"))

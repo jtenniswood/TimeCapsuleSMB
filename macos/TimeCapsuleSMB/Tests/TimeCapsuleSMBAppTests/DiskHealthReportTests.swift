@@ -134,6 +134,38 @@ final class DiskHealthReportTests: XCTestCase {
         }
     }
 
+    func testFreeSpacePercentageUsesCombinedCapacityRatherThanAveragingVolumes() {
+        let disk = diskWithPartitions([
+            DiskHealthPartition(name: "Small", sizeMiB: 100, usedMiB: 0, freeMiB: 100),
+            DiskHealthPartition(name: "Large", sizeMiB: 900, usedMiB: 500, freeMiB: 400)
+        ])
+        XCTAssertEqual(disk.freeSpacePercentage, 0.5.formatted(.percent.precision(.fractionLength(0))))
+        for (free, percentage): (Int64, Double) in [(0, 0), (25, 0.25), (100, 1)] {
+            let disk = diskWithPartitions([
+                DiskHealthPartition(name: "Data", sizeMiB: 100, usedMiB: 100 - free, freeMiB: free)
+            ])
+            XCTAssertEqual(disk.freeSpacePercentage, percentage.formatted(.percent.precision(.fractionLength(0))))
+        }
+    }
+
+    func testInvalidOrIncompleteSpaceReadingsHaveNoPercentage() {
+        let valid = DiskHealthPartition(name: "Data", sizeMiB: 100, usedMiB: 40, freeMiB: 60)
+        XCTAssertNil(diskWithPartitions([]).freeSpacePercentage)
+        for (size, free): (Int64?, Int64?) in [(nil, 10), (100, nil), (0, 0), (-1, 0), (100, -1), (100, 101)] {
+            let invalid = DiskHealthPartition(name: "Unknown", sizeMiB: size, usedMiB: nil, freeMiB: free)
+            XCTAssertNil(diskWithPartitions([invalid]).freeSpacePercentage)
+            // A valid volume must not hide missing or invalid readings in another.
+            if size != 0 { XCTAssertNil(diskWithPartitions([valid, invalid]).freeSpacePercentage) }
+        }
+        let overflowing = DiskHealthPartition(name: "Overflow", sizeMiB: Int64.max, usedMiB: 0, freeMiB: Int64.max)
+        XCTAssertNil(diskWithPartitions([valid, overflowing]).freeSpacePercentage)
+    }
+
+    private func diskWithPartitions(_ partitions: [DiskHealthPartition]) -> DiskHealthDisk {
+        DiskHealthDisk(device: "wd0", label: "Disk", builtin: true, smartStatus: nil,
+            partitions: partitions, details: DiskSmartDetails(state: "unavailable", attributes: []))
+    }
+
     func testRendersReportedAndUnavailableDiskHealth() throws {
         let bitmap = try renderView(
             DiskHealthView(report: report()),
