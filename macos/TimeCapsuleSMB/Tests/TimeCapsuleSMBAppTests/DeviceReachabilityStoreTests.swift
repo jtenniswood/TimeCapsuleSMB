@@ -180,6 +180,33 @@ final class DeviceReachabilityStoreTests: XCTestCase {
         XCTAssertNil(store.error(for: profile))
     }
 
+    func testSharingRefreshReadsTheInstalledVersionAgainAfterAnUpdate() async throws {
+        var now = Date(timeIntervalSince1970: 100)
+        let runner = StoreTestRunner(responses: [
+            .init(events: [BackendEvent(type: "result", operation: "reachability", ok: true,
+                                       payload: testReachabilityPayload(installState: "outdated", installedReleaseTag: "v2.0.0"))]),
+            .init(events: [BackendEvent(type: "result", operation: "reachability", ok: true,
+                                       payload: testReachabilityPayload(installState: "current", installedReleaseTag: "v2.1.0"))])
+        ])
+        let coordinator = OperationCoordinator(backend: BackendClient(runner: runner))
+        let store = DeviceReachabilityStore(coordinator: coordinator, now: { now })
+        var profile = try makeProfile()
+        let background = coordinator.lane(for: .deviceWorkflow(profile.id, .reachabilityStatus))
+        store.refreshIfNeeded(profile: profile, password: "pw")
+        try await waitUntilStoreState { store.snapshot(for: profile) != nil && !background.isBusy }
+
+        now = Date(timeIntervalSince1970: 110)
+        profile.lastDeployState = testDeployState(startedAt: Date(timeIntervalSince1970: 101), updatedAt: now, finishedAt: now)
+        XCTAssertNil(DeviceDashboardHeaderPresentation.currentVersionPayload(store.snapshot(for: profile), profile: profile))
+        // A ten-second-old reading must not hide the version just installed.
+        store.refreshIfNeeded(profile: profile, password: "pw")
+        try await waitUntilStoreState { store.snapshot(for: profile)?.payload.installedReleaseTag == "v2.1.0" && !background.isBusy }
+        XCTAssertEqual(runner.calls.map(\.operation), ["reachability", "reachability"])
+        XCTAssertEqual(DeviceDashboardHeaderPresentation.currentVersionPayload(store.snapshot(for: profile), profile: profile)?.installedReleaseTag, "v2.1.0")
+        store.refreshIfNeeded(profile: profile, password: "pw")
+        XCTAssertEqual(runner.calls.count, 2)
+    }
+
     func testASnapshotRecordsWhenItsCheckStarted() async throws {
         var now = Date(timeIntervalSince1970: 100)
         let runner = PausingStoreTestRunner(responses: [

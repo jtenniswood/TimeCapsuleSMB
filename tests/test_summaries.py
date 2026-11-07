@@ -411,8 +411,9 @@ class SummaryFixtureTests(unittest.TestCase):
 
     # Summaries whose English catalog wording deliberately differs from the
     # helper's CLI English: the app says what was installed, and reuses its
-    # auth error sentence for the reachability auth failure.
-    ENGLISH_REWORDED = {"deploy_completed", "reachability.auth_failed"}
+    # auth error sentence for the reachability auth failure, and uses the app's
+    # display name while the CLI retains its project name.
+    ENGLISH_REWORDED = {"deploy_completed", "reachability.auth_failed", "version_supported", "migration.skipped_unsupported"}
 
     def test_english_catalog_says_what_the_helper_says(self) -> None:
         for row in fixture_events():

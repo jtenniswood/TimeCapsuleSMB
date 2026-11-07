@@ -153,6 +153,11 @@ struct CheckupDomainPresentation: Equatable, Identifiable {
     var id: String { domain.rawValue }
     var title: String { domain.title }
 
+    /// Problems remain visible without opening the full diagnostic transcript.
+    var attentionRows: [CheckupRowPresentation] {
+        rows.filter { $0.status == .failed || $0.status == .warning }
+    }
+
     /// The group's status is its section's, as the helper decided it; the
     /// checks' own severity covers a Checkup still running.
     init(

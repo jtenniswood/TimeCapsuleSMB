@@ -133,6 +133,7 @@ struct DoctorSummary: Equatable {
     /// The device was restarting (deviceRestartingResultCode).
     let deviceRestarting: Bool
     let checks: [DoctorCheckPayload]
+    let diskHealth: DiskHealthReport?
     let sections: [DoctorCheckDomain: DoctorSection]
     /// nil only for a payload without one, which the bundled helper never sends.
     let overallStatus: DoctorSectionStatus?
@@ -166,6 +167,7 @@ struct DoctorSummary: Equatable {
         }
         self.deviceRestarting = Self.containsResultCode(Self.deviceRestartingResultCode, in: payload)
         self.checks = payload.results
+        self.diskHealth = payload.diskHealth
         self.sections = Dictionary(
             (payload.sections ?? [:]).map { (DoctorCheckDomainPolicy.domain(for: $0.key), $0.value) },
             uniquingKeysWith: { first, _ in first }

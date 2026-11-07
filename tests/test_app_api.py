@@ -5241,6 +5241,29 @@ class AppApiTests(unittest.TestCase):
         self.assertEqual(checks[0]["status"], "PASS")
         self.assertEqual(checks[0]["details"], {"port": 445})
 
+    def test_doctor_sends_detailed_disk_readings_only_to_the_app(self) -> None:
+        collector = CollectingSink()
+        config = AppConfig.from_values({"TC_HOST": "root@10.0.0.2", "TC_PASSWORD": "pw"})
+        report = json.loads((REPO_ROOT / (
+            "macos/TimeCapsuleSMB/Tests/TimeCapsuleSMBAppTests/Fixtures/disk_smart_report.json"
+        )).read_text())
+
+        def fake_run_doctor_checks(*_args, **kwargs):
+            kwargs["disk_health_report"].update(report)
+            return [], False
+
+        with mock.patch("timecapsulesmb.app.ops.common.load_env_config", return_value=config), \
+             mock.patch("timecapsulesmb.app.ops.doctor.resolve_app_paths", return_value=SimpleNamespace(distribution_root=REPO_ROOT)), \
+             mock.patch("timecapsulesmb.app.ops.common.resolve_env_connection", return_value=SshConnection("root@10.0.0.2", "pw", "")), \
+             mock.patch("timecapsulesmb.app.ops.doctor.run_doctor_checks", side_effect=fake_run_doctor_checks):
+            service.run_api_request({"operation": "doctor", "params": {}}, collector.sink)
+        payload = collector.events_of_type("result")[-1]["payload"]
+        self.assertEqual(payload["disk_health"], report)
+        telemetry = str(self._telemetry_client.emit.call_args_list)
+        self.assertNotIn("threshold_exceeded", telemetry)
+        self.assertNotIn("16141", telemetry)
+        self.assertNotIn("disk_health", contracts.doctor_payload(fatal=False, results=[]))
+
     def test_doctor_tells_the_app_when_it_waits_for_device_startup(self) -> None:
         collector = CollectingSink()
         config = AppConfig.from_values({"TC_HOST": "root@10.0.0.2", "TC_PASSWORD": "pw"})

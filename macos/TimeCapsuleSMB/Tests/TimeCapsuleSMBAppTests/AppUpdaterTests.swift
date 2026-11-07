@@ -432,6 +432,29 @@ final class AppUpdaterTests: XCTestCase {
         XCTAssertEqual(titles(), [german])
     }
 
+    func testAutomaticUpdatePreferenceWaitsForSaveAndCancelDiscardsIt() async throws {
+        for shouldSave in [false, true] {
+            let fixture = try await AppViewFixture()
+            let driver = FakeUpdaterDriver()
+            let updater = AppUpdater(driver: driver)
+            let host = LiveHostedView(AppSettingsView(appStore: fixture.appStore,
+                appSettingsStore: fixture.appStore.appSettingsStore,
+                editor: fixture.composition.appSettingsEditorStore, updater: updater), size: CGSize(width: 620, height: 460))
+            defer { host.close() }
+            await runQueuedStoreUpdates()
+            XCTAssertTrue(pressAccessibleControl(in: host.contentView, labeled: L10n.string("app_settings.automatic_updates")))
+            await runQueuedStoreUpdates()
+            XCTAssertTrue(driver.automaticallyChecksForUpdates)
+            XCTAssertTrue(pressAccessibleControl(in: host.contentView, labeled: L10n.string(shouldSave ? "utility.save" : "action.cancel")))
+            if shouldSave {
+                try await waitUntilStoreState { !driver.automaticallyChecksForUpdates }
+            } else {
+                await runQueuedStoreUpdates()
+                XCTAssertTrue(driver.automaticallyChecksForUpdates)
+            }
+        }
+    }
+
     func testSettingsShowsTheAutomaticChecksToggle() async throws {
         let fixture = try await AppViewFixture()
         let view = AppSettingsView(

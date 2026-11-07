@@ -9734,6 +9734,55 @@ bridge1: flags=e002<BROADCAST,LINK1,LINK2,MULTICAST> metric 0 mtu 1500
         self._mast_read.assert_called_once()
         self.assertEqual(debug_fields["disk_health"], {"error": None, "disks": []})
 
+    def test_app_can_collect_detailed_readings_without_adding_them_to_telemetry(self) -> None:
+        self.give_mast(test_storage_runtime.netbsd6_internal_and_usb_xml())
+        report: dict[str, object] = {}
+        sink = DoctorSink(on_result=None, debug_fields={}, disk_health_report=report)
+        details = {"state": "available", "attributes": [{"id": 9, "raw": "12345", "critical": False, "reliability": "positive"}]}
+        with mock.patch("timecapsulesmb.checks.doctor_steps.read_smart_status", side_effect=[
+            details, {"state": "unsupported", "attributes": []},
+        ]) as read:
+            _doctor_check_disk_health(
+                SimpleNamespace(connection=mock.sentinel.connection),
+                SimpleNamespace(remote_checks_enabled=True), sink,
+            )
+        self.assertIsNone(report["error"])
+        self.assertEqual([call.args for call in read.call_args_list], [
+            (mock.sentinel.connection, "wd0"), (mock.sentinel.connection, "sd0"),
+        ])
+        self.assertEqual(report["disks"][0]["details"], details)
+        self.assertEqual(report["disks"][0]["partitions"][0]["name"], "AirPort Disk")
+        self.assertEqual(report["disks"][1]["details"]["state"], "unsupported")
+        self.assertNotIn("details", sink.debug_fields["disk_health"]["disks"][0])
+        self.assertNotIn("SERIAL6", json.dumps(report))
+        self.assertNotIn("product", report["disks"][0])
+
+    def test_fresh_ata_failure_overrides_cached_verified_status_in_checkup(self) -> None:
+        self.give_mast(test_storage_runtime.netbsd6_internal_and_usb_xml())
+        sink = DoctorSink(on_result=None, debug_fields={}, disk_health_report={})
+        with mock.patch("timecapsulesmb.checks.doctor_steps.read_smart_status", side_effect=[
+            {"state": "unavailable", "attributes": [], "threshold_exceeded": True},
+            {"state": "unsupported", "attributes": []},
+        ]):
+            _doctor_check_disk_health(SimpleNamespace(connection=None), SimpleNamespace(remote_checks_enabled=True), sink)
+        self.assertEqual([result.status for result in self.disk_rows(sink)], ["WARN", "INFO"])
+        self.assertEqual(sink.results[0].details["code"], DOCTOR_CODE_DISK_SMART_FAILING)
+
+    def test_background_disk_check_does_not_read_ata_attributes(self) -> None:
+        self.give_mast(test_storage_runtime.netbsd6_internal_and_usb_xml())
+        with mock.patch("timecapsulesmb.checks.doctor_steps.read_smart_status") as read:
+            self.run_healthy_doctor()
+        read.assert_not_called()
+
+    def test_unavailable_inventory_does_not_read_ata_attributes(self) -> None:
+        self.give_mast("MaSt=unreadable", returncode=1)
+        report: dict[str, object] = {}
+        sink = DoctorSink(on_result=None, debug_fields={}, disk_health_report=report)
+        with mock.patch("timecapsulesmb.checks.doctor_steps.read_smart_status") as read:
+            _doctor_check_disk_health(SimpleNamespace(connection=None), SimpleNamespace(remote_checks_enabled=True), sink)
+        self.assertEqual(report, {"error": "unavailable", "disks": []})
+        read.assert_not_called()
+
     def test_a_failing_disk_warns_without_failing_the_checkup(self) -> None:
         baseline = self.run_healthy_doctor()
         self.give_mast(test_storage_runtime.netbsd6_internal_and_usb_xml("failing"))

@@ -2,222 +2,122 @@ import SwiftUI
 
 struct AddDeviceView: View {
     @ObservedObject var store: AddDeviceFlowStore
+    var onCancel: () -> Void = {}
+    @FocusState private var passwordFocused: Bool
 
     var body: some View {
-        ZStack {
-            content
-            if let progress = AddDeviceProgressPresentation(state: store.state, currentStage: store.currentStage) {
-                BlockingProgressOverlay(progress: progress)
-            }
-        }
-    }
-
-    private var content: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            topSection
-            if store.entryMode == .manual {
-                connectionControls
-                Spacer(minLength: 0)
-            } else {
-                deviceResultsSection
-                connectionControls
-            }
-        }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .disabled(AddDeviceProgressPresentation(state: store.state, currentStage: store.currentStage) != nil)
-    }
-
-    private var topSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(L10n.string("add_device.title"))
-                    .font(.title2.weight(.semibold))
-                Spacer()
-                Picker(L10n.string("add_device.connection_method"), selection: Binding(
-                    get: { store.entryMode },
-                    set: { store.setEntryMode($0) }
-                )) {
-                    ForEach(AddDeviceEntryMode.allCases) { mode in
-                        Text(mode.title).tag(mode)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 360)
-            }
-
-            HStack {
-                if store.entryMode == .discover {
-                    Text(discoveryStatusText)
-                        .foregroundStyle(.secondary)
-                    Button {
-                        store.runDiscover()
-                    } label: {
-                        Label(L10n.string("button.discover"), systemImage: "network")
-                    }
-                    .disabled(store.isRunning || store.bonjourTimeoutValue == nil)
-                }
-                Label(store.state.title, systemImage: statusIcon)
-                    .foregroundStyle(statusColor)
-            }
-            .frame(minHeight: 28, alignment: .center)
-        }
-    }
-
-    private var discoveryStatusText: String {
-        guard let stage = store.currentStage else {
-            return L10n.string("add_device.discover.placeholder")
-        }
-        return OperationTimelineBuilder.stageDetail(for: stage.operation, stage: stage.stage)
-            ?? OperationTimelineBuilder.stageTitle(for: stage.operation, stage: stage.stage)
-    }
-
-    private var deviceResultsSection: some View {
-        Group {
-            if store.entryMode == .discover && !store.devices.isEmpty {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(L10n.string("add_device.discovered_devices"))
-                        .font(.headline)
-
-                    ScrollView {
-                        LazyVStack(alignment: .leading, spacing: 0) {
-                            ForEach(store.devices) { device in
-                                Button {
-                                    store.select(device)
-                                } label: {
-                                    DeviceCandidateRow(device: device, selected: store.selectedDeviceID == device.id)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
-                                }
-                                .buttonStyle(.plain)
-                                .disabled(store.isAdding)
+        VStack(spacing: 0) {
+            GeometryReader { geometry in
+                ScrollView {
+                    VStack(spacing: 24) {
+                        Spacer(minLength: 24)
+                        AirPortDeviceIcon().frame(width: 64, height: 84)
+                        VStack(spacing: 8) {
+                            Text(L10n.string(store.showsPasswordStep ? "utility.setup.password_title" : "simple.setup.choose_title"))
+                                .font(UtilityStyle.title)
+                            if store.showsPasswordStep {
+                                Text(store.selectedDevice?.displayName ?? store.hostFieldText).foregroundStyle(.secondary)
                             }
                         }
+                        if store.isAdding {
+                            VStack(spacing: 16) {
+                                ProgressView().controlSize(.small)
+                                Text(L10n.string("utility.progress.connecting"))
+                            }
+                            .frame(height: 130)
+                        } else if store.showsPasswordStep {
+                            passwordStep
+                        } else {
+                            chooseStep
+                        }
+                        if let error = store.error {
+                            ErrorRecoveryView(error: error, omittedActions: [.retry, .replacePassword]) { store.recoveryAction($0) }
+                        }
+                        if let warning = store.discovery.warning {
+                            Text(warning).font(UtilityStyle.secondary).foregroundStyle(.orange)
+                        }
+                        Spacer(minLength: 24)
                     }
-                    .scrollIndicators(.visible)
+                    .frame(maxWidth: 440, minHeight: geometry.size.height)
                     .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 24)
                 }
+            }
+            UtilityFooter {
+                Button(L10n.string("action.cancel")) {
+                    if store.isAdding { store.cancel() } else { store.reset(); onCancel() }
+                }
+                .keyboardShortcut(.cancelAction).disabled(store.isAdding && !store.canCancel)
+                Spacer()
+                if store.showsPasswordStep {
+                    Button(L10n.string("simple.back")) { store.returnToDeviceSelection() }.disabled(store.isAdding)
+                }
+                Button(L10n.string(store.showsPasswordStep ? "simple.connect" : "simple.continue")) {
+                    if store.showsPasswordStep { store.runConfigure() } else { store.continueToPassword() }
+                }
+                .keyboardShortcut(.defaultAction)
+                .disabled(store.showsPasswordStep ? !store.canConfigure : !store.canContinueToPassword)
+            }
+        }
+        .font(UtilityStyle.body)
+        .onAppear { passwordFocused = store.showsPasswordStep }
+        .onChange(of: store.showsPasswordStep) { _, showsPassword in passwordFocused = showsPassword }
+    }
+
+    private var chooseStep: some View {
+        VStack(spacing: 16) {
+            Picker(L10n.string("add_device.connection_method"), selection: Binding(get: { store.entryMode }, set: { store.setEntryMode($0) })) {
+                Text(L10n.string("simple.nearby")).tag(AddDeviceEntryMode.discover)
+                Text(L10n.string("simple.address")).tag(AddDeviceEntryMode.manual)
+            }
+            .pickerStyle(.segmented).labelsHidden().frame(width: 240)
+            if store.entryMode == .manual {
+                TextField(L10n.string("simple.address"), text: $store.manualHost)
+                    .textFieldStyle(.roundedBorder).frame(width: UtilityStyle.fieldWidth)
+                    .accessibilityLabel(L10n.string("simple.address"))
+                    .padding(.vertical, 36)
+            } else if store.devices.isEmpty {
+                VStack(spacing: 12) {
+                    if store.discovery.state == .discovering { ProgressView().controlSize(.small) }
+                    Text(L10n.string(store.isRunning ? "overview.discovery.discovering" : "overview.discovery.empty"))
+                        .foregroundStyle(.secondary)
+                    Button(L10n.string("overview.discovery.refresh")) { store.runDiscover() }.disabled(store.isRunning)
+                }
+                .frame(height: 130)
             } else {
-                Spacer(minLength: 24)
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    }
-
-    private var connectionControls: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                TextField(L10n.string("add_device.host_or_ip"), text: Binding(
-                    get: { store.hostFieldText },
-                    set: { store.manualHost = $0 }
-                ))
-                .disabled(!store.isHostFieldEditable)
-                RevealablePasswordField(L10n.string("add_device.password"), text: $store.password) {
-                    guard store.canConfigure else {
-                        return
+                List(selection: Binding(get: { store.selectedDeviceID }, set: { id in
+                    if let device = store.devices.first(where: { $0.id == id }), !device.isUnsupportedModel { store.select(device) }
+                })) {
+                    ForEach(store.devices) { device in
+                        HStack(spacing: 12) {
+                            AirPortDeviceIcon(isTower: device.syap == "119" || device.syap == "120").frame(width: 28, height: 36)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(device.displayName)
+                                Text(device.isUnsupportedModel ? L10n.string("add_device.state.unsupported") : device.host)
+                                    .font(UtilityStyle.secondary).foregroundStyle(.secondary)
+                            }
+                        }
+                        .tag(device.id).disabled(device.isUnsupportedModel)
                     }
-                    store.runConfigure()
                 }
+                .listStyle(.bordered).frame(height: 160)
             }
+        }
+    }
 
-            if let message = store.reconnectMessage {
-                Text(message)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+    private var passwordStep: some View {
+        VStack(spacing: 12) {
+            RevealablePasswordField(L10n.string("simple.setup.password"), text: $store.password) {
+                if store.canConfigure { store.runConfigure() }
             }
+            .focused($passwordFocused).frame(width: UtilityStyle.fieldWidth)
+            .help(L10n.string("simple.setup.password_message"))
+            Text(L10n.string("utility.setup.saved"))
+                .font(UtilityStyle.secondary).foregroundStyle(.secondary)
+            if let message = store.reconnectMessage { Text(message).foregroundStyle(.secondary) }
             if let profile = store.suggestedProfile {
-                Button(L10n.format("discovery.reconnect_existing", profile.title)) {
-                    store.reconnectSuggestedProfile()
-                }
-                .disabled(store.isRunning)
-            }
-            HStack {
-                Button {
-                    store.runConfigure()
-                } label: {
-                    Label(L10n.string("add_device.save_device"), systemImage: "checkmark.circle")
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(!store.canConfigure)
-
-                Button {
-                    store.reset()
-                } label: {
-                    Label(L10n.string("add_device.reset"), systemImage: "arrow.counterclockwise")
-                }
-                .disabled(store.isRunning)
-            }
-
-            if let warning = store.discovery.warning {
-                Text(warning).foregroundStyle(.orange)
-            }
-            if let error = store.error {
-                ErrorRecoveryView(error: error) { store.recoveryAction($0) }
+                Button(L10n.format("discovery.reconnect_existing", profile.title)) { store.reconnectSuggestedProfile() }
             }
         }
-    }
-
-    private var statusIcon: String {
-        switch store.state {
-        case .idle, .manualEntry, .passwordEntry:
-            return "circle"
-        case .discovering, .checkingLocalNetwork, .configuring, .savingProfile:
-            return "hourglass"
-        case .awaitingConfirmation:
-            return "questionmark.circle"
-        case .discoveryReady:
-            return "checkmark.circle"
-        case .discoveryEmpty:
-            return "magnifyingglass"
-        case .authFailed, .unsupported, .failed:
-            return "exclamationmark.triangle"
-        }
-    }
-
-    private var statusColor: Color {
-        switch store.state {
-        case .discoveryReady:
-            return .green
-        case .awaitingConfirmation:
-            return .yellow
-        case .authFailed, .unsupported, .failed:
-            return .red
-        default:
-            return .secondary
-        }
-    }
-}
-
-private struct DeviceCandidateRow: View {
-    let device: DiscoveredDevice
-    let selected: Bool
-
-    var body: some View {
-        HStack {
-            Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-                .foregroundStyle(selected ? Color.accentColor : Color.secondary)
-            VStack(alignment: .leading) {
-                Text(device.displayName)
-                Text([device.hostname, device.addressSummary].filter { !$0.isEmpty }.joined(separator: "  "))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text(L10n.format("add_device.setup_target", device.connectionTarget))
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-            }
-            Spacer()
-            if device.isUnsupportedModel {
-                Label(L10n.string("add_device.state.unsupported"), systemImage: "exclamationmark.triangle")
-                    .font(.caption)
-                    .foregroundStyle(.red)
-                    .lineLimit(1)
-            } else if !device.discoveryModelText.isEmpty {
-                Text(device.discoveryModelText)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
-        }
-        .opacity(device.isUnsupportedModel ? 0.6 : 1)
-        .padding(.vertical, 6)
     }
 }

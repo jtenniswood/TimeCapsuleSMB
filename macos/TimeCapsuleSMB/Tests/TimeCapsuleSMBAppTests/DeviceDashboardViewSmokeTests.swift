@@ -175,6 +175,7 @@ final class DeviceDashboardViewSmokeTests: XCTestCase {
         let idleProfile = try await idleFixture.saveProfile(id: "device-one")
         let idleSession = idleFixture.dashboardSession(for: idleProfile)
         idleSession.selectedTab = .maintenance
+        idleSession.maintenanceUtilitiesExpanded = true
         for workflow in MaintenanceWorkflowAvailability.workflows(for: idleProfile) {
             idleSession.maintenanceStore.selectedWorkflow = workflow
             try assertRendersNonBlank(dashboardView(fixture: idleFixture, profile: idleProfile, session: idleSession))
@@ -184,6 +185,7 @@ final class DeviceDashboardViewSmokeTests: XCTestCase {
         let netbsd4Profile = try await netbsd4.saveProfile(id: "netbsd4-device", payloadFamily: "netbsd4_samba4")
         let netbsd4Session = netbsd4.dashboardSession(for: netbsd4Profile)
         netbsd4Session.selectedTab = .maintenance
+        netbsd4Session.maintenanceUtilitiesExpanded = true
         for workflow in MaintenanceWorkflowAvailability.workflows(for: netbsd4Profile) {
             netbsd4Session.maintenanceStore.selectedWorkflow = workflow
             try assertRendersNonBlank(dashboardView(fixture: netbsd4, profile: netbsd4Profile, session: netbsd4Session))
@@ -275,7 +277,7 @@ final class DeviceDashboardViewSmokeTests: XCTestCase {
         let maintenance = session.maintenanceStore
         maintenance.selectedWorkflow = .bootHook
         // The tab alone: the dashboard around it starts device checks of its own.
-        let host = LiveHostedView(MaintenanceTab(profile: profile, session: session, showDiagnostics: {}, diagnosticsText: { "" }))
+        let host = LiveHostedView(MaintenanceToolSheet(profile: profile, session: session, showDiagnostics: {}, diagnosticsText: { "" }))
         defer { host.close() }
         func isEnabled(_ label: String) -> Bool? {
             accessibleElements(in: host.contentView).first { $0.text == label }?.isEnabled
@@ -283,16 +285,16 @@ final class DeviceDashboardViewSmokeTests: XCTestCase {
 
         // The boot hook's own options replace the other panels' Advanced Options.
         let texts = accessibleElements(in: host.contentView).map(\.text)
-        XCTAssertTrue(texts.contains("Apple Firmware Options"), "\(texts)")
+        XCTAssertTrue(texts.contains(L10n.string("utility.details")), "\(texts)")
         XCTAssertFalse(texts.contains("Advanced Options"), "\(texts)")
         XCTAssertEqual(isEnabled("Back Up and Inspect"), true)
-        XCTAssertEqual(isEnabled("Plan Patch"), false)
-        XCTAssertEqual(isEnabled("Write Patch"), false)
+        XCTAssertNil(isEnabled("Plan Patch"))
+        XCTAssertNil(isEnabled("Write Patch"))
 
         XCTAssertTrue(pressAccessibleControl(in: host.contentView, labeled: "Back Up and Inspect"))
         try await waitUntilStoreState { maintenance.bootHookStore.backup != nil && !maintenance.isBusy }
         try await waitUntilStoreState { isEnabled("Plan Patch") == true }
-        XCTAssertEqual(isEnabled("Write Patch"), false)
+        XCTAssertNil(isEnabled("Write Patch"))
 
         XCTAssertTrue(pressAccessibleControl(in: host.contentView, labeled: "Plan Patch"))
         try await waitUntilStoreState { maintenance.bootHookStore.plan != nil && !maintenance.isBusy }
@@ -312,14 +314,14 @@ final class DeviceDashboardViewSmokeTests: XCTestCase {
         // An empty field has no text to find it by.
         maintenance.bootHookStore.firmwareVersion = "7.8.1"
         maintenance.bootHookStore.firmwareTemplatePath = "/tmp/firmware.basebinary"
-        let host = LiveHostedView(MaintenanceTab(profile: profile, session: session, showDiagnostics: {}, diagnosticsText: { "" }))
+        let host = LiveHostedView(MaintenanceToolSheet(profile: profile, session: session, showDiagnostics: {}, diagnosticsText: { "" }))
         defer { host.close() }
         func enabledStates() -> [Bool] {
             let fields = ["7.8.1", "/tmp/firmware.basebinary", "Choose"]
             return accessibleElements(in: host.contentView).filter { fields.contains($0.text) }.map(\.isEnabled)
         }
 
-        XCTAssertTrue(pressAccessibleControl(in: host.contentView, labeled: "Apple Firmware Options"))
+        XCTAssertTrue(pressAccessibleControl(in: host.contentView, labeled: L10n.string("utility.details")))
         try await waitUntilStoreState { enabledStates().count == 3 }
         XCTAssertEqual(enabledStates(), [true, true, true], "\(accessibleElements(in: host.contentView).map(\.text))")
 

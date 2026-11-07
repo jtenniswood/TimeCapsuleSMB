@@ -301,9 +301,9 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>lld</string>
 			<key>one</key>
-			<string>%lld ._-bestand bevat items die TimeCapsuleSMB niet omzet. De ondersteunde metadata ervan zijn gemigreerd en het bestand is bewaard.</string>
+			<string>%lld ._-bestand bevat items die Time Capsule Updater niet omzet. De ondersteunde metadata ervan zijn gemigreerd en het bestand is bewaard.</string>
 			<key>other</key>
-			<string>%lld ._-bestanden bevatten items die TimeCapsuleSMB niet omzet. De ondersteunde metadata ervan zijn gemigreerd en de bestanden zijn bewaard.</string>
+			<string>%lld ._-bestanden bevatten items die Time Capsule Updater niet omzet. De ondersteunde metadata ervan zijn gemigreerd en de bestanden zijn bewaard.</string>
 		</dict>
 	</dict>
 	<key>bundle_issue.distribution_artifacts_missing_count.message</key>
@@ -317,9 +317,9 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>lld</string>
 			<key>one</key>
-			<string>In het meegeleverde TimeCapsuleSMB-pakket ontbreekt %lld installatiebestand.</string>
+			<string>In het meegeleverde Time Capsule Updater-pakket ontbreekt %lld installatiebestand.</string>
 			<key>other</key>
-			<string>In het meegeleverde TimeCapsuleSMB-pakket ontbreken %lld installatiebestanden.</string>
+			<string>In het meegeleverde Time Capsule Updater-pakket ontbreken %lld installatiebestanden.</string>
 		</dict>
 	</dict>
 </dict>

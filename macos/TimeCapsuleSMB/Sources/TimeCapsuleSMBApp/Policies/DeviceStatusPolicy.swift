@@ -22,31 +22,31 @@ enum DeviceDisplayStatus: String, CaseIterable, Equatable, Identifiable {
     var title: String {
         switch self {
         case .unchecked:
-            return L10n.string("status.unchecked")
+            return L10n.string("utility.status.unchecked")
         case .passwordNeeded:
             return L10n.string("status.password_needed")
         case .passwordInvalid:
-            return L10n.string("status.password_invalid")
+            return L10n.string("utility.status.password_invalid")
         case .keychainUnavailable:
-            return L10n.string("status.keychain_unavailable")
+            return L10n.string("utility.status.saved_password")
         case .checking:
             return L10n.string("status.checking")
         case .installing:
             return L10n.string("status.installing")
         case .maintaining:
-            return L10n.string("status.maintenance")
+            return L10n.string("utility.status.working_on_device")
         case .readyToInstall:
-            return L10n.string("status.ready_to_install")
+            return L10n.string("utility.status.setup")
         case .healthy:
-            return L10n.string("status.healthy")
+            return L10n.string("simple.device.connected")
         case .warning:
-            return L10n.string("status.warning")
+            return L10n.string("utility.status.attention")
         case .failed:
             return L10n.string("status.failed")
         case .activationNeeded:
-            return L10n.string("status.activation_needed")
+            return L10n.string("utility.status.finish_setup")
         case .removed:
-            return L10n.string("status.removed")
+            return L10n.string("utility.status.not_setup")
         case .offline:
             return L10n.string("status.offline")
         case .unsupported:

@@ -1,265 +1,124 @@
 import SwiftUI
 
-private enum OverviewLayout {
-    static let actionIconSize: CGFloat = 16
-    static let healthRowMinHeight: CGFloat = 64
-    static let healthStatusIconSize: CGFloat = 30
-    static let healthStatusSymbolSize: CGFloat = 18
-    static let healthActionSlotMinWidth: CGFloat = 144
-}
-
 struct OverviewTab: View {
     let profile: DeviceProfile
     @ObservedObject var session: DeviceDashboardSession
     @ObservedObject var reachabilityStore: DeviceReachabilityStore
+    var showDiagnostics: () -> Void = {}
+    var diagnosticsText: () -> String = { "" }
 
     var body: some View {
         let summary = session.summary(for: profile)
-        let presentation = DeviceDashboardOverviewPresentation(
-            summary: summary,
-            reachabilitySnapshot: reachabilityStore.snapshot(for: profile),
-            isReachabilityRunning: reachabilityStore.isRunning(profile: profile)
-        )
-
+        let payload = DeviceDashboardHeaderPresentation.currentVersionPayload(reachabilityStore.snapshot(for: profile), profile: profile)
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                if let warning = presentation.hostWarning {
-                    WarningBanner(warning: warning)
-                }
-
-                DashboardHeaderView(presentation: presentation.header)
-
-                DashboardPrimaryActionStrip(
-                    primaryAction: presentation.primaryAction,
-                    isPrimaryActionEnabled: presentation.isPrimaryActionEnabled,
-                    secondaryActions: presentation.secondaryActions,
-                    isSecondaryActionEnabled: presentation.isEnabled,
-                    performPrimary: {
-                        session.performPrimaryAction(presentation.primaryAction, profile: profile)
-                    },
-                    performSecondary: { action in
-                        session.performSecondaryAction(action, profile: profile)
-                    }
-                )
-
-                VStack(alignment: .leading, spacing: 10) {
-                    ForEach(presentation.healthSections) { section in
-                        DashboardHealthSectionView(section: section, isActionEnabled: presentation.isEnabled) { action in
-                            session.performSecondaryAction(action, profile: profile)
+            VStack(alignment: .leading, spacing: 20) {
+                HStack(spacing: 20) {
+                    AirPortDeviceIcon(isTower: profile.usesTowerArtwork).frame(width: 64, height: 86)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(profile.title).font(UtilityStyle.title)
+                        Text(DeviceDashboardHeaderPresentation.friendlyModelValue(for: profile)).foregroundStyle(.secondary)
+                        HStack(spacing: 7) {
+                            DeviceStatusLight(status: summary.displayStatus)
+                            Text(summary.displayStatus.title)
                         }
                     }
+                    Spacer(minLength: 0)
                 }
+                .help(DeviceDashboardHeaderPresentation.deviceTooltip(for: profile, payload: payload))
+                SupportStatusView(profile: profile, session: session, reachability: reachabilityStore)
+                DiskHealthView(report: profile.lastCheckup?.diskHealth)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: 560, alignment: .leading).frame(maxWidth: .infinity, alignment: .top)
+        }
+        .task(id: OverviewRefresh(profileID: profile.id, finishedAt: profile.lastDeployState?.finishedAt,
+            busy: session.appStore.operationCoordinator.isDeviceBusy(profile))) {
+            guard !session.appStore.operationCoordinator.isDeviceBusy(profile) else { return }
+            await session.refreshInstalledVersion(profile: profile)
+            await session.refreshSharingSettings(profile: profile)
         }
     }
 }
 
-private struct DashboardHeaderView: View {
-    let presentation: DeviceDashboardHeaderPresentation
+private struct OverviewRefresh: Equatable {
+    let profileID: DeviceProfile.ID
+    let finishedAt: Date?
+    let busy: Bool
+}
+
+struct SupportStatusView: View {
+    let profile: DeviceProfile
+    @ObservedObject var session: DeviceDashboardSession
+    @ObservedObject var reachability: DeviceReachabilityStore
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(presentation.title)
-                        .font(.title2.weight(.semibold))
-                    Text(presentation.connectionTarget)
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                StatusBadge(status: presentation.status)
+        GroupBox {
+            VStack(alignment: .leading, spacing: 12) {
+                SMBSupportRow(profile: profile, session: session, reachability: reachability)
+                Divider()
+                SSHSupportView(profile: profile, status: session.appStore.sshAccessStore,
+                    operation: session.maintenanceStore.sshAccessStore, coordinator: session.appStore.operationCoordinator,
+                    enable: { session.enableSSHAccess(profile: profile) })
             }
-
-            Label(presentation.lastChecked, systemImage: "clock")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            SummaryGrid(rows: presentation.rows.map { ($0.label, $0.value) })
+            .padding(12).frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 }
 
-private struct StatusBadge: View {
-    let status: DeviceDisplayStatus
+private struct SMBSupportRow: View {
+    let profile: DeviceProfile
+    @ObservedObject var session: DeviceDashboardSession
+    @ObservedObject var reachability: DeviceReachabilityStore
 
     var body: some View {
-        Label {
-            Text(status.title)
-        } icon: {
-            Image(systemName: status.systemImage)
-                .frame(width: OverviewLayout.actionIconSize, height: OverviewLayout.actionIconSize)
-        }
-            .font(.caption.weight(.medium))
-            .padding(.horizontal, 8)
-            .padding(.vertical, 5)
-            .background(.quaternary)
-            .clipShape(Capsule())
-    }
-}
-
-private struct DashboardPrimaryActionStrip: View {
-    let primaryAction: DashboardPrimaryAction
-    let isPrimaryActionEnabled: Bool
-    let secondaryActions: [DashboardSecondaryAction]
-    let isSecondaryActionEnabled: (DashboardSecondaryAction) -> Bool
-    let performPrimary: () -> Void
-    let performSecondary: (DashboardSecondaryAction) -> Void
-
-    var body: some View {
-        HStack(spacing: 8) {
-            DashboardPrimaryActionButton(action: primaryAction, perform: performPrimary)
-                .disabled(!isPrimaryActionEnabled)
-
-            ForEach(secondaryActions) { action in
-                Button {
-                    performSecondary(action)
-                } label: {
-                    DashboardActionLabel(title: action.title, systemImage: action.systemImage)
-                }
-                .disabled(!isSecondaryActionEnabled(action))
-            }
-        }
-    }
-}
-
-private struct DashboardPrimaryActionButton: View {
-    let action: DashboardPrimaryAction
-    let perform: () -> Void
-
-    var body: some View {
-        Button(action: perform) {
-            DashboardActionLabel(title: action.title, systemImage: action.systemImage)
-        }
-        .buttonStyle(.borderedProminent)
-    }
-}
-
-private struct DashboardActionLabel: View {
-    let title: String
-    let systemImage: String
-
-    var body: some View {
-        Label {
-            Text(title)
-                .lineLimit(1)
-        } icon: {
-            Image(systemName: systemImage)
-                .frame(width: OverviewLayout.actionIconSize, height: OverviewLayout.actionIconSize)
-        }
-    }
-}
-
-private struct DashboardHealthSectionView: View {
-    let section: DashboardHealthSection
-    let isActionEnabled: (DashboardSecondaryAction) -> Bool
-    let performAction: (DashboardSecondaryAction) -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(section.title)
-                .font(.headline)
-            ForEach(section.rows) { row in
-                HStack(alignment: .top, spacing: 10) {
-                    DashboardHealthStatusIcon(status: row.status)
-                    VStack(alignment: .leading, spacing: 3) {
-                        HStack {
-                            Text(row.title)
-                                .font(.body.weight(.medium))
-                            Spacer()
-                            DashboardHealthActionSlot(
-                                action: row.action,
-                                isActionEnabled: isActionEnabled,
-                                performAction: performAction
-                            )
-                        }
-                        AnimatedProgressText(message: row.detail, isRunning: row.status == .running)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .padding(10)
-                .frame(maxWidth: .infinity, minHeight: OverviewLayout.healthRowMinHeight, alignment: .topLeading)
-                .background(Color.secondary.opacity(0.08))
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-            }
-        }
-    }
-}
-
-private struct DashboardHealthActionSlot: View {
-    let action: DashboardSecondaryAction?
-    let isActionEnabled: (DashboardSecondaryAction) -> Bool
-    let performAction: (DashboardSecondaryAction) -> Void
-
-    var body: some View {
-        Group {
-            if let action {
-                Button {
-                    performAction(action)
-                } label: {
-                    DashboardActionLabel(title: action.title, systemImage: action.systemImage)
-                }
-                .controlSize(.small)
-                .disabled(!isActionEnabled(action))
+        let store = session.deployStore
+        let payload = DeviceDashboardHeaderPresentation.currentVersionPayload(reachability.snapshot(for: profile), profile: profile)
+        let state = FileSharingInstallationPresentation(profile: profile, payload: payload, sharing: session.sharingStore.snapshot,
+            checking: reachability.isRefreshing(profile: profile) || session.sharingStore.loading)
+        VStack(alignment: .leading, spacing: 12) {
+            if store.isBusy {
+                FileSharingProgressView(store: store)
             } else {
-                // Reserve real button metrics so rows without actions align with rows that have action buttons.
-                Button {} label: {
-                    DashboardActionLabel(
-                        title: DashboardSecondaryAction.runCheckup.title,
-                        systemImage: DashboardSecondaryAction.runCheckup.systemImage
-                    )
+                HStack(spacing: 12) {
+                    Label {
+                        Text(state.statusTitle)
+                    } icon: {
+                        Group {
+                            if state.state == .checking {
+                                ProgressView().controlSize(.small).accessibilityHidden(true)
+                            } else {
+                                Image(systemName: state.needsInstall ? "arrow.down.circle" : "checkmark.circle")
+                            }
+                        }.frame(width: 16, height: 16)
+                    }
+                    Spacer()
+                    if let version = state.version { Text(version).foregroundStyle(.secondary).monospacedDigit() }
+                    if state.needsInstall {
+                        Button(L10n.string(state.state == .notInstalled ? "simple.sharing.set_up" : "simple.sharing.update")) {
+                            session.runInstall(profile: profile)
+                        }.disabled(session.appStore.operationCoordinator.isDeviceBusy(profile))
+                    }
                 }
-                    .controlSize(.small)
-                    .hidden()
-                    .accessibilityHidden(true)
-                    .allowsHitTesting(false)
+                if let error = store.error, !["cancelled", "confirmation_cancelled"].contains(error.code) {
+                    Text(error.message).foregroundStyle(.red)
+                }
             }
         }
-        .frame(
-            minWidth: OverviewLayout.healthActionSlotMinWidth,
-            alignment: .trailing
-        )
     }
 }
 
-private struct DashboardHealthStatusIcon: View {
-    let status: DashboardHealthStatus
+struct FileSharingProgressView: View {
+    @ObservedObject var store: DeployWorkflowStore
 
     var body: some View {
-        ZStack {
-            Circle()
-                .fill(statusColor.opacity(status == .unknown ? 0.10 : 0.14))
-            icon
-                .foregroundStyle(statusColor)
-        }
-            .frame(width: OverviewLayout.healthStatusIconSize, height: OverviewLayout.healthStatusIconSize)
-            .accessibilityLabel(status.title)
-    }
-
-    @ViewBuilder
-    private var icon: some View {
-        if status == .running {
-            OperationTimelineStateIcon(state: .running)
-        } else {
-            Image(systemName: status.systemImage)
-                .font(.system(size: OverviewLayout.healthStatusSymbolSize, weight: .semibold))
-        }
-    }
-
-    private var statusColor: Color {
-        switch status {
-        case .unknown:
-            return .secondary
-        case .good:
-            return .green
-        case .warning:
-            return .orange
-        case .failed:
-            return .red
-        case .running:
-            return .accentColor
+        HStack(spacing: 16) {
+            if let progress = InstallProgressPresentation(state: store.state, currentStage: store.currentStage) {
+                InlineOperationProgress(progress: progress, title: L10n.string("simple.sharing.title"))
+            } else {
+                ProgressView().controlSize(.small)
+                Text(L10n.string("simple.sharing.title"))
+            }
+            Spacer(minLength: 8)
+            Button(L10n.string("toolbar.cancel")) { store.cancel() }.disabled(!store.canCancel)
         }
     }
 }

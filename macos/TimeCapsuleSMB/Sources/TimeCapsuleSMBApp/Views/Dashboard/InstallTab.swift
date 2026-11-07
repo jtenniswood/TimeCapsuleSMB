@@ -9,215 +9,96 @@ struct InstallTab: View {
 
     var body: some View {
         let store = session.deployStore
-        let summary = session.summary(for: profile)
-        let presentation = InstallWorkflowPresentation(
-            state: store.state,
-            result: store.result,
-            error: store.error,
-            events: store.events,
-            currentStage: store.currentStage,
-            profile: profile,
-            isCheckupRunning: summary.displayStatus == .checking
-        )
-        let progress = InstallProgressPresentation(state: store.state, currentStage: store.currentStage)
+        let presentation = InstallWorkflowPresentation(state: store.state, result: store.result,
+            error: store.error, events: store.events, currentStage: store.currentStage, profile: profile,
+            isCheckupRunning: session.summary(for: profile).displayStatus == .checking)
         let isDeviceBusy = operationCoordinator.isDeviceBusy(profile)
+        let firstInstall = profile.runtimeState == nil || profile.runtimeState?.state == .notInstalled
 
-        ZStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    InstallHeaderView(presentation: presentation)
-
-                    ForEach(presentation.notices, id: \.self) { notice in
-                        Label(notice, systemImage: "exclamationmark.triangle")
-                            .font(.caption)
-                            .foregroundStyle(.yellow)
+        ScrollView {
+            VStack(alignment: .leading, spacing: UtilityStyle.sectionSpacing) {
+                VStack(alignment: .leading, spacing: 16) {
+                    if let progress = InstallProgressPresentation(state: store.state, currentStage: store.currentStage) {
+                        InlineOperationProgress(progress: progress, title: L10n.string("simple.sharing.title"))
                     }
-
-                    if !presentation.actions.isEmpty {
-                        HStack {
-                            ForEach(presentation.actions) { action in
-                                InstallActionButton(action: action) {
-                                    session.performInstallAction(action, profile: profile, showDiagnostics: showDiagnostics)
-                                }
-                                .disabled(isDisabled(action, store: store, isDeviceBusy: isDeviceBusy))
+                    if !store.isBusy {
+                        DiskSharingSettingsView(store: session.sharingStore, deviceBusy: isDeviceBusy, isLegacyDevice: profile.osRelease?.hasPrefix("4.") == true) {
+                            session.sharingStore.load(profile: profile, password: session.appStore.passwordWithoutPrompt(for: profile), force: true)
+                        }
+                    }
+                    if !firstInstall && !store.isBusy {
+                        UtilityFormRow(title: L10n.string("dashboard.overview.installed_version")) {
+                            let reachability = session.appStore.reachabilityStore
+                            let payload = DeviceDashboardHeaderPresentation.currentVersionPayload(reachability.snapshot(for: profile), profile: profile)
+                            if payload == nil && reachability.isRefreshing(profile: profile) {
+                                ProgressView().controlSize(.small)
+                            } else {
+                                Text(DeviceDashboardHeaderPresentation.installedVersionValue(runtimeState: profile.runtimeState?.state, payload: payload))
+                                    .textSelection(.enabled)
                             }
                         }
                     }
-
-                    if let timeline = presentation.timeline {
-                        InstallTimelineView(presentation: timeline)
-                    }
-
-                    if let error = presentation.error {
-                        ErrorRecoveryView(
-                            error: error,
-                            guidance: presentation.failureGuidance,
-                            diagnosticsText: diagnosticsText
-                        ) { recoveryAction($0, error: error) }
-                    }
-
-                    if let completion = presentation.completion {
-                        InstallCompletionView(
-                            presentation: completion,
-                            isDisabled: { isDisabled($0, store: store, isDeviceBusy: isDeviceBusy) }
-                        ) { action in
-                            session.performInstallAction(action, profile: profile, showDiagnostics: showDiagnostics)
+                    if !store.isBusy {
+                        UtilityFormRow(title: "") {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Button(L10n.string(firstInstall ? "simple.sharing.set_up" : "simple.sharing.update")) {
+                                    session.performInstallAction(.installUpdate, profile: profile, showDiagnostics: showDiagnostics)
+                                }
+                                .disabled(!InstallActionAvailabilityPolicy.isEnabled(.installUpdate, store: store, isDeviceBusy: isDeviceBusy))
+                                Text(L10n.string("sharing.update_help"))
+                                    .font(UtilityStyle.secondary).foregroundStyle(.secondary)
+                            }
                         }
                     }
-
-                    InstallExecutionOptionsView(store: store, isDeviceBusy: isDeviceBusy)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-
-            if let progress {
-                BlockingProgressOverlay(progress: progress, allowsBackgroundInteraction: true)
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    }
-
-    private func recoveryAction(_ kind: RecoveryActionKind, error: BackendErrorViewModel) -> (() -> Void)? {
-        kind == .diagnostics ? { showDiagnostics() } : session.recoveryAction(kind, error: error, profile: profile)
-    }
-
-    private func isDisabled(_ action: InstallUserAction, store: DeployWorkflowStore, isDeviceBusy: Bool) -> Bool {
-        !InstallActionAvailabilityPolicy.isEnabled(action, store: store, isDeviceBusy: isDeviceBusy)
-    }
-}
-
-private struct InstallHeaderView: View {
-    let presentation: InstallWorkflowPresentation
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(alignment: .firstTextBaseline) {
-                Text(presentation.title)
-                    .font(.title2.weight(.semibold))
-                Spacer()
-                Text(presentation.stateTitle)
-                    .font(.caption.weight(.medium))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 5)
-                    .background(.quaternary)
-                    .clipShape(Capsule())
-            }
-            Text(presentation.statusMessage)
-                .font(.callout)
-                .foregroundStyle(.secondary)
-        }
-    }
-}
-
-private struct InstallActionButton: View {
-    let action: InstallUserAction
-    let perform: () -> Void
-
-    var body: some View {
-        if action == .installUpdate {
-            Button(action: perform) {
-                Label(action.title, systemImage: action.systemImage)
-            }
-            .buttonStyle(.borderedProminent)
-        } else {
-            Button(action: perform) {
-                Label(action.title, systemImage: action.systemImage)
-            }
-            .buttonStyle(.bordered)
-        }
-    }
-}
-
-private struct InstallTimelineView: View {
-    let presentation: InstallTimelinePresentation
-
-    var body: some View {
-        OperationTimelineListView(
-            title: L10n.string("install.timeline.title"),
-            emptyMessage: L10n.string("install.timeline.waiting"),
-            items: presentation.items
-        )
-    }
-}
-
-private struct InstallCompletionView: View {
-    let presentation: InstallCompletionPresentation
-    let isDisabled: (InstallUserAction) -> Bool
-    let performAction: (InstallUserAction) -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(presentation.title)
-                .font(.headline)
-            SummaryGrid(rows: presentation.rows.map { ($0.label, $0.value) })
-            ForEach(presentation.warnings) { warning in
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Label(warning.text, systemImage: "exclamationmark.triangle")
-                        .font(.caption)
-                        .foregroundStyle(.yellow)
-                    if let action = warning.action {
-                        Button {
-                            performAction(action)
-                        } label: {
-                            Label(action.title, systemImage: action.systemImage)
+                ForEach(presentation.notices, id: \.self) { notice in
+                    UtilityNotice { Text(notice) }
+                }
+                if let completion = presentation.completion {
+                    ForEach(completion.warnings) { warning in
+                        UtilityNotice {
+                            Text(warning.text)
+                            if let action = warning.action {
+                                Button(action.title) { perform(action) }
+                                    .disabled(!InstallActionAvailabilityPolicy.isEnabled(action, store: store, isDeviceBusy: isDeviceBusy))
+                            }
                         }
-                        .controlSize(.small)
-                        .disabled(isDisabled(action))
+                    }
+                }
+                if let error = presentation.error {
+                    ErrorRecoveryView(error: error, guidance: presentation.failureGuidance, diagnosticsText: diagnosticsText,
+                        omittedActions: [.retry, .installSMB]) { kind in
+                        kind == .diagnostics ? { showDiagnostics() } : session.recoveryAction(kind, error: error, profile: profile)
+                    }
+                }
+                if presentation.error == nil && (presentation.timeline != nil || presentation.completion != nil) {
+                    DashboardDisclosureSection(title: L10n.string("utility.details")) {
+                        if let completion = presentation.completion {
+                            SummaryGrid(rows: completion.rows.filter { $0.label != L10n.string("deploy.result.message") }.map { ($0.label, $0.value) })
+                        }
+                        if let timeline = presentation.timeline, store.isBusy || presentation.completion == nil {
+                            OperationTimelineListView(items: timeline.items)
+                        }
                     }
                 }
             }
-            HStack {
-                ForEach(presentation.actions) { action in
-                    Button {
-                        performAction(action)
-                    } label: {
-                        Label(action.title, systemImage: action.systemImage)
-                    }
-                    .disabled(isDisabled(action))
-                }
-            }
+            .frame(maxWidth: 560, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .top)
         }
+        .task(id: InstalledVersionRefresh(profileID: profile.id, finishedAt: profile.lastDeployState?.finishedAt, deviceBusy: isDeviceBusy)) {
+            guard !isDeviceBusy else { return }
+            await session.refreshInstalledVersion(profile: profile)
+            await session.refreshSharingSettings(profile: profile)
+        }
+    }
+
+    private func perform(_ action: InstallUserAction) {
+        session.performInstallAction(action, profile: profile, showDiagnostics: showDiagnostics)
     }
 }
 
-private struct InstallExecutionOptionsView: View {
-    @ObservedObject var store: DeployWorkflowStore
-    let isDeviceBusy: Bool
-
-    var body: some View {
-        DashboardDisclosureSection(title: L10n.string("install.advanced_options")) {
-            Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
-                GridRow {
-                    Toggle(L10n.string("toggle.no_wait"), isOn: $store.noWait)
-                        .gridCellColumns(2)
-                }
-                GridRow {
-                    Text(L10n.string("install.advanced_options.no_wait_note"))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .gridCellColumns(2)
-                }
-                GridRow {
-                    Toggle(L10n.string("toggle.enable_rsync"), isOn: $store.rsyncEnabled)
-                        .gridCellColumns(2)
-                }
-                GridRow {
-                    Text(L10n.string("install.advanced_options.rsync_note"))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .gridCellColumns(2)
-                }
-                GridRow {
-                    Text(L10n.string("field.mount_wait"))
-                        .foregroundStyle(.secondary)
-                    TextField(L10n.string("field.mount_wait"), text: $store.mountWait)
-                        .frame(width: 150)
-                }
-            }
-        }
-        .disabled(store.isBusy || isDeviceBusy)
-    }
-
+private struct InstalledVersionRefresh: Equatable {
+    let profileID: DeviceProfile.ID
+    let finishedAt: Date?
+    let deviceBusy: Bool
 }

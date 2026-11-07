@@ -14,7 +14,7 @@ public enum HelperLocatorError: Error, Equatable, LocalizedError {
         switch self {
         case .notFound(let attempts):
             let attempted = attempts.isEmpty ? "none" : attempts.joined(separator: ", ")
-            return "Could not find the TimeCapsuleSMB helper. Attempted: \(attempted)"
+            return "Could not find the Time Capsule Updater helper. Attempted: \(attempted)"
         }
     }
 }

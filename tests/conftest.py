@@ -220,6 +220,14 @@ def acpd_runs_after_start(monkeypatch: pytest.MonkeyPatch):
 
 
 @pytest.fixture(autouse=True)
+def managed_file_sharing_enabled(monkeypatch: pytest.MonkeyPatch):
+    # Existing runtime fixtures describe a running share. Off-state tests
+    # override this result and check the actual disabled-service verifier.
+    monkeypatch.setattr("timecapsulesmb.services.runtime_verification.managed_sharing_disabled", lambda _connection: False)
+    yield
+
+
+@pytest.fixture(autouse=True)
 def device_disks_healthy(monkeypatch: pytest.MonkeyPatch):
     # Install, uninstall and disk repair read the device's kernel log for disk
     # errors before they ask, and a runtime that does not start reads it to

@@ -1068,7 +1068,7 @@ final class DashboardPresentationTests: XCTestCase {
         let notInstalled = L10n.string("dashboard.overview.installed_version.not_installed")
         let notChecked = L10n.string("dashboard.overview.installed_version.not_checked")
         let outdated = L10n.format("dashboard.overview.installed_version.outdated", "v4.0.0", "v5.0.0")
-        let newer = L10n.string("dashboard.overview.installed_version.newer")
+        let newer = "v4.0.0"
         let unknown = L10n.string("value.unknown")
         let expected: [(String?, [DeviceRuntimeState?: String])] = [
             ("current", [.notInstalled: notInstalled, .installedVerified: "v4.0.0", .unknown: "v4.0.0"]),
@@ -1158,6 +1158,12 @@ final class DashboardPresentationTests: XCTestCase {
         let afterOverlap = DeviceDashboardOverviewPresentation(summary: summary(for: profile), reachabilitySnapshot: overlapping)
         XCTAssertEqual(try headerValue(label, in: afterOverlap), L10n.string("dashboard.overview.installed_version.not_checked"))
         XCTAssertNotEqual(try row(.runtime, in: afterOverlap).action, .installUpdate)
+
+        // A background read started during the update can also be stale.
+        let duringInstall = DeviceReachabilitySnapshot(refreshedAt: Date(timeIntervalSince1970: 200), payload: snapshot.payload)
+        XCTAssertNil(DeviceDashboardHeaderPresentation.currentVersionPayload(duringInstall, profile: profile))
+        let afterInstall = DeviceReachabilitySnapshot(refreshedAt: Date(timeIntervalSince1970: 301), payload: snapshot.payload)
+        XCTAssertEqual(DeviceDashboardHeaderPresentation.currentVersionPayload(afterInstall, profile: profile), snapshot.payload)
     }
 
     func testInstalledVersionStringsInEveryLanguage() {

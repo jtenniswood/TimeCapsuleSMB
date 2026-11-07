@@ -657,3 +657,8 @@
 # child that dies leaves its opens to the scavenger's rescan (0077), and this
 # line says which one died and how.
 0083-smbd-child-exit-logging.patch|log a child that exited with an error status or a signal
+
+# 9. AirPort Utility accounts. Separate SMB identities and passwords retain
+# root filesystem credentials required by the appliance kernel. Read-only
+# access travels with each authenticated token, inside configured shares.
+0086-airport-account-authentication.patch|authenticate AirPort accounts with independent passwords and access

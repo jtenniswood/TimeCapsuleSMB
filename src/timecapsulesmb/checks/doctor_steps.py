@@ -10,6 +10,7 @@ from dataclasses import asdict, dataclass, replace
 from pathlib import Path
 from typing import TypeVar
 from xml.parsers.expat import ExpatError
+from timecapsulesmb.device.airport_account import read_sharing_account
 
 from timecapsulesmb.checks.bonjour import (
     BONJOUR_INSTANCE_NOT_SEEN_CODE,
@@ -99,6 +100,7 @@ from timecapsulesmb.core.net import (
     same_scoped_ip,
 )
 from timecapsulesmb.device.compat import render_compatibility_message
+from timecapsulesmb.device.smart import read_smart_status
 from timecapsulesmb.device.disk_errors import (
     disk_errors_explain,
     disk_errors_in,
@@ -207,7 +209,7 @@ from timecapsulesmb.discovery.models import normalize_airport_mac
 from timecapsulesmb.transport.local import find_free_local_port
 from timecapsulesmb.transport.local import scoped_tcp_connect_errors
 from timecapsulesmb.transport.errors import TransportError
-from timecapsulesmb.transport.ssh import SshCommandTimeout, SshConnection, run_ssh, ssh_local_forward
+from timecapsulesmb.transport.ssh import SshCommandTimeout, SshConnection, run_ssh, run_ssh_capture_bytes, ssh_local_forward
 
 
 T = TypeVar("T")
@@ -1949,12 +1951,15 @@ def _add_tunneled_authenticated_smb_results(
     connection: SshConnection,
     *,
     smb_password: str,
+    smb_username: str = DEFAULT_SAMBA_AUTH_USER,
     active_share_names: list[str],
     active_smb_conf_reason: str,
     debug_fields: dict[str, object] | None,
     add_result: Callable[[CheckResult], None],
     retry_delays: tuple[int, ...] = DOCTOR_TRANSIENT_RETRY_DELAYS,
     password_matches: bool = False,
+    password_label: str = "AirPort admin password",
+    read_only: bool = False,
 ) -> str:
     """List and change files on the device's own smbd through an SSH tunnel;
     return one of the DEVICE_SMB_* outcomes. password_matches: the saved
@@ -1973,7 +1978,7 @@ def _add_tunneled_authenticated_smb_results(
             remote_port=445,
         ):
             listing_result = _authenticated_smb_listing_with_doctor_retries(
-                DEFAULT_SAMBA_AUTH_USER,
+                smb_username,
                 smb_password,
                 "127.0.0.1",
                 port=local_port,
@@ -1987,7 +1992,7 @@ def _add_tunneled_authenticated_smb_results(
                     # means the device has not applied the current one.
                     add_result(CheckResult(
                         "FAIL",
-                        "Samba on the device rejected the saved password although it is the AirPort admin password; "
+                        f"Samba on the device rejected the sharing password although it is the {password_label}; "
                         f"the device has not applied its current password to Samba, restart the device ({listing_result.message})",
                         {**listing_result.details, "code": DOCTOR_CODE_DEVICE_SMB_PASSWORD_STALE},
                     ))
@@ -2004,6 +2009,9 @@ def _add_tunneled_authenticated_smb_results(
             add_result(listing_result)
             if listing_result.status != "PASS":
                 return DEVICE_SMB_FAILED
+            if read_only:
+                add_result(CheckResult("INFO", "AirPort sharing account is read-only; write checks skipped"))
+                return DEVICE_SMB_PASSED
             share_name = _select_smb_file_ops_share(
                 listing_result,
                 active_share_names,
@@ -2015,7 +2023,7 @@ def _add_tunneled_authenticated_smb_results(
 
             file_ops_ok = True
             for result in check_authenticated_smb_file_ops_detailed(
-                DEFAULT_SAMBA_AUTH_USER,
+                smb_username,
                 smb_password,
                 "127.0.0.1",
                 share_name,
@@ -2062,6 +2070,7 @@ def _add_authenticated_smb_results(
     runtime_naming_identity: RuntimeNamingIdentityProbeResult | None,
     *,
     smb_password: str,
+    smb_username: str = DEFAULT_SAMBA_AUTH_USER,
     active_smb_conf: str | None,
     active_smb_conf_reason: str,
     direct_smb: DirectSmbState,
@@ -2092,7 +2101,7 @@ def _add_authenticated_smb_results(
         (
             family,
             _authenticated_smb_listing_with_doctor_retries(
-                DEFAULT_SAMBA_AUTH_USER,
+                smb_username,
                 smb_password,
                 targets,
                 port=445,
@@ -2139,6 +2148,7 @@ def _add_authenticated_smb_results(
             _add_lan_smb_file_ops_results(
                 listing_result,
                 smb_password=smb_password,
+                **({"smb_username": smb_username} if smb_username != DEFAULT_SAMBA_AUTH_USER else {}),
                 active_share_names=active_share_names,
                 active_smb_conf_reason=active_smb_conf_reason,
                 add_result=add_result,
@@ -2175,6 +2185,7 @@ def _add_lan_smb_file_ops_results(
     listing_result: CheckResult,
     *,
     smb_password: str,
+    smb_username: str = DEFAULT_SAMBA_AUTH_USER,
     active_share_names: list[str],
     active_smb_conf_reason: str,
     add_result: Callable[[CheckResult], None],
@@ -2196,7 +2207,7 @@ def _add_lan_smb_file_ops_results(
     if isinstance(smb_ip_address, str) and smb_ip_address:
         file_ops_kwargs["ip_address"] = smb_ip_address
     for result in check_authenticated_smb_file_ops_detailed(
-        DEFAULT_SAMBA_AUTH_USER,
+        smb_username,
         smb_password,
         smb_server,
         share_name,
@@ -2239,6 +2250,43 @@ def _build_doctor_target(inputs: DoctorInputs) -> DoctorTarget:
         host=endpoint_host(connection.host),
         smb_password=inputs.config.require("TC_PASSWORD"),
     )
+
+
+def _doctor_select_smb_password(target: DoctorTarget, remote: RemoteAccess,
+                                smb_config: SmbConfigState, sink: DoctorSink) -> DoctorTarget:
+    match = re.search(r"^\s*tc:airport account\s*=\s*(\*|[A-Za-z0-9_.-]{1,63})\s*$",
+                      smb_config.text or "", re.M)
+    account_backend = re.search(r"^\s*passdb backend\s*=\s*tc_airport:", smb_config.text or "", re.M)
+    if match is None and account_backend is None:
+        if (remote.remote_checks_enabled and re.search(r"^\s*tc:airport disk password\s*=\s*yes\s*$", smb_config.text or "", re.M)):
+            try:
+                data = run_ssh_capture_bytes(target.connection, "/usr/bin/acp -q fssp", timeout=25)
+                if len(data) > 8192 or b"\0" in data:
+                    raise ValueError
+                password = data.decode().removesuffix("\n")
+                if not password:
+                    data = run_ssh_capture_bytes(target.connection, "/usr/bin/acp -q syPW", timeout=25)
+                    if len(data) > 8192 or b"\0" in data:
+                        raise ValueError
+                    password = data.decode().removesuffix("\n")
+                return replace(target, smb_account="root", smb_password=password, smb_password_available=bool(password))
+            except Exception:
+                sink.add(CheckResult("FAIL", "The disk password could not be read"))
+                return replace(target, smb_password="", smb_password_available=False)
+        return target
+    name = match.group(1) if match else "*"
+    target = replace(target, smb_account=name, smb_password="", smb_password_available=False)
+    if not remote.remote_checks_enabled:
+        sink.add(CheckResult("SKIP", "SMB account password could not be read because SSH checks are unavailable"))
+        return target
+    try:
+        account = read_sharing_account(target.connection, name)
+    except ValueError:
+        sink.add(CheckResult("FAIL", "The selected AirPort sharing account is unavailable, disabled or invalid"))
+        return target
+    sink.add(CheckResult("INFO", f"SMB checks use AirPort account {account.name}"))
+    return replace(target, smb_account=account.name, smb_password=account.password, smb_read_only=account.read_only,
+                   smb_password_available=True)
 
 
 def _doctor_check_ssh_login(target: DoctorTarget, options: DoctorOptions, sink: DoctorSink) -> RemoteAccess:
@@ -2939,7 +2987,8 @@ def _acpd_silent(sink: DoctorSink) -> bool:
 def _doctor_check_disk_health(target: DoctorTarget, remote: RemoteAccess, sink: DoctorSink) -> None:
     """Each disk's SMART verdict and space from MaSt, which never wakes a
     sleeping disk, so it runs on every check, even when what follows stops
-    early. An ACPd the check before found silent is not asked: acp would
+    early. The app can additionally request read-only ATA attributes, which
+    may wake a sleeping drive. An ACPd the check before found silent is not asked: acp would
     wait out the read's timeout to say the same."""
     if not remote.remote_checks_enabled:
         return
@@ -2964,13 +3013,42 @@ def _doctor_check_disk_health(target: DoctorTarget, remote: RemoteAccess, sink: 
             "error": reason,
             "disks": [{key: value for key, value in asdict(disk).items() if key != "product"} for disk in disks],
         }
+    smart_failures: set[str] = set()
+    if sink.disk_health_report is not None:
+        # These optional ATA reads are requested by the app, not background
+        # reachability probes or telemetry. Never copy serials or raw MaSt.
+        sink.disk_health_report.update(
+            error="unavailable" if reason else None,
+            disks=[
+                {
+                    "device": disk.device, "label": disk.label or disk.device,
+                    "builtin": disk.builtin, "smart_status": disk.smart_status,
+                    "partitions": [{
+                        "name": part.name or part.device, "size_mib": part.size_mib,
+                        "used_mib": part.used_mib, "free_mib": part.free_mib,
+                    } for part in disk.partitions],
+                    "details": read_smart_status(target.connection, disk.device),
+                }
+                for disk in disks
+            ],
+        )
+        for disk in sink.disk_health_report["disks"]:
+            details = disk["details"]
+            if details.get("threshold_exceeded") or any(
+                attribute["critical"] and attribute["reliability"] == "negative"
+                for attribute in details["attributes"]
+            ):
+                smart_failures.add(disk["device"])
     if reason is not None:
         sink.add(CheckResult(
             "INFO", f"Attempt to read Apple ACPd's MaSt to get disk information failed: {reason}",
             details={"code": DOCTOR_CODE_DISK_INFO_UNAVAILABLE},
         ))
     for disk in disks:
-        sink.add(_disk_health_result(disk))
+        # A fresh ATA failure takes precedence over diskd's cached verdict.
+        # Reuse the existing warning so Checkup's counts and advice agree
+        # with the detailed panel; it does not claim Samba has stopped.
+        sink.add(_disk_health_result(replace(disk, smart_status="failing") if disk.device in smart_failures else disk))
     if any(partition.format == "hfs" for disk in disks for partition in disk.partitions):
         _doctor_check_in_memory_volumes(target, disks, sink)
     elif disks:
@@ -3848,6 +3926,8 @@ def _doctor_check_device_smb(
     this computer and the device. Returns a DEVICE_SMB_* outcome."""
     if not remote.remote_checks_enabled:
         return DEVICE_SMB_NOT_RUN
+    if not target.smb_password_available:
+        return DEVICE_SMB_BLOCKED
     if inputs.options.skip_smb:
         sink.add(CheckResult("SKIP", SMB_CHECKS_SKIPPED_MESSAGE, {"code": DOCTOR_CODE_SMB_CHECKS_SKIPPED}))
         return DEVICE_SMB_NOT_RUN
@@ -3867,7 +3947,7 @@ def _doctor_check_device_smb(
     if unusable is not None:
         sink.add(_device_smb_not_checked(f"{client.label} {unusable} (see this computer's checks)"))
         return DEVICE_SMB_BLOCKED
-    if password_match is False:
+    if password_match is False and not target.smb_account:
         sink.add(_device_smb_not_checked(
             "the saved password is not the AirPort admin password, so Samba would reject it (see this computer's checks)"
         ))
@@ -3881,7 +3961,10 @@ def _doctor_check_device_smb(
         add_result=sink.add,
         # Without a process snapshot, retries could pile up stuck processes.
         retry_delays=() if processes.timed_out else DOCTOR_TRANSIENT_RETRY_DELAYS,
-        password_matches=password_match is True,
+        password_matches=password_match is True or bool(target.smb_account),
+        **({"password_label": "AirPort account password", "read_only": target.smb_read_only,
+            "smb_username": target.smb_account}
+           if target.smb_account else {}),
     )
 
 
@@ -3922,7 +4005,7 @@ def _doctor_check_authenticated_smb(
     if inputs.options.skip_smb:
         sink.add(CheckResult("SKIP", SMB_CHECKS_SKIPPED_MESSAGE, {"code": DOCTOR_CODE_SMB_CHECKS_SKIPPED}))
         return
-    if processes.smbd_stuck or device_smb == DEVICE_SMB_BLOCKED:
+    if processes.smbd_stuck or device_smb == DEVICE_SMB_BLOCKED or not target.smb_password_available:
         return
     if local_smb.local_smb_client().unusable() is not None:
         return
@@ -3935,10 +4018,11 @@ def _doctor_check_authenticated_smb(
         active_smb_conf=smb_config.text,
         active_smb_conf_reason=smb_config.reason,
         direct_smb=direct_smb,
-        include_file_ops=device_smb == DEVICE_SMB_NOT_RUN,
+        include_file_ops=device_smb == DEVICE_SMB_NOT_RUN and not target.smb_read_only,
         device_smb_passed=device_smb == DEVICE_SMB_PASSED,
         debug_fields=sink.debug_fields,
         add_result=sink.add,
         # Without a process snapshot, retries could pile up stuck processes.
         retry_delays=() if processes.timed_out else DOCTOR_TRANSIENT_RETRY_DELAYS,
+        **({"smb_username": target.smb_account} if target.smb_account else {}),
     )

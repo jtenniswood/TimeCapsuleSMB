@@ -63,10 +63,10 @@ def make_release(tmp_path: Path, *, executable: bytes | None = None, **info_over
         **info_overrides,
     }
     info = {key: value for key, value in info.items() if value is not None}
-    archive = tmp_path / "TimeCapsuleSMB.app.zip"
+    archive = tmp_path / "Time-Capsule-Updater.app.zip"
     with zipfile.ZipFile(archive, "w") as zipped:
-        zipped.writestr("TimeCapsuleSMB.app/Contents/MacOS/TimeCapsuleSMB", executable or fat_executable(X86_64, ARM64))
-        zipped.writestr("TimeCapsuleSMB.app/Contents/Info.plist", plistlib.dumps(info))
+        zipped.writestr("Time Capsule Updater.app/Contents/MacOS/TimeCapsuleSMB", executable or fat_executable(X86_64, ARM64))
+        zipped.writestr("Time Capsule Updater.app/Contents/Info.plist", plistlib.dumps(info))
     key = tmp_path / "key.txt"
     key.write_bytes(PRIVATE_KEY)
     stdin_log = tmp_path / "sign_update-stdin"
@@ -118,6 +118,7 @@ def test_appcast_names_the_release_its_signature_and_notes(tmp_path: Path) -> No
 
     root = ElementTree.parse(release.out).getroot()
     assert root.tag == "rss" and root.get("version") == "2.0"
+    assert root.findtext("channel/title") == "Time Capsule Updater"
     items = root.findall("channel/item")
     assert len(items) == 1
     item = items[0]
@@ -132,7 +133,7 @@ def test_appcast_names_the_release_its_signature_and_notes(tmp_path: Path) -> No
     enclosure = item.find("enclosure")
     assert enclosure is not None
     assert enclosure.attrib == {
-        "url": "https://github.com/jamesyc/TimeCapsuleSMB/releases/download/v3.8.0/TimeCapsuleSMB.app.zip",
+        "url": "https://github.com/jamesyc/TimeCapsuleSMB/releases/download/v3.8.0/Time-Capsule-Updater.app.zip",
         "length": "1234",
         "type": "application/octet-stream",
         f"{SPARKLE}edSignature": SIGNATURE,
@@ -226,7 +227,7 @@ def test_a_zip_without_the_apps_info_plist_is_refused(
 
     assert run(module, release, sign_update) == 1
 
-    assert "no readable TimeCapsuleSMB.app/Contents/Info.plist" in capsys.readouterr().err
+    assert "no readable Time Capsule Updater.app/Contents/Info.plist" in capsys.readouterr().err
     assert not release.stdin_log.exists()
     assert not release.out.exists()
 
@@ -381,12 +382,12 @@ def test_a_zip_without_the_apps_executable_is_refused(tmp_path: Path, capsys: py
     module = load_module()
     release = make_release(tmp_path)
     with zipfile.ZipFile(release.archive) as zipped:
-        info = zipped.read("TimeCapsuleSMB.app/Contents/Info.plist")
+        info = zipped.read("Time Capsule Updater.app/Contents/Info.plist")
     with zipfile.ZipFile(release.archive, "w") as zipped:
-        zipped.writestr("TimeCapsuleSMB.app/Contents/Info.plist", info)
+        zipped.writestr("Time Capsule Updater.app/Contents/Info.plist", info)
     sign_update = stub_sign_update(tmp_path, release)
 
     assert run(module, release, sign_update) == 1
 
-    assert "no readable TimeCapsuleSMB.app/Contents/MacOS/TimeCapsuleSMB" in capsys.readouterr().err
+    assert "no readable Time Capsule Updater.app/Contents/MacOS/TimeCapsuleSMB" in capsys.readouterr().err
     assert not release.out.exists()

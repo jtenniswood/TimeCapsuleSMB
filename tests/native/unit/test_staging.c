@@ -13,6 +13,25 @@ int device_nt_hash(char hash[33]) {
     strcpy(hash, "0123456789ABCDEF0123456789ABCDEF");
     return getenv("FAIL_HASH") ? -1 : 0;
 }
+int airport_disk_nt_hash(char hash[33]) { strcpy(hash, "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"); return 0; }
+int airport_sharing_flags(unsigned *flags) {
+    if (getenv("FAIL_SHARING")) return -1;
+    *flags = getenv("SHARING_FLAGS") ? (unsigned)strtoul(getenv("SHARING_FLAGS"), NULL, 0) : 0x410;
+    return 0;
+}
+int airport_accounts_nt_hashes(struct airport_accounts *out) {
+    memset(out, 0, sizeof(*out));
+    out->count = getenv("EMPTY_ACCOUNTS") ? 0 : 2;
+    strcpy(out->values[0].name, "jtenniswood");
+    strcpy(out->values[0].nt_hash, "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+    out->values[0].userid = 65537;
+    out->values[0].access = getenv("ACCOUNT_ACCESS") ? atoi(getenv("ACCOUNT_ACCESS")) : 0;
+    strcpy(out->values[1].name, "Other % user");
+    strcpy(out->values[1].nt_hash, "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
+    out->values[1].userid = 65538;
+    out->values[1].access = 1;
+    return getenv("FAIL_ACCOUNT") ? -1 : 0;
+}
 int main(int argc, char **argv) {
     struct tc_samba_settings settings;
     struct tc_storage_snapshot storage;
@@ -26,6 +45,10 @@ int main(int argc, char **argv) {
     if (!strcmp(argv[1], "clear-locks")) return tc_samba_clear_locks() ? 5 : 0;
     if (tc_samba_settings_read(&settings, "capsule") || tc_mast_parse(&inventory, text, length))
         return 2;
+    if (!strcmp(argv[1], "settings")) {
+        printf("sharing=%d account=%s\n", settings.config.sharing_enabled, settings.config.smb_airport_account);
+        return 0;
+    }
     memset(&storage, 0, sizeof(storage));
     storage.inventory = inventory;
     storage.available = 1;
@@ -48,6 +71,8 @@ int main(int argc, char **argv) {
     memset(&result, 0x55, sizeof(result));
     if (getenv("BAD_HASH"))
         strcpy(settings.nt_hash, "not a hash");
+    if (getenv("BAD_ACCOUNT_HASH"))
+        strcpy(settings.config.smb_accounts.values[0].nt_hash, "not a hash");
     failed = rsync ? tc_rsync_stage(&storage, &how, &result) : tc_samba_stage(&storage, &settings, &how, &result);
     /* What the manager learns about the image, even from a failed run. */
     printf("copy=%d crc=%lld read=%lld missing=%d\n", result.copy, result.crc32, result.read, result.missing);

@@ -51,6 +51,13 @@ enum AppReadinessState: Equatable {
     case degraded(AppReadinessSummary, [BundleRuntimeIssue])
     case blocked(BundleRuntimeIssue)
 
+    var isOpening: Bool {
+        switch self {
+        case .resolvingBundle, .checkingVersion, .checkingCapabilities, .validatingInstall: return true
+        default: return false
+        }
+    }
+
     var kind: AppReadinessStateKind {
         switch self {
         case .idle:

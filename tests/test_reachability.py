@@ -453,6 +453,14 @@ class ReachabilityTests(unittest.TestCase):
         self.assertEqual(result.installed.state, "unknown")
         self.assertEqual(contracts.reachability_payload(result)["install_state"], "unknown")
 
+    def test_the_login_reports_firmware_and_serial_separately_from_file_sharing(self) -> None:
+        stdout = f"release_tag=v6.0.0\ncli_version_code=60000\nfirmware_version=7.9.1\nserial_number=TESTSERIAL123\n{reachability.REACHABILITY_OK_TOKEN}"
+        result = self.run_reachable(lambda *_a, **_k: subprocess.CompletedProcess(["ssh"], 0, stdout=stdout, stderr=""))
+        payload = contracts.reachability_payload(result)
+        self.assertEqual(payload["firmware_version"], "7.9.1")
+        self.assertEqual(payload["serial_number"], "TESTSERIAL123")
+        self.assertEqual(payload["installed_release_tag"], "v6.0.0")
+
     def test_no_login_means_the_version_was_not_checked(self) -> None:
         def port(host: str, port: int, *_args, **_kwargs) -> str | None:
             return "connection refused" if port == 22 else None

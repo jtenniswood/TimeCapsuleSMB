@@ -8,60 +8,25 @@ struct AppReadinessBannerView: View {
 
     var body: some View {
         switch store.state {
-        case .idle, .ready:
+        case .idle, .ready, .blocked:
             EmptyView()
         case .resolvingBundle, .checkingVersion, .checkingCapabilities, .validatingInstall:
             HStack(spacing: 10) {
-                ProgressView()
-                    .controlSize(.small)
-                Text(title)
-                    .font(.caption)
-                if let stage = currentStageText {
-                    Text(stage)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                ProgressView().controlSize(.small)
+                Text(L10n.string("utility.readiness.opening"))
                 Spacer()
             }
-            .padding(.horizontal)
-            .padding(.vertical, 8)
-            .background(Color.secondary.opacity(0.08))
-        case .degraded(_, let issues):
+            .font(UtilityStyle.secondary)
+            .padding(.horizontal, 24).padding(.vertical, 8)
+        case .degraded:
             HStack(spacing: 10) {
-                Image(systemName: "exclamationmark.triangle")
-                    .foregroundStyle(.yellow)
-                Text(issues.first?.message ?? L10n.string("readiness.warning.default"))
-                    .font(.caption)
+                Image(systemName: "exclamationmark.triangle").foregroundStyle(.orange)
+                Text(L10n.string("utility.readiness.warning"))
                 Spacer()
-                Button(L10n.string("toolbar.diagnostics"), action: showDiagnostics)
+                Button(L10n.string("utility.support"), action: showDiagnostics)
             }
-            .padding(.horizontal)
-            .padding(.vertical, 8)
-            .background(Color.yellow.opacity(0.12))
-        case .blocked:
-            EmptyView()
-        }
-    }
-
-    private var title: String {
-        switch store.state.kind {
-        case .resolvingBundle:
-            return L10n.string("readiness.state.resolving_bundle")
-        case .checkingVersion:
-            return L10n.string("readiness.state.checking_version")
-        case .checkingCapabilities:
-            return L10n.string("readiness.state.checking_capabilities")
-        case .validatingInstall:
-            return L10n.string("readiness.state.validating_install")
-        default:
-            return ""
-        }
-    }
-
-    private var currentStageText: String? {
-        store.currentStage.map {
-            OperationTimelineBuilder.stageDetail(for: $0.operation, stage: $0.stage)
-                ?? OperationTimelineBuilder.stageTitle(for: $0.operation, stage: $0.stage)
+            .font(UtilityStyle.body)
+            .padding(.horizontal, 24).padding(.vertical, 8)
         }
     }
 }
@@ -71,32 +36,18 @@ struct AppReadinessBlockedView: View {
     let showDiagnostics: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Label(L10n.string("readiness.blocked.title"), systemImage: "exclamationmark.octagon")
-                .font(.title2.weight(.semibold))
-                .foregroundStyle(.red)
-            if case .blocked(let issue) = store.state {
-                Text(issue.message)
-                Text(issue.recovery)
-                    .foregroundStyle(.secondary)
-            }
-            HStack {
-                Button {
-                    store.start()
-                } label: {
-                    Label(L10n.string("recovery.action.retry"), systemImage: "arrow.clockwise")
-                }
-                .disabled(!store.canRetry)
-
-                Button {
-                    showDiagnostics()
-                } label: {
-                    Label(L10n.string("toolbar.diagnostics"), systemImage: "wrench.and.screwdriver")
-                }
+        VStack(spacing: 16) {
+            Image(systemName: "exclamationmark.triangle").font(.system(size: 32)).foregroundStyle(.secondary)
+            Text(L10n.string("utility.readiness.blocked")).font(UtilityStyle.title)
+            HStack(spacing: 8) {
+                Button(L10n.string("utility.support"), action: showDiagnostics)
+                Button(L10n.string("utility.try_again")) { store.start() }
+                    .disabled(!store.canRetry).keyboardShortcut(.defaultAction)
             }
         }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .font(UtilityStyle.body)
+        .padding(24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -104,88 +55,35 @@ struct AppDiagnosticsView: View {
     @ObservedObject var store: AppReadinessStore
     let exportContext: (_ includeBackendEvents: Bool) -> DiagnosticsExportContext
     @Binding var showBackendEvents: Bool
-    @Binding var helperPath: String
     @Environment(\.dismiss) private var dismiss
     @State private var exportStatus: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text(L10n.string("diagnostics.title"))
-                    .font(.title2.weight(.semibold))
+        VStack(alignment: .leading, spacing: 16) {
+            Text(L10n.string("utility.support.title")).font(UtilityStyle.title)
+                .padding(.horizontal, 24).padding(.top, 24)
+            ScrollView {
+                Text(exportText())
+                    .font(.system(size: 11, design: .monospaced))
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(12)
+            }
+            .background(Color(nsColor: .textBackgroundColor))
+            .border(Color(nsColor: .separatorColor))
+            .padding(.horizontal, 24)
+            Toggle(L10n.string("utility.support.include_logs"), isOn: $showBackendEvents)
+                .padding(.horizontal, 24)
+            UtilityFooter {
+                if let exportStatus { Text(exportStatus).font(UtilityStyle.secondary).foregroundStyle(.secondary) }
                 Spacer()
-                if let exportStatus {
-                    Text(exportStatus)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Button {
-                    copyDiagnostics()
-                } label: {
-                    Label(L10n.string("diagnostics.copy"), systemImage: "doc.on.doc")
-                }
-                Button {
-                    saveDiagnostics()
-                } label: {
-                    Label(L10n.string("diagnostics.save"), systemImage: "square.and.arrow.down")
-                }
-                Button(L10n.string("action.done")) {
-                    dismiss()
-                }
-                .keyboardShortcut(.defaultAction)
-            }
-
-            TextField(L10n.string("field.helper"), text: $helperPath)
-
-            Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 6) {
-                GridRow {
-                    Text(L10n.string("diagnostics.state")).foregroundStyle(.secondary)
-                    Text(store.state.kind.title)
-                }
-                if let capabilities = store.capabilities {
-                    GridRow {
-                        Text(L10n.string("diagnostics.helper")).foregroundStyle(.secondary)
-                        Text(capabilities.helperVersion)
-                    }
-                    GridRow {
-                        Text(L10n.string("diagnostics.distribution")).foregroundStyle(.secondary)
-                        Text(capabilities.distributionRoot)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                    }
-                }
-                if let validation = store.validation {
-                    GridRow {
-                        Text(L10n.string("diagnostics.validation")).foregroundStyle(.secondary)
-                        Text(validation.localizedSummary)
-                    }
-                }
-            }
-            .font(.caption)
-
-            if !store.issues.isEmpty {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(L10n.string("diagnostics.runtime_issues"))
-                        .font(.headline)
-                    ForEach(store.issues) { issue in
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(issue.message)
-                            Text(issue.recovery)
-                                .foregroundStyle(.secondary)
-                        }
-                        .font(.caption)
-                    }
-                }
-            }
-
-            Toggle(L10n.string("diagnostics.backend_events"), isOn: $showBackendEvents)
-                .font(.headline)
-            if showBackendEvents {
-                EventList(events: exportContext(true).events)
+                Button(L10n.string("diagnostics.copy"), action: copyDiagnostics)
+                Button(L10n.string("diagnostics.save"), action: saveDiagnostics)
+                Button(L10n.string("action.done")) { dismiss() }.keyboardShortcut(.defaultAction)
             }
         }
-        .padding()
-        .frame(minWidth: 720, minHeight: 520)
+        .font(UtilityStyle.body)
+        .frame(minWidth: 640, idealWidth: 720, minHeight: 460, idealHeight: 520)
     }
 
     private func copyDiagnostics() {
@@ -197,7 +95,7 @@ struct AppDiagnosticsView: View {
 
     private func saveDiagnostics() {
         let panel = NSSavePanel()
-        panel.nameFieldStringValue = "TimeCapsuleSMB-Diagnostics.txt"
+        panel.nameFieldStringValue = "Time Capsule Updater Diagnostics.txt"
         panel.allowedContentTypes = [.plainText]
         let text = exportText()
         panel.begin { response in
@@ -217,10 +115,11 @@ struct AppDiagnosticsView: View {
         }
     }
 
-    private func exportText() -> String {
-        DiagnosticsExportBuilder().build(context: exportContext(true))
+    func exportText() -> String {
+        DiagnosticsExportBuilder().build(context: exportContext(showBackendEvents))
     }
 }
+
 
 struct EventList: View {
     let events: [BackendEvent]
@@ -230,10 +129,10 @@ struct EventList: View {
             VStack(alignment: .leading, spacing: 4) {
                 // Diagnostics stay in the helper's English.
                 Text(event.logLine)
-                    .font(.body)
+                    .font(.system(size: 11, design: .monospaced))
                 if let payload = event.payload, event.type == "result" {
                     Text(payload.displayText)
-                        .font(.system(.caption, design: .monospaced))
+                        .font(.system(size: 11, design: .monospaced))
                         .foregroundStyle(.secondary)
                         .lineLimit(6)
                 }

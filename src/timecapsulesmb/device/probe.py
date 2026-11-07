@@ -157,6 +157,10 @@ runtime_passdb_path() {{
             printf '%s\n' "${{passdb_backend#smbpasswd:}}"
             return 0
             ;;
+        tc_airport:*)
+            printf '%s\n' "${{passdb_backend#tc_airport:}}"
+            return 0
+            ;;
     esac
     return 1
 }}
@@ -395,6 +399,8 @@ class DeployedVersionProbeResult:
     release_tag: str | None
     cli_version_code: int | None
     detail: str
+    firmware_version: str | None = None
+    serial_number: str | None = None
 
 
 # "info" reports an advisory finding that never blocks readiness.
@@ -2569,10 +2575,10 @@ def flash_runtime_config_present_conn(connection: SshConnection) -> bool:
     return proc.returncode == 0
 
 
-def deployed_version_script() -> str:
+def deployed_version_script(*, include_device_info: bool = False) -> str:
     """Shell that prints the installed release tag and version code from the
     Flash config, each empty when the config or the key is missing."""
-    return (
+    script = (
         f"config={shlex.quote(FLASH_RUNTIME_CONFIG)}; "
         "TC_DEPLOY_RELEASE_TAG=; "
         "TC_DEPLOY_CLI_VERSION_CODE=; "
@@ -2580,6 +2586,12 @@ def deployed_version_script() -> str:
         'printf "release_tag=%s\\n" "$TC_DEPLOY_RELEASE_TAG"; '
         'printf "cli_version_code=%s\\n" "$TC_DEPLOY_CLI_VERSION_CODE"'
     )
+    if include_device_info:
+        script += (
+            '; printf "firmware_version=%s\\n" "$(/usr/bin/acp -q syVs 2>/dev/null)"; '
+            'printf "serial_number=%s\\n" "$(/usr/bin/acp -q sySN 2>/dev/null)"'
+        )
+    return script
 
 
 def read_deployed_version_conn(connection: SshConnection) -> DeployedVersionProbeResult:
@@ -2607,7 +2619,10 @@ def parse_deployed_version(stdout: str) -> DeployedVersionProbeResult:
         version_code = None
 
     detail = "ok" if release_tag is not None and version_code is not None else "missing version metadata"
-    return DeployedVersionProbeResult(release_tag, version_code, detail)
+    def public_value(key: str) -> str | None:
+        value = values.get(key, "")
+        return value if value and len(value) <= 64 and all(char.isalnum() or char in ".-_" for char in value) else None
+    return DeployedVersionProbeResult(release_tag, version_code, detail, public_value("firmware_version"), public_value("serial_number"))
 
 
 def runtime_ram_root_present_conn(connection: SshConnection) -> bool:

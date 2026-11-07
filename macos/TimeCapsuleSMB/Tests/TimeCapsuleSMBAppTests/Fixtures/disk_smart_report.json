@@ -1,0 +1,283 @@
+{
+  "error": null,
+  "disks": [
+    {
+      "device": "wd0",
+      "label": "Disk 1",
+      "builtin": true,
+      "smart_status": "verified",
+      "partitions": [
+        {
+          "name": "Data",
+          "size_mib": 1905681,
+          "used_mib": 8977,
+          "free_mib": 1896704
+        }
+      ],
+      "details": {
+        "state": "available",
+        "attributes": [
+          {
+            "id": 1,
+            "value": 116,
+            "threshold": 6,
+            "critical": true,
+            "collection": "online",
+            "reliability": "positive",
+            "name": "Raw read error rate",
+            "raw": "109549360"
+          },
+          {
+            "id": 3,
+            "value": 97,
+            "threshold": 0,
+            "critical": true,
+            "collection": "online",
+            "reliability": "positive",
+            "name": "Spin-up time",
+            "raw": "0"
+          },
+          {
+            "id": 4,
+            "value": 81,
+            "threshold": 20,
+            "critical": false,
+            "collection": "online",
+            "reliability": "positive",
+            "name": "Start/stop count",
+            "raw": "20196"
+          },
+          {
+            "id": 5,
+            "value": 100,
+            "threshold": 36,
+            "critical": true,
+            "collection": "online",
+            "reliability": "positive",
+            "name": "Reallocated sector count",
+            "raw": "0"
+          },
+          {
+            "id": 7,
+            "value": 81,
+            "threshold": 30,
+            "critical": true,
+            "collection": "online",
+            "reliability": "positive",
+            "name": "Seek error rate",
+            "raw": "151948771"
+          },
+          {
+            "id": 9,
+            "value": 82,
+            "threshold": 0,
+            "critical": false,
+            "collection": "online",
+            "reliability": "positive",
+            "name": "Power-on hours count",
+            "raw": "16141"
+          },
+          {
+            "id": 10,
+            "value": 100,
+            "threshold": 97,
+            "critical": true,
+            "collection": "online",
+            "reliability": "positive",
+            "name": "Spin retry count",
+            "raw": "0"
+          },
+          {
+            "id": 12,
+            "value": 96,
+            "threshold": 20,
+            "critical": false,
+            "collection": "online",
+            "reliability": "positive",
+            "name": "Device power cycle count",
+            "raw": "4236"
+          },
+          {
+            "id": 184,
+            "value": 100,
+            "threshold": 99,
+            "critical": false,
+            "collection": "online",
+            "reliability": "positive",
+            "name": "Unknown",
+            "raw": "0"
+          },
+          {
+            "id": 187,
+            "value": 100,
+            "threshold": 0,
+            "critical": false,
+            "collection": "online",
+            "reliability": "positive",
+            "name": "Reported uncorrect",
+            "raw": "0"
+          },
+          {
+            "id": 188,
+            "value": 100,
+            "threshold": 0,
+            "critical": false,
+            "collection": "online",
+            "reliability": "positive",
+            "name": "Unknown",
+            "raw": "0"
+          },
+          {
+            "id": 189,
+            "value": 97,
+            "threshold": 0,
+            "critical": false,
+            "collection": "online",
+            "reliability": "positive",
+            "name": "High Fly Writes",
+            "raw": "3"
+          },
+          {
+            "id": 190,
+            "value": 52,
+            "threshold": 45,
+            "critical": false,
+            "collection": "online",
+            "reliability": "positive",
+            "name": "Airflow Temperature",
+            "raw": "48 Lifetime min/max 22/43"
+          },
+          {
+            "id": 191,
+            "value": 100,
+            "threshold": 0,
+            "critical": false,
+            "collection": "online",
+            "reliability": "positive",
+            "name": "G-sense error rate",
+            "raw": "0"
+          },
+          {
+            "id": 192,
+            "value": 98,
+            "threshold": 0,
+            "critical": false,
+            "collection": "online",
+            "reliability": "positive",
+            "name": "Power-off retract count",
+            "raw": "4173"
+          },
+          {
+            "id": 193,
+            "value": 90,
+            "threshold": 0,
+            "critical": false,
+            "collection": "online",
+            "reliability": "positive",
+            "name": "Load cycle count",
+            "raw": "20209"
+          },
+          {
+            "id": 194,
+            "value": 48,
+            "threshold": 0,
+            "critical": false,
+            "collection": "online",
+            "reliability": "positive",
+            "name": "Temperature",
+            "raw": "48 Lifetime min/max 0/12"
+          },
+          {
+            "id": 197,
+            "value": 100,
+            "threshold": 0,
+            "critical": false,
+            "collection": "online",
+            "reliability": "positive",
+            "name": "Current pending sector",
+            "raw": "0"
+          },
+          {
+            "id": 198,
+            "value": 100,
+            "threshold": 0,
+            "critical": false,
+            "collection": "offline",
+            "reliability": "positive",
+            "name": "Offline uncorrectable",
+            "raw": "0"
+          },
+          {
+            "id": 199,
+            "value": 200,
+            "threshold": 0,
+            "critical": false,
+            "collection": "online",
+            "reliability": "positive",
+            "name": "Ultra DMA CRC error count",
+            "raw": "0"
+          },
+          {
+            "id": 240,
+            "value": 100,
+            "threshold": 0,
+            "critical": false,
+            "collection": "offline",
+            "reliability": "positive",
+            "name": "Head flying hours",
+            "raw": "208812720003871"
+          },
+          {
+            "id": 241,
+            "value": 100,
+            "threshold": 0,
+            "critical": false,
+            "collection": "offline",
+            "reliability": "positive",
+            "name": "Unknown",
+            "raw": "24117178329"
+          },
+          {
+            "id": 242,
+            "value": 100,
+            "threshold": 0,
+            "critical": false,
+            "collection": "offline",
+            "reliability": "positive",
+            "name": "Unknown",
+            "raw": "456365688056"
+          },
+          {
+            "id": 254,
+            "value": 1,
+            "threshold": 0,
+            "critical": false,
+            "collection": "online",
+            "reliability": "positive",
+            "name": "Unknown",
+            "raw": "12"
+          }
+        ],
+        "threshold_exceeded": false
+      }
+    },
+    {
+      "device": "sd0",
+      "label": "Disk 2",
+      "builtin": false,
+      "smart_status": null,
+      "partitions": [
+        {
+          "name": "USB",
+          "size_mib": null,
+          "used_mib": null,
+          "free_mib": null
+        }
+      ],
+      "details": {
+        "state": "unsupported",
+        "attributes": []
+      }
+    }
+  ]
+}

@@ -2,6 +2,7 @@ native/service/main.c
 native/service/entry.c
 native/service/network_commands.c
 native/service/nt_hash.c
+native/service/airport_account.c
 native/discovery/main.c
 native/discovery/wcifsnd.c
 native/discovery/adisk_txt.c

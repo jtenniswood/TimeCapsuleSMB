@@ -65,19 +65,19 @@ enum AppResourceBundle {
 public enum AppLaunchResourceValidation {
     public static func validate() -> String? {
         guard AppResourceBundle.bundleURL != nil else {
-            return "TimeCapsuleSMB resource bundle could not be located."
+            return "Time Capsule Updater resource bundle could not be located."
         }
 
         guard let localizable = englishStringsURL(in: AppResourceBundle.bundle),
               FileManager.default.isReadableFile(atPath: localizable.path) else {
-            return "TimeCapsuleSMB resource bundle is missing en.lproj/Localizable.strings."
+            return "Time Capsule Updater resource bundle is missing en.lproj/Localizable.strings."
         }
 
         // Validate resource lookup, not wording that can change during copy edits.
         let key = "screen.readiness"
         let localized = L10n.string(key, language: .english)
         guard !localized.isEmpty, localized != key else {
-            return "TimeCapsuleSMB localized strings did not load from the resource bundle."
+            return "Time Capsule Updater localized strings did not load from the resource bundle."
         }
         return nil
     }

@@ -162,10 +162,15 @@ for _operation in ("fsck", "wipe-disk"):
     _POLICIES[(_operation, "post_reboot_activation")] = StagePolicy(REMOTE_WRITE, False, "Start the installed runtime after reboot.")
     _POLICIES[(_operation, "verify_runtime_activation")] = StagePolicy(REMOTE_READ, True, "Wait for the started runtime to become ready.")
 # Every reboot goes through services.reboot.reboot_device.
-for _operation in ("configure", "set-ssh", "deploy", "uninstall", "fsck", "flash", "wipe-disk"):
+for _operation in ("configure", "set-ssh", "deploy", "uninstall", "fsck", "flash", "wipe-disk", "disk-sharing"):
     _POLICIES[(_operation, "reboot")] = StagePolicy(REBOOT, False, "Ask AirPort ACP to reboot the device.")
     _POLICIES[(_operation, "wait_for_reboot_down")] = StagePolicy(REBOOT, True, "Wait for the device's ACP uptime to restart.")
     _POLICIES[(_operation, "wait_for_reboot_up")] = StagePolicy(REBOOT, True, "Wait for the restarted device's SSH port.")
+
+_POLICIES[("disk-sharing", "load_config")] = StagePolicy(LOCAL_READ, True, "Load connection settings.")
+for _stage in ("resolve_connection", "read_sharing", "verify_sharing"):
+    _POLICIES[("disk-sharing", _stage)] = StagePolicy(REMOTE_READ, True, "Read AirPort sharing settings.")
+_POLICIES[("disk-sharing", "save_sharing")] = StagePolicy(REMOTE_WRITE, False, "Save and verify AirPort sharing settings.")
 
 
 def stage_policy(operation: str, stage: str) -> StagePolicy | None:

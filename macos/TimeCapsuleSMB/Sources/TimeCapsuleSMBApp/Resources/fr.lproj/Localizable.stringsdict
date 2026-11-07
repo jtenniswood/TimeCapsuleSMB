@@ -337,17 +337,17 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>lld</string>
 			<key>many</key>
-			<string>%lld de fichiers ._ contiennent des entrées que TimeCapsuleSMB ne convertit pas. Leurs métadonnées prises en charge ont été migrées et les fichiers ont été conservés.</string>
+			<string>%lld de fichiers ._ contiennent des entrées que Time Capsule Updater ne convertit pas. Leurs métadonnées prises en charge ont été migrées et les fichiers ont été conservés.</string>
 			<key>one</key>
-			<string>%lld fichier ._ contient des entrées que TimeCapsuleSMB ne convertit pas. Ses métadonnées prises en charge ont été migrées et le fichier a été conservé.</string>
+			<string>%lld fichier ._ contient des entrées que Time Capsule Updater ne convertit pas. Ses métadonnées prises en charge ont été migrées et le fichier a été conservé.</string>
 			<key>other</key>
-			<string>%lld fichiers ._ contiennent des entrées que TimeCapsuleSMB ne convertit pas. Leurs métadonnées prises en charge ont été migrées et les fichiers ont été conservés.</string>
+			<string>%lld fichiers ._ contiennent des entrées que Time Capsule Updater ne convertit pas. Leurs métadonnées prises en charge ont été migrées et les fichiers ont été conservés.</string>
 		</dict>
 	</dict>
 	<key>bundle_issue.distribution_artifacts_missing_count.message</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
-		<string>Il manque %#@files@ dans le paquet fourni avec TimeCapsuleSMB.</string>
+		<string>Il manque %#@files@ dans le paquet fourni avec Time Capsule Updater.</string>
 		<key>files</key>
 		<dict>
 			<key>NSStringFormatSpecTypeKey</key>

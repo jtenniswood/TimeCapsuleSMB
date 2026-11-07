@@ -4,22 +4,13 @@ struct WarningBanner: View {
     let warning: HostCompatibilityWarning
 
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
-            Image(systemName: "exclamationmark.triangle")
-                .foregroundStyle(.yellow)
-            VStack(alignment: .leading) {
+        UtilityNotice {
                 Text(warning.title)
-                    .font(.body.weight(.medium))
-                Text(warning.message)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+                    .font(UtilityStyle.heading)
+                DashboardDisclosureSection(title: L10n.string("utility.details")) {
+                    Text(warning.message).foregroundStyle(.secondary)
+                }
         }
-        .padding(.vertical, 10)
-        .padding(.leading, 14)
-        .padding(.trailing, 18)
-        .background(Color.yellow.opacity(0.12))
-        .clipShape(RoundedRectangle(cornerRadius: 6))
     }
 }
 
@@ -28,17 +19,22 @@ struct SummaryGrid: View {
     var valueLineLimit: Int? = 2
 
     var body: some View {
-        Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 6) {
+        VStack(alignment: .leading, spacing: 8) {
             ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
-                GridRow {
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
                     Text(row.0).foregroundStyle(.secondary)
+                        .multilineTextAlignment(.trailing)
+                        .frame(width: 160, alignment: .trailing)
                     Text(row.1)
                         .lineLimit(valueLineLimit)
                         .truncationMode(.middle)
+                        .textSelection(.enabled)
+                    Spacer(minLength: 0)
                 }
             }
         }
-        .font(.caption)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .font(UtilityStyle.body)
     }
 }
 
@@ -48,11 +44,11 @@ struct StageLine: View {
     var body: some View {
         HStack(spacing: 8) {
             Text(OperationTimelineBuilder.stageTitle(for: stage.operation, stage: stage.stage))
-                .font(.caption)
+                .font(UtilityStyle.secondary)
             if let detail = stage.progressDetail
                 ?? OperationTimelineBuilder.stageDetail(for: stage.operation, stage: stage.stage) {
                 Text(detail)
-                    .font(.caption)
+                    .font(UtilityStyle.secondary)
                     .foregroundStyle(.secondary)
             }
         }
@@ -65,32 +61,14 @@ struct DashboardDisclosureSection<Content: View>: View {
     @State private var isExpanded = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Button {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    isExpanded.toggle()
-                }
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "chevron.right")
-                        .font(.caption.weight(.semibold))
-                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
-                        .frame(width: 12)
-                    Text(title)
-                    Spacer(minLength: 0)
-                }
-                .padding(.vertical, 4)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-
-            if isExpanded {
+        DisclosureGroup(title, isExpanded: $isExpanded) {
+            VStack(alignment: .leading, spacing: 12) {
                 content()
-                    .padding(.top, 8)
-                    .padding(.leading, 18)
             }
+            .padding(.top, 12)
+            .padding(.leading, 16)
         }
+        .font(UtilityStyle.body)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

@@ -16,6 +16,7 @@ final class FsckStore: ObservableObject {
     private var plannedOptions: MaintenanceOptions?
     private var plannedTargetID: FsckTargetViewModel.ID?
     private var latestOptions: MaintenanceOptions?
+    private var preferredDisk: DiskHealthDisk?
 
     init(backend: BackendClient, coordinator: OperationCoordinator? = nil, laneKey: OperationLaneKey? = nil) {
         self.operation = MaintenanceWorkflowOperation(
@@ -40,6 +41,20 @@ final class FsckStore: ObservableObject {
             return nil
         }
         return targets.first { $0.id == selectedTargetID }
+    }
+
+    func prepareForDisk(_ disk: DiskHealthDisk?) {
+        guard !isBusy else { return }
+        preferredDisk = disk
+        selectedTargetID = nil
+        targets = []
+        plan = nil
+        result = nil
+        plannedTargetID = nil
+        plannedOptions = nil
+        error = nil
+        state = .idle
+        operation.clear()
     }
 
     func canFindVolumes(mountWaitValue: Int?) -> Bool {
@@ -241,7 +256,13 @@ final class FsckStore: ObservableObject {
         do {
             let payload = try event.decodePayload(FsckVolumeListPayload.self)
             targets = payload.targets.map(FsckTargetViewModel.init)
-            selectedTargetID = targets.count == 1 ? targets[0].id : nil
+            if let disk = preferredDisk {
+                let names = Set(disk.partitions.map(\.name))
+                let matches = targets.filter { $0.builtin == disk.builtin && $0.name.map(names.contains) == true }
+                selectedTargetID = matches.count == 1 ? matches[0].id : nil
+            } else {
+                selectedTargetID = targets.count == 1 ? targets[0].id : nil
+            }
             state = .listReady
             error = nil
             operation.finishObserver()

@@ -5,12 +5,14 @@ import Foundation
 final class DeviceDashboardSession: ObservableObject, Identifiable {
     let id: DeviceProfile.ID
     @Published var selectedTab: DeviceDashboardTab = .overview
+    @Published var maintenanceUtilitiesExpanded = false
 
     let appStore: AppStore
     var deployStore: DeployWorkflowStore
     var doctorStore: DoctorStore
     var maintenanceStore: MaintenanceStore
     let profileEditorStore: DeviceProfileEditorStore
+    let sharingStore: DiskSharingStore
 
     private let urlOpener: URLOpening
     private let smbAccountResolver: SMBAccountResolving
@@ -54,6 +56,7 @@ final class DeviceDashboardSession: ObservableObject, Identifiable {
             laneKey: .deviceWorkflow(profile.id, .maintenance)
         )
         self.profileEditorStore = DeviceProfileEditorStore(profile: profile, appStore: appStore)
+        self.sharingStore = DiskSharingStore(coordinator: appStore.operationCoordinator, profileID: profile.id)
         self.stateSynchronizer = DeviceDashboardStateSynchronizer(
             appStore: appStore,
             doctorStore: doctorStore,
@@ -68,6 +71,7 @@ final class DeviceDashboardSession: ObservableObject, Identifiable {
         checkedAddressOutcomes = Set(addressOutcomeEvents().map(\.id))
         observeRemoteWorkflowFailures()
         observeSSHAccessMaintenanceResults()
+        sharingStore.objectWillChange.sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &cancellables)
     }
 
     func summary(for profile: DeviceProfile) -> DeviceDashboardSummary {
@@ -97,6 +101,12 @@ final class DeviceDashboardSession: ObservableObject, Identifiable {
     /// switches to another device.
     func refreshDeviceStatus(profile: DeviceProfile) async {
         refreshSSHAccessStatus(profile: profile)
+        await refreshInstalledVersion(profile: profile)
+    }
+
+    /// Sharing also checks on entry and after an update. Wait for the SSH
+    /// preflight, then reuse a current reading or start one read-only check.
+    func refreshInstalledVersion(profile: DeviceProfile) async {
         let sshCheck = appStore.operationCoordinator.lane(for: .deviceWorkflow(profile.id, .sshStatus))
         for await isRunning in sshCheck.backend.$isRunning.values where !isRunning {
             break
@@ -109,9 +119,16 @@ final class DeviceDashboardSession: ObservableObject, Identifiable {
         appStore.reachabilityStore.refreshIfNeeded(profile: current, password: self.appStore.passwordWithoutPrompt(for: current))
     }
 
+    func refreshSharingSettings(profile: DeviceProfile) async {
+        let check = appStore.operationCoordinator.lane(for: .deviceWorkflow(profile.id, .reachabilityStatus))
+        for await running in check.backend.$isRunning.values where !running { break }
+        guard !Task.isCancelled else { return }
+        let current = latestProfile(for: profile)
+        sharingStore.load(profile: current, password: appStore.passwordWithoutPrompt(for: current))
+    }
+
     func openSSHAccess(profile: DeviceProfile) {
-        selectedTab = .maintenance
-        maintenanceStore.selectedWorkflow = .sshAccess
+        showMaintenance(.sshAccess)
         refreshSSHAccessStatus(profile: profile)
     }
 
@@ -120,8 +137,7 @@ final class DeviceDashboardSession: ObservableObject, Identifiable {
         if let waiting = localNetworkPreflight, waiting.tab != .maintenance {
             return
         }
-        selectedTab = .maintenance
-        maintenanceStore.selectedWorkflow = .sshAccess
+        showMaintenance(.sshAccess)
         if let password = maintenancePassword(for: profile) {
             startEnableSSHAccess(password: password, profile: profile)
         }
@@ -227,8 +243,7 @@ final class DeviceDashboardSession: ObservableObject, Identifiable {
         case .viewCheckup:
             selectedTab = .checkup
         case .startSMB:
-            selectedTab = .maintenance
-            maintenanceStore.selectedWorkflow = .activate
+            showMaintenance(.activate)
         case .settings:
             selectedTab = .settings
         }
@@ -247,8 +262,7 @@ final class DeviceDashboardSession: ObservableObject, Identifiable {
         case .viewDiagnostics:
             showDiagnostics()
         case .openBootHook:
-            selectedTab = .maintenance
-            maintenanceStore.selectedWorkflow = .bootHook
+            showMaintenance(.bootHook)
         }
     }
 
@@ -259,8 +273,7 @@ final class DeviceDashboardSession: ObservableObject, Identifiable {
         case .installUpdate:
             runInstall(profile: profile)
         case .startSMB:
-            selectedTab = .maintenance
-            maintenanceStore.selectedWorkflow = .activate
+            showMaintenance(.activate)
         case .replacePassword:
             showPasswordReplacement()
         case .openFinder:
@@ -389,7 +402,7 @@ final class DeviceDashboardSession: ObservableObject, Identifiable {
             return
         }
         profileEditorStore.clearPasswordAttention()
-        selectedTab = .install
+        selectedTab = .overview
         if case .started(let operation) = deployStore.runDeploy(password: password, profile: profile) {
             stateSynchronizer.trackDeployStart(operation, profile: profile)
         }
@@ -424,10 +437,8 @@ final class DeviceDashboardSession: ObservableObject, Identifiable {
             return { [weak self] in self?.showMaintenance(.activate) }
         case .uninstall:
             return { [weak self] in self?.showMaintenance(.uninstall) }
-        case .diskRepair:
-            return { [weak self] in self?.showMaintenance(.fsck) }
-        case .wipeDisk:
-            return { [weak self] in self?.showMaintenance(.wipeDisk) }
+        case .diskRepair, .wipeDisk:
+            return nil
         case .replacePassword:
             return { [weak self] in self?.showPasswordReplacement() }
         case .openSystemSettings:
@@ -452,7 +463,9 @@ final class DeviceDashboardSession: ObservableObject, Identifiable {
     }
 
     private func showMaintenance(_ workflow: MaintenanceWorkflow) {
+        if workflow == .fsck { maintenanceStore.fsckStore.prepareForDisk(nil) }
         selectedTab = .maintenance
+        maintenanceUtilitiesExpanded = true
         maintenanceStore.selectedWorkflow = workflow
     }
 

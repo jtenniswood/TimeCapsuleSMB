@@ -53,7 +53,7 @@ struct ActivityCompactStatus: Equatable {
             isRunning: laneSnapshot.snapshot.isRunning,
             requiresAttention: laneSnapshot.isPendingConfirmation,
             scope: laneSnapshot.snapshot.scope,
-            operationTitle: laneSnapshot.snapshot.operationTitle,
+            operationTitle: UtilityOperationTitle.title(for: laneSnapshot.snapshot.operation, fallback: laneSnapshot.snapshot.operationTitle),
             latestMessage: laneSnapshot.snapshot.latestMessage,
             latestTimelineTitle: laneSnapshot.snapshot.timeline.last?.title,
             activeLaneCount: activeLaneCount

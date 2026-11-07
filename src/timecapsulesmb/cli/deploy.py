@@ -229,6 +229,7 @@ def main(argv: Optional[list[str]] = None) -> int:
                 deploy_options,
                 callbacks=command_context.to_operation_callbacks(),
                 device_reading=command_context.reading_at(connection),
+                airport_accounts_enabled=bool(config.get("TC_SMB_AIRPORT_ACCOUNT", "")),
             )
         except DeployArtifactValidationError as exc:
             raise SystemExit(str(exc)) from exc

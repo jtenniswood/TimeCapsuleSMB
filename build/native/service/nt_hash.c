@@ -200,6 +200,17 @@ static int tc_nt_hash_utf8(const uint8_t *input, size_t len, uint8_t digest[16])
     return 0;
 }
 
+int password_nt_hash(const char *password, size_t length, char hash[33]) {
+    uint8_t digest[16];
+    size_t i;
+    hash[0] = 0;
+    if (!length || length > NT_HASH_MAX_PASSWORD_BYTES ||
+        tc_nt_hash_utf8((const uint8_t *)password, length, digest)) return -1;
+    for (i = 0; i < sizeof(digest); i++) snprintf(hash + 2*i, 3, "%02X", digest[i]);
+    memset(digest, 0, sizeof(digest));
+    return 0;
+}
+
 int print_nt_hash_from_stdin(void) {
     uint8_t input[NT_HASH_MAX_PASSWORD_BYTES + 1];
     uint8_t digest[16];
@@ -249,7 +260,7 @@ int print_nt_hash_from_stdin(void) {
 
 /* Keep passwords inside this process. Raw capture preserves whitespace; the
  * final-LF/CR treatment matches the old shell substitution + stdin interface. */
-int device_nt_hash(char out[33]) {
+static int property_nt_hash(const char *key, char out[33], int empty_fallback) {
     char input[8193];
     struct acp_request request;
     uint8_t digest[16];
@@ -258,7 +269,7 @@ int device_nt_hash(char out[33]) {
     volatile char *wipe = input;
     out[0] = 0;
     memset(&request, 0, sizeof(request));
-    request.key = "syPW";
+    request.key = key;
     request.multiline = 1;
     request.output = input;
     request.capacity = sizeof(input);
@@ -270,6 +281,10 @@ int device_nt_hash(char out[33]) {
     }
     len = request.length;
     while (len && input[len - 1] == '\n') len--;
+    if (!len && empty_fallback) {
+        rc = device_nt_hash(out);
+        goto done;
+    }
     if (!len || len + 1 > NT_HASH_MAX_PASSWORD_BYTES) goto done;
     if (input[len - 1] == '\r') len--;
     if (!len || tc_nt_hash_utf8((const uint8_t *)input, len, digest) != 0) goto done;
@@ -278,6 +293,20 @@ int device_nt_hash(char out[33]) {
 done:
     for (i = 0; i < sizeof(input); i++) wipe[i] = 0;
     return rc;
+}
+
+int device_nt_hash(char out[33]) { return property_nt_hash("syPW", out, 0); }
+int airport_disk_nt_hash(char out[33]) { return property_nt_hash("fssp", out, 1); }
+
+int airport_sharing_flags(unsigned *flags) {
+    char value[32], *end;
+    unsigned long parsed;
+    if (read_acp_value("usbF", value, sizeof(value))) return -1;
+    errno = 0;
+    parsed = strtoul(value, &end, 0);
+    if (errno || !*value || *end || parsed > 0xffffffffu) return -1;
+    *flags = (unsigned)parsed;
+    return 0;
 }
 
 int print_device_nt_hash(void) {

@@ -226,7 +226,7 @@ def test_python_import_check_kills_a_python_that_never_finishes_and_fails(monkey
     package_app = load_package_app_module()
     monkeypatch.setattr(package_app, "PACKAGE_ROOT", tmp_path)
     monkeypatch.setattr(package_app, "PYTHON_LAUNCH_TIMEOUT", 2)
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
     python = package_app.bundled_python_executable(app)
     python.parent.mkdir(parents=True)
     python.write_text('#!/bin/sh\necho $$ > "$PYTHONHOME/pid"\necho "importing ifaddr" >&2\nexec sleep 60\n')
@@ -241,7 +241,7 @@ def test_python_import_check_kills_a_python_that_never_finishes_and_fails(monkey
 
 def make_valid_layout_bundle(package_app, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Path:
     """A bundle assert_bundle_layout accepts, with the Mach-O checks stubbed."""
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
     helper = app / "Contents" / "Helpers" / "tcapsule"
     python_packages = app / "Contents" / "Resources" / "Python" / "site-packages"
     distribution = app / "Contents" / "Resources" / "Distribution"
@@ -306,7 +306,7 @@ def test_assert_bundle_layout_checks_helper_python_and_artifacts(
     tmp_path: Path,
 ) -> None:
     package_app = load_package_app_module()
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
     helper = app / "Contents" / "Helpers" / "tcapsule"
     python_packages = app / "Contents" / "Resources" / "Python" / "site-packages"
     distribution = app / "Contents" / "Resources" / "Distribution"
@@ -339,7 +339,7 @@ def test_assert_bundle_layout_checks_helper_python_and_artifacts(
 
 def test_assert_bundle_layout_requires_artifact_manifest(tmp_path: Path) -> None:
     package_app = load_package_app_module()
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
     helper = app / "Contents" / "Helpers" / "tcapsule"
     python_packages = app / "Contents" / "Resources" / "Python" / "site-packages"
     distribution = app / "Contents" / "Resources" / "Distribution"
@@ -355,7 +355,7 @@ def test_assert_bundle_layout_requires_artifact_manifest(tmp_path: Path) -> None
 
 def test_assert_bundle_layout_requires_python_packages(tmp_path: Path) -> None:
     package_app = load_package_app_module()
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
     helper = app / "Contents" / "Helpers" / "tcapsule"
     distribution = app / "Contents" / "Resources" / "Distribution"
     for directory in (helper.parent, distribution / "bin"):
@@ -370,7 +370,7 @@ def test_assert_bundle_layout_requires_python_packages(tmp_path: Path) -> None:
 
 def test_assert_bundle_layout_requires_swift_resource_bundle(tmp_path: Path) -> None:
     package_app = load_package_app_module()
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
     helper = app / "Contents" / "Helpers" / "tcapsule"
     executable = app / "Contents" / "MacOS" / "TimeCapsuleSMB"
     python_packages = app / "Contents" / "Resources" / "Python" / "site-packages"
@@ -390,7 +390,7 @@ def test_assert_bundle_layout_requires_swift_resource_bundle(tmp_path: Path) -> 
 
 def test_assert_bundle_layout_requires_plural_localizations(tmp_path: Path) -> None:
     package_app = load_package_app_module()
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
     helper = app / "Contents" / "Helpers" / "tcapsule"
     python_packages = app / "Contents" / "Resources" / "Python" / "site-packages"
     distribution = app / "Contents" / "Resources" / "Distribution"
@@ -410,7 +410,7 @@ def test_assert_bundle_layout_requires_plural_localizations(tmp_path: Path) -> N
 
 def app_with_deep_resource_bundle(package_app, tmp_path: Path) -> Path:
     """A packaged app whose Swift resource bundle has Swift Build's layout."""
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
     helper = app / "Contents" / "Helpers" / "tcapsule"
     python_packages = app / "Contents" / "Resources" / "Python" / "site-packages"
     distribution = app / "Contents" / "Resources" / "Distribution"
@@ -811,7 +811,7 @@ def test_macho_tool_cache_shares_a_record_between_copies_at_other_paths(
 ) -> None:
     package_app = load_package_app_module()
     monkeypatch.setattr(package_app, "PACKAGE_ROOT", tmp_path)
-    staged, bundled = tmp_path / "staging" / "python3.13", tmp_path / "TimeCapsuleSMB.app" / "python3.13"
+    staged, bundled = tmp_path / "staging" / "python3.13", tmp_path / "Time Capsule Updater.app" / "python3.13"
     for path in (staged, bundled):
         path.parent.mkdir(parents=True)
         path.write_text("fat python")
@@ -836,7 +836,7 @@ def test_macho_tool_cache_keeps_install_names_that_match_the_inspected_path(
     # validation must see that, not the copy's own path.
     package_app = load_package_app_module()
     monkeypatch.setattr(package_app, "PACKAGE_ROOT", tmp_path)
-    staged, bundled = tmp_path / "build" / "libfoo.dylib", tmp_path / "TimeCapsuleSMB.app" / "libfoo.dylib"
+    staged, bundled = tmp_path / "build" / "libfoo.dylib", tmp_path / "Time Capsule Updater.app" / "libfoo.dylib"
     for path in (staged, bundled):
         path.parent.mkdir(parents=True)
         path.write_text("absolute install name")
@@ -875,7 +875,7 @@ def test_macho_tool_cache_names_the_copy_in_otools_not_an_object_file_line(
     # Executable scripts are candidates too; otool exits 0 for them.
     package_app = load_package_app_module()
     monkeypatch.setattr(package_app, "PACKAGE_ROOT", tmp_path)
-    staged, bundled = tmp_path / "build" / "tool", tmp_path / "TimeCapsuleSMB.app" / "tool"
+    staged, bundled = tmp_path / "build" / "tool", tmp_path / "Time Capsule Updater.app" / "tool"
     for path in (staged, bundled):
         path.parent.mkdir(parents=True)
         path.write_text("#!/bin/sh")
@@ -1010,7 +1010,7 @@ def test_codesign_certificate_sha1_accepts_a_hash_and_survives_security_failure(
 
 
 def signature_cache_app(package_app, root: Path, leaves: dict[str, str]) -> tuple[Path, list[Path]]:
-    app = root / "TimeCapsuleSMB.app"
+    app = root / "Time Capsule Updater.app"
     package_app.bundled_python_framework(app).mkdir(parents=True)
     paths = []
     for relative, content in leaves.items():
@@ -1154,7 +1154,7 @@ def test_both_signers_give_only_the_executables_that_run_python_python_entitleme
     package_app = load_package_app_module()
     commands: list[list[str]] = []
     monkeypatch.setattr(package_app, "run_quiet", lambda cmd: commands.append(cmd))
-    path = tmp_path / "TimeCapsuleSMB.app" / "Contents" / relative
+    path = tmp_path / "Time Capsule Updater.app" / "Contents" / relative
 
     package_app.developer_id_codesign(path, "identity")
     package_app.ad_hoc_codesign(path)
@@ -1184,7 +1184,7 @@ def test_python_entitlements_are_required_however_the_app_is_signed(
     tmp_path: Path, helper_signing: list[str] | None, python_app_signing: list[str], problem: str | None,
 ) -> None:
     package_app = load_package_app_module()
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
     jit = tmp_path / "jit.entitlements"
     jit.write_bytes(plistlib.dumps({"com.apple.security.cs.allow-jit": True}))
     entitlements = {"python": str(package_app.PYTHON_ENTITLEMENTS), "jit": str(jit)}
@@ -1431,6 +1431,11 @@ def test_write_info_plist_names_the_icon_for_every_macos(tmp_path: Path) -> None
     # macOS 26 and later read the catalog by name; the .icns is the file fallback.
     assert info["CFBundleIconName"] == "TimeCapsuleSMB"
     assert info["CFBundleIconFile"] == "TimeCapsuleSMB"
+    assert info["CFBundleDisplayName"] == "Time Capsule Updater"
+    assert info["CFBundleName"] == "Time Capsule Updater"
+    # The new name must retain the app's identity and saved credentials.
+    assert info["CFBundleIdentifier"] == "com.timecapsulesmb.TimeCapsuleSMB"
+    assert info["CFBundleExecutable"] == "TimeCapsuleSMB"
 
     package_app.write_info_plist(tmp_path, languages=["en"])
     with (tmp_path / "Info.plist").open("rb") as handle:
@@ -1619,7 +1624,7 @@ def test_remove_python_bytecode_removes_nested_pycache_and_orphans(tmp_path: Pat
 
 def test_remove_appledouble_files_removes_metadata_sidecars(tmp_path: Path) -> None:
     package_app = load_package_app_module()
-    root = tmp_path / "TimeCapsuleSMB.app"
+    root = tmp_path / "Time Capsule Updater.app"
     normal = root / "Contents" / "Resources" / "Python"
     sidecar = root / "Contents" / "Resources" / "._Python"
     nested_sidecar_dir = root / "Contents" / "Resources" / "._Metadata"
@@ -1638,12 +1643,12 @@ def test_remove_appledouble_files_removes_metadata_sidecars(tmp_path: Path) -> N
 
 def test_assert_no_appledouble_files_reports_nested_sidecars(tmp_path: Path) -> None:
     package_app = load_package_app_module()
-    sidecar = tmp_path / "TimeCapsuleSMB.app" / "Contents" / "Resources" / "._Python"
+    sidecar = tmp_path / "Time Capsule Updater.app" / "Contents" / "Resources" / "._Python"
     sidecar.parent.mkdir(parents=True)
     sidecar.write_text("appledouble", encoding="utf-8")
 
     with pytest.raises(RuntimeError, match="AppleDouble metadata files"):
-        package_app.assert_no_appledouble_files(tmp_path / "TimeCapsuleSMB.app")
+        package_app.assert_no_appledouble_files(tmp_path / "Time Capsule Updater.app")
 
 
 def test_create_python_packages_reuses_cache(
@@ -1993,7 +1998,7 @@ def test_package_args_defaults_and_options(monkeypatch: pytest.MonkeyPatch) -> N
 def test_copy_helper_executable_preserves_bundled_helper_path(tmp_path: Path) -> None:
     package_app = load_package_app_module()
     source = tmp_path / "build" / "tcapsule"
-    destination = tmp_path / "TimeCapsuleSMB.app" / "Contents" / "Helpers" / "tcapsule"
+    destination = tmp_path / "Time Capsule Updater.app" / "Contents" / "Helpers" / "tcapsule"
     source.parent.mkdir(parents=True)
     source.write_text("mach-o helper", encoding="utf-8")
     source.chmod(0o644)
@@ -2009,7 +2014,7 @@ def test_assert_bundle_layout_requires_bundled_ca_certificates(
     tmp_path: Path,
 ) -> None:
     package_app = load_package_app_module()
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
     helper = app / "Contents" / "Helpers" / "tcapsule"
     python_packages = app / "Contents" / "Resources" / "Python" / "site-packages"
     distribution = app / "Contents" / "Resources" / "Distribution"
@@ -2030,7 +2035,7 @@ def test_assert_bundle_layout_uses_full_macho_validation_only_when_requested(
     tmp_path: Path,
 ) -> None:
     package_app = load_package_app_module()
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
     helper = app / "Contents" / "Helpers" / "tcapsule"
     python_packages = app / "Contents" / "Resources" / "Python" / "site-packages"
     distribution = app / "Contents" / "Resources" / "Distribution"
@@ -2234,7 +2239,7 @@ SPARKLE_INSTALL_NAME = "@rpath/Sparkle.framework/Versions/B/Sparkle"
 def external_validation_fixture(package_app, monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
     """The app executable as swift build links it: Sparkle through @rpath, found
     by the rpath add_framework_rpath gives it, beside its own Swift rpath."""
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
     contents = app / "Contents"
     executable = contents / "MacOS" / "TimeCapsuleSMB"
     sparkle = contents / "Frameworks" / "Sparkle.framework" / "Versions" / "B" / "Sparkle"
@@ -2306,7 +2311,7 @@ def test_developer_id_codesign_app_bundle_signs_nested_code_framework_and_app(
     tmp_path: Path,
 ) -> None:
     package_app = load_package_app_module()
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
     library = app / "Contents" / "Frameworks" / "libtool.dylib"
     extension = app / "Contents" / "Resources" / "Python" / "site-packages" / "zopfli" / "zopfli.so"
     executable = app / "Contents" / "MacOS" / "TimeCapsuleSMB"
@@ -2415,7 +2420,7 @@ def test_assert_macho_code_signatures_valid_reports_invalid_signature(
     tmp_path: Path,
 ) -> None:
     package_app = load_package_app_module()
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
     contents = app / "Contents"
     sparkle = contents / "Frameworks" / "Sparkle.framework" / "Versions" / "B" / "Sparkle"
     extension = contents / "Resources" / "Python" / "site-packages" / "zopfli" / "zopfli.so"
@@ -2447,7 +2452,7 @@ def test_assert_app_bundle_signature_valid_reports_codesign_failure(
     tmp_path: Path,
 ) -> None:
     package_app = load_package_app_module()
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
 
     def fake_run(cmd: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
         assert cmd[:5] == ["codesign", "--verify", "--deep", "--strict", "--verbose=4"]
@@ -2464,8 +2469,8 @@ def test_create_app_zip_uses_metadata_free_archive_and_validates_unzip(
     tmp_path: Path,
 ) -> None:
     package_app = load_package_app_module()
-    app = tmp_path / "TimeCapsuleSMB.app"
-    zip_path = tmp_path / "dist" / "TimeCapsuleSMB.app.zip"
+    app = tmp_path / "Time Capsule Updater.app"
+    zip_path = tmp_path / "dist" / "Time-Capsule-Updater.app.zip"
     app.mkdir()
     calls: list[list[str]] = []
     verified: list[Path] = []
@@ -2491,7 +2496,7 @@ def test_create_app_zip_uses_metadata_free_archive_and_validates_unzip(
     assert "--noacl" in calls[0]
     assert "--noqtn" in calls[0]
     assert calls[1][:2] == ["unzip", "-q"]
-    assert verified and verified[0].name == "TimeCapsuleSMB.app"
+    assert verified and verified[0].name == "Time Capsule Updater.app"
 
 
 def test_validate_app_zip_rejects_root_appledouble_sidecar(
@@ -2499,14 +2504,14 @@ def test_validate_app_zip_rejects_root_appledouble_sidecar(
     tmp_path: Path,
 ) -> None:
     package_app = load_package_app_module()
-    zip_path = tmp_path / "TimeCapsuleSMB.app.zip"
+    zip_path = tmp_path / "Time-Capsule-Updater.app.zip"
     zip_path.write_bytes(b"zip")
 
     def fake_run(cmd: list[str], **_kwargs: object) -> subprocess.CompletedProcess[str]:
         assert cmd[:2] == ["unzip", "-q"]
         extract_dir = Path(cmd[-1])
-        (extract_dir / "TimeCapsuleSMB.app").mkdir()
-        (extract_dir / "._TimeCapsuleSMB.app").write_text("appledouble", encoding="utf-8")
+        (extract_dir / "Time Capsule Updater.app").mkdir()
+        (extract_dir / "._Time Capsule Updater.app").write_text("appledouble", encoding="utf-8")
         return subprocess.CompletedProcess(cmd, 0)
 
     monkeypatch.setattr(package_app, "run", fake_run)
@@ -2514,7 +2519,7 @@ def test_validate_app_zip_rejects_root_appledouble_sidecar(
     monkeypatch.setattr(package_app, "assert_python_entitlements", lambda app: None)
 
     with pytest.raises(RuntimeError, match="AppleDouble metadata files"):
-        package_app.validate_app_zip(zip_path, "TimeCapsuleSMB.app")
+        package_app.validate_app_zip(zip_path, "Time Capsule Updater.app")
 
 
 # What notarytool log prints for a refused submission (abridged).
@@ -2523,7 +2528,7 @@ NOTARY_LOG = """{
   "issues": [
     {
       "severity": "error",
-      "path": "TimeCapsuleSMB-notary.zip/TimeCapsuleSMB.app/Contents/Helpers/tcapsule",
+      "path": "Time-Capsule-Updater-notary.zip/Time Capsule Updater.app/Contents/Helpers/tcapsule",
       "message": "The signature does not include a secure timestamp."
     }
   ]
@@ -2536,7 +2541,7 @@ def test_notarize_archive_requires_accepted_status(
     tmp_path: Path,
 ) -> None:
     package_app = load_package_app_module()
-    archive = tmp_path / "TimeCapsuleSMB-notary.zip"
+    archive = tmp_path / "Time-Capsule-Updater-notary.zip"
     archive.write_bytes(b"zip")
     calls: list[list[str]] = []
 
@@ -2568,7 +2573,7 @@ def test_a_refused_notarization_still_fails_when_its_log_cannot_be_fetched(
     tmp_path: Path,
 ) -> None:
     package_app = load_package_app_module()
-    archive = tmp_path / "TimeCapsuleSMB-notary.zip"
+    archive = tmp_path / "Time-Capsule-Updater-notary.zip"
     archive.write_bytes(b"zip")
 
     def fake_run_quiet(cmd: list[str]) -> subprocess.CompletedProcess[str]:
@@ -2587,7 +2592,7 @@ def test_a_notarization_without_a_submission_asks_for_no_log(
     tmp_path: Path,
 ) -> None:
     package_app = load_package_app_module()
-    archive = tmp_path / "TimeCapsuleSMB-notary.zip"
+    archive = tmp_path / "Time-Capsule-Updater-notary.zip"
     archive.write_bytes(b"zip")
     calls: list[list[str]] = []
 
@@ -2608,7 +2613,7 @@ def test_notarize_archive_returns_submission_id_on_accept(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     package_app = load_package_app_module()
-    archive = tmp_path / "TimeCapsuleSMB-notary.zip"
+    archive = tmp_path / "Time-Capsule-Updater-notary.zip"
     archive.write_bytes(b"zip")
     ticks = iter([100.0, 115.5])
     monkeypatch.setattr(package_app.time, "perf_counter", lambda: next(ticks))
@@ -2636,7 +2641,7 @@ def test_ad_hoc_codesign_app_bundle_signs_helper_before_app(
     tmp_path: Path,
 ) -> None:
     package_app = load_package_app_module()
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
     helper = app / "Contents" / "Helpers" / "tcapsule"
     helper.parent.mkdir(parents=True)
     helper.write_text("#!/bin/sh\n", encoding="utf-8")
@@ -2726,7 +2731,7 @@ def test_package_app_signs_the_final_bundle_after_copying_sparkle(
     assert "app-verify" not in calls  # The layout validation owns the final verification.
     assert python_signing == [identity is None]
     assert signature_caching == ([True] if identity else [])
-    assert result.app == tmp_path / "dist" / "TimeCapsuleSMB.app"
+    assert result.app == tmp_path / "dist" / "Time Capsule Updater.app"
     assert result.zip_path is None
     assert result.notarization_archive is None
     # The plist declares the languages of the resource bundle the build made.
@@ -2738,6 +2743,7 @@ def test_package_app_ships_only_the_app_resource_bundle(monkeypatch: pytest.Monk
     # The real build_swift and copy_resources run against a Swift Build that
     # also wrote the test target's bundle; the steps after them are stubbed.
     package_app = load_package_app_module()
+    monkeypatch.setattr(package_app, "uv_executable", lambda: "uv")
     monkeypatch.setattr(package_app, "PACKAGE_ROOT", tmp_path)
     monkeypatch.setattr(package_app, "run", fake_swift_build(package_app, "swiftbuild", []))
     monkeypatch.setattr(package_app, "resolve_architectures", lambda arch: ("arm64",))
@@ -2801,7 +2807,7 @@ def test_package_app_holds_the_cache_lock_for_the_whole_build(
     package_app = load_package_app_module()
     monkeypatch.setattr(package_app, "PACKAGE_ROOT", tmp_path)
     args = SimpleNamespace()
-    expected = package_app.PackageResult(app=tmp_path / "dist" / "TimeCapsuleSMB.app", zip_path=None, notarization_archive=None)
+    expected = package_app.PackageResult(app=tmp_path / "dist" / "Time Capsule Updater.app", zip_path=None, notarization_archive=None)
     seen: list[bool] = []
 
     def build(received):
@@ -2890,9 +2896,9 @@ def test_package_app_result_includes_zip_and_notarization_archive(
 
     result = package_app.package_app(args)
 
-    assert result.app == tmp_path / "dist" / "TimeCapsuleSMB.app"
-    assert result.notarization_archive == tmp_path / "dist" / "TimeCapsuleSMB-notary.zip"
-    assert result.zip_path == tmp_path / "dist" / "TimeCapsuleSMB.app.zip"
+    assert result.app == tmp_path / "dist" / "Time Capsule Updater.app"
+    assert result.notarization_archive == tmp_path / "dist" / "Time-Capsule-Updater-notary.zip"
+    assert result.zip_path == tmp_path / "dist" / "Time-Capsule-Updater.app.zip"
     # CI audits exactly what was bundled, from this file beside the app, and
     # keys its package cache on it, the bundled Python included.
     assert (tmp_path / "dist" / "python-packages.txt").read_text(encoding="utf-8") == f"# Python 3.15.2\n{PACKAGES}"
@@ -2902,7 +2908,7 @@ def test_package_app_result_includes_zip_and_notarization_archive(
 
 def test_the_disk_image_shows_the_app_beside_applications_with_the_apps_icon(tmp_path: Path) -> None:
     package_app = load_package_app_module()
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
     background = tmp_path / "drawn" / "background.png"
 
     settings = package_app.dmg_settings(app, background)
@@ -2915,7 +2921,7 @@ def test_the_disk_image_shows_the_app_beside_applications_with_the_apps_icon(tmp
     # The window is the background's content area with Finder's title bar above it.
     assert settings["window_rect"] == ((200, 120), (640, 440))
     assert settings["icon_size"] == 128
-    assert settings["icon_locations"] == {"TimeCapsuleSMB.app": (170, 160), "Applications": (470, 160)}
+    assert settings["icon_locations"] == {"Time Capsule Updater.app": (170, 160), "Applications": (470, 160)}
     # A hidden extension is a Finder flag on the bundle, which strict codesign rejects.
     assert "hide_extensions" not in settings
 
@@ -2976,7 +2982,7 @@ def test_the_background_script_refuses_an_incomplete_layout(tmp_path: Path) -> N
 def test_create_app_dmg_builds_over_the_drawn_background_then_validates(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     package_app = load_package_app_module()
     calls: list[object] = []
-    dmg = tmp_path / "dist" / "TimeCapsuleSMB.dmg"
+    dmg = tmp_path / "dist" / "Time-Capsule-Updater.dmg"
     dmg.parent.mkdir()
     dmg.write_bytes(b"old image")
 
@@ -2992,15 +2998,15 @@ def test_create_app_dmg_builds_over_the_drawn_background_then_validates(monkeypa
     monkeypatch.setitem(sys.modules, "dmgbuild", SimpleNamespace(build_dmg=build))
     monkeypatch.setattr(package_app, "draw_dmg_background", draw)
     monkeypatch.setattr(package_app, "validate_app_dmg", lambda path, name: calls.append(("validate", path, name)))
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
 
     package_app.create_app_dmg(app, dmg)
 
     # The old image is gone before dmgbuild writes the new one over the fresh background.
     assert calls == [
         "draw",
-        ("build", str(dmg), "TimeCapsuleSMB", [str(app)], False, b"png"),
-        ("validate", dmg, "TimeCapsuleSMB.app"),
+        ("build", str(dmg), "Time Capsule Updater", [str(app)], False, b"png"),
+        ("validate", dmg, "Time Capsule Updater.app"),
     ]
 
 
@@ -3025,25 +3031,25 @@ def mount_disk_image(monkeypatch: pytest.MonkeyPatch, package_app, contents, *, 
 def complete_volume(mountpoint: Path, *, app: bool = True, link: str | None = "/Applications", icon: bool = True,
                     appledouble: bool = False) -> None:
     if app:
-        (mountpoint / "TimeCapsuleSMB.app" / "Contents").mkdir(parents=True)
+        (mountpoint / "Time Capsule Updater.app" / "Contents").mkdir(parents=True)
     if link is not None:
         (mountpoint / "Applications").symlink_to(link)
     if icon:
         (mountpoint / ".VolumeIcon.icns").write_bytes(b"icns")
     if appledouble:
-        (mountpoint / "._TimeCapsuleSMB.app").write_bytes(b"")
+        (mountpoint / "._Time Capsule Updater.app").write_bytes(b"")
 
 
 def test_a_complete_disk_image_is_mounted_read_only_checked_and_detached(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     package_app = load_package_app_module()
     commands = mount_disk_image(monkeypatch, package_app, complete_volume)
 
-    package_app.validate_app_dmg(tmp_path / "TimeCapsuleSMB.dmg", "TimeCapsuleSMB.app")
+    package_app.validate_app_dmg(tmp_path / "Time-Capsule-Updater.dmg", "Time Capsule Updater.app")
 
     attach, verify, detach = commands
     assert attach[:5] == ["hdiutil", "attach", "-readonly", "-nobrowse", "-noautoopen"]
-    assert attach[-1] == str(tmp_path / "TimeCapsuleSMB.dmg")
-    assert verify == ["verify", "TimeCapsuleSMB.app"]
+    assert attach[-1] == str(tmp_path / "Time-Capsule-Updater.dmg")
+    assert verify == ["verify", "Time Capsule Updater.app"]
     # Forced, by the mount point, which ejects the whole read-only image.
     assert detach == ["hdiutil", "detach", "-force", attach[attach.index("-mountpoint") + 1]]
 
@@ -3053,11 +3059,11 @@ def test_a_detach_that_fails_stops_packaging(monkeypatch: pytest.MonkeyPatch, tm
     mount_disk_image(monkeypatch, package_app, complete_volume, detach_fails=True)
 
     with pytest.raises(subprocess.CalledProcessError):
-        package_app.validate_app_dmg(tmp_path / "TimeCapsuleSMB.dmg", "TimeCapsuleSMB.app")
+        package_app.validate_app_dmg(tmp_path / "Time-Capsule-Updater.dmg", "Time Capsule Updater.app")
 
 
 @pytest.mark.parametrize("volume,problem", [
-    ({"app": False}, "does not hold TimeCapsuleSMB.app"),
+    ({"app": False}, "does not hold Time Capsule Updater.app"),
     ({"link": None}, "no Applications link"),
     ({"link": "/Users/someone/Applications"}, "no Applications link"),
     ({"icon": False}, "no volume icon"),
@@ -3070,7 +3076,7 @@ def test_an_incomplete_disk_image_fails_and_is_still_detached(
     commands = mount_disk_image(monkeypatch, package_app, lambda mountpoint: complete_volume(mountpoint, **volume))
 
     with pytest.raises(RuntimeError, match=problem):
-        package_app.validate_app_dmg(tmp_path / "TimeCapsuleSMB.dmg", "TimeCapsuleSMB.app")
+        package_app.validate_app_dmg(tmp_path / "Time-Capsule-Updater.dmg", "Time Capsule Updater.app")
     assert commands[-1][:3] == ["hdiutil", "detach", "-force"]
 
 
@@ -3078,7 +3084,7 @@ def test_a_disk_image_is_signed_with_a_timestamp_and_verified(monkeypatch: pytes
     package_app = load_package_app_module()
     commands: list[list[str]] = []
     monkeypatch.setattr(package_app, "run", lambda cmd, **kwargs: commands.append(cmd))
-    dmg = tmp_path / "TimeCapsuleSMB.dmg"
+    dmg = tmp_path / "Time-Capsule-Updater.dmg"
 
     package_app.codesign_dmg(dmg, "Developer ID Application: Example (TEAMID)")
 
@@ -3094,7 +3100,7 @@ def test_a_disk_image_is_notarized_stapled_and_assessed_as_opened(monkeypatch: p
     monkeypatch.setattr(package_app, "notarize_archive", lambda path, profile, timeout: calls.append(("notarize", path, profile, timeout)) or "id-1")
     monkeypatch.setattr(package_app, "staple_notarization_ticket", lambda path: calls.append(("staple", path)))
     monkeypatch.setattr(package_app.subprocess, "run", lambda cmd, **kwargs: calls.append(cmd) or subprocess.CompletedProcess(cmd, 0, "", "accepted"))
-    dmg = tmp_path / "TimeCapsuleSMB.dmg"
+    dmg = tmp_path / "Time-Capsule-Updater.dmg"
 
     assert package_app.notarize_dmg(dmg, profile="tcapsulesmb-notary", timeout="30m") == "id-1"
 
@@ -3110,7 +3116,7 @@ def test_gatekeeper_refusing_the_disk_image_stops_packaging(monkeypatch: pytest.
     monkeypatch.setattr(package_app.subprocess, "run", lambda cmd, **kwargs: subprocess.CompletedProcess(cmd, 3, "", "rejected\nsource=no usable signature"))
 
     with pytest.raises(RuntimeError, match="Gatekeeper assessment failed:\nrejected"):
-        package_app.assert_gatekeeper_accepts(tmp_path / "TimeCapsuleSMB.dmg", "open", "--context", "context:primary-signature")
+        package_app.assert_gatekeeper_accepts(tmp_path / "Time-Capsule-Updater.dmg", "open", "--context", "context:primary-signature")
 
 
 def packaging_order(monkeypatch: pytest.MonkeyPatch, tmp_path: Path, **args: object) -> tuple[list[str], object]:
@@ -3167,10 +3173,10 @@ def test_a_release_disk_image_is_built_from_the_stapled_app_then_signed_and_nota
     )
 
     assert steps == [
-        "sign app", "notarize and staple app", "zip TimeCapsuleSMB.app.zip",
-        "dmg TimeCapsuleSMB.dmg", "sign dmg", "notarize and staple dmg",
+        "sign app", "notarize and staple app", "zip Time-Capsule-Updater.app.zip",
+        "dmg Time-Capsule-Updater.dmg", "sign dmg", "notarize and staple dmg",
     ]
-    assert result.dmg_path == tmp_path / "dist" / "TimeCapsuleSMB.dmg"
+    assert result.dmg_path == tmp_path / "dist" / "Time-Capsule-Updater.dmg"
 
 
 def test_an_unsigned_disk_image_is_only_built(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -3184,7 +3190,7 @@ def test_an_unsigned_disk_image_is_only_built(monkeypatch: pytest.MonkeyPatch, t
 def test_no_disk_image_unless_asked(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     steps, result = packaging_order(monkeypatch, tmp_path, zip=True)
 
-    assert steps == ["sign app ad hoc", "zip TimeCapsuleSMB.app.zip"]
+    assert steps == ["sign app ad hoc", "zip Time-Capsule-Updater.app.zip"]
     assert result.dmg_path is None
 
 
@@ -3195,10 +3201,10 @@ def test_main_prints_labeled_artifact_paths(
 ) -> None:
     package_app = load_package_app_module()
     result = package_app.PackageResult(
-        app=tmp_path / "TimeCapsuleSMB.app",
-        notarization_archive=tmp_path / "TimeCapsuleSMB-notary.zip",
-        zip_path=tmp_path / "TimeCapsuleSMB.app.zip",
-        dmg_path=tmp_path / "TimeCapsuleSMB.dmg",
+        app=tmp_path / "Time Capsule Updater.app",
+        notarization_archive=tmp_path / "Time-Capsule-Updater-notary.zip",
+        zip_path=tmp_path / "Time-Capsule-Updater.app.zip",
+        dmg_path=tmp_path / "Time-Capsule-Updater.dmg",
     )
     monkeypatch.setattr(package_app, "package_app", lambda args: result)
 
@@ -3247,7 +3253,7 @@ def test_runtime_macho_architecture_validation_checks_internal_dependencies(
     tmp_path: Path,
 ) -> None:
     package_app = load_package_app_module()
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
     executable = app / "Contents" / "MacOS" / "TimeCapsuleSMB"
     dependency = app / "Contents" / "Frameworks" / "libtool.dylib"
     executable.parent.mkdir(parents=True)
@@ -3279,7 +3285,7 @@ def test_runtime_macho_architecture_validation_checks_helper(
     tmp_path: Path,
 ) -> None:
     package_app = load_package_app_module()
-    helper = tmp_path / "TimeCapsuleSMB.app" / "Contents" / "Helpers" / "tcapsule"
+    helper = tmp_path / "Time Capsule Updater.app" / "Contents" / "Helpers" / "tcapsule"
     helper.parent.mkdir(parents=True)
     helper.write_text("helper", encoding="utf-8")
 
@@ -3292,7 +3298,7 @@ def test_runtime_macho_architecture_validation_checks_helper(
     monkeypatch.setattr(package_app, "macho_dependencies", lambda path: [])
 
     with pytest.raises(RuntimeError, match=r"tcapsule: missing x86_64"):
-        package_app.assert_runtime_macho_architectures(tmp_path / "TimeCapsuleSMB.app", ("arm64", "x86_64"))
+        package_app.assert_runtime_macho_architectures(tmp_path / "Time Capsule Updater.app", ("arm64", "x86_64"))
 
 
 def test_python_dependency_validation_uses_bundled_python(
@@ -3301,7 +3307,7 @@ def test_python_dependency_validation_uses_bundled_python(
 ) -> None:
     package_app = load_package_app_module()
     monkeypatch.setattr(package_app, "PACKAGE_ROOT", tmp_path)
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
     create_fake_app_executable_and_resources(app)
     site_packages = app / "Contents" / "Resources" / "Python" / "site-packages"
     site_packages.mkdir(parents=True)
@@ -3327,7 +3333,7 @@ def test_python_dependency_validation_uses_bundled_python(
 
 def test_validate_app_resources_rejects_swift_resource_bundle_crash(tmp_path: Path) -> None:
     package_app = load_package_app_module()
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
     executable = app / "Contents" / "MacOS" / "TimeCapsuleSMB"
     executable.parent.mkdir(parents=True)
     executable.write_text("#!/bin/sh\necho resource crash >&2\nexit 70\n", encoding="utf-8")
@@ -3369,7 +3375,7 @@ def test_sparkle_is_copied_as_symlinks_without_its_xpc_services(tmp_path: Path) 
     package_app = load_package_app_module()
     build_dir = tmp_path / "build"
     create_fake_sparkle(build_dir)
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
 
     package_app.copy_sparkle_framework(build_dir, app)
 
@@ -3389,7 +3395,7 @@ def test_sparkle_copy_fails_when_swift_build_made_no_framework(tmp_path: Path) -
     package_app = load_package_app_module()
 
     with pytest.raises(RuntimeError, match="did not produce .*Sparkle.framework"):
-        package_app.copy_sparkle_framework(tmp_path / "build", tmp_path / "TimeCapsuleSMB.app")
+        package_app.copy_sparkle_framework(tmp_path / "build", tmp_path / "Time Capsule Updater.app")
 
 
 def test_app_executable_gets_the_frameworks_rpath(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
@@ -3407,7 +3413,7 @@ def test_ad_hoc_signing_signs_sparkle_inside_out_before_the_helper_and_app(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
 ) -> None:
     package_app = load_package_app_module()
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
     helper = app / "Contents" / "Helpers" / "tcapsule"
     helper.parent.mkdir(parents=True)
     helper.write_text("#!/bin/sh\n", encoding="utf-8")
@@ -3432,7 +3438,7 @@ def test_developer_id_signing_signs_sparkle_bundles_after_its_leaves(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
 ) -> None:
     package_app = load_package_app_module()
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
     framework = create_fake_sparkle(app / "Contents" / "Frameworks", xpc_services=False)
     executable = app / "Contents" / "MacOS" / "TimeCapsuleSMB"
     executable.parent.mkdir(parents=True)
@@ -3488,9 +3494,9 @@ def test_smoke_test_runs_the_helper_again_as_x86_64_under_rosetta(
     monkeypatch.setattr(package_app, "native_architecture", lambda: "arm64")
     monkeypatch.setattr(package_app, "rosetta_available", lambda: True)
 
-    package_app.smoke_test(tmp_path / "TimeCapsuleSMB.app", ("arm64", "x86_64"))
+    package_app.smoke_test(tmp_path / "Time Capsule Updater.app", ("arm64", "x86_64"))
 
-    helper = str(tmp_path / "TimeCapsuleSMB.app" / "Contents" / "Helpers" / "tcapsule")
+    helper = str(tmp_path / "Time Capsule Updater.app" / "Contents" / "Helpers" / "tcapsule")
     assert commands == [
         [helper, "api"],
         [helper, "api"],
@@ -3519,9 +3525,9 @@ def test_smoke_test_runs_one_pass_unless_apple_silicon_builds_universal(
     monkeypatch.setattr(package_app, "native_architecture", lambda: host)
     monkeypatch.setattr(package_app, "rosetta_available", lambda: pytest.fail("Rosetta was probed"))
 
-    package_app.smoke_test(tmp_path / "TimeCapsuleSMB.app", architectures)
+    package_app.smoke_test(tmp_path / "Time Capsule Updater.app", architectures)
 
-    helper = str(tmp_path / "TimeCapsuleSMB.app" / "Contents" / "Helpers" / "tcapsule")
+    helper = str(tmp_path / "Time Capsule Updater.app" / "Contents" / "Helpers" / "tcapsule")
     assert commands == [[helper, "api"], [helper, "api"]]
 
 
@@ -3535,9 +3541,9 @@ def test_smoke_test_without_rosetta_skips_the_x86_64_pass_and_says_how_to_instal
     monkeypatch.setattr(package_app, "native_architecture", lambda: "arm64")
     monkeypatch.setattr(package_app, "rosetta_available", lambda: False)
 
-    package_app.smoke_test(tmp_path / "TimeCapsuleSMB.app", ("arm64", "x86_64"))
+    package_app.smoke_test(tmp_path / "Time Capsule Updater.app", ("arm64", "x86_64"))
 
-    helper = str(tmp_path / "TimeCapsuleSMB.app" / "Contents" / "Helpers" / "tcapsule")
+    helper = str(tmp_path / "Time Capsule Updater.app" / "Contents" / "Helpers" / "tcapsule")
     assert commands == [[helper, "api"], [helper, "api"]]
     err = capsys.readouterr().err
     assert "Skipped the x86_64 smoke pass" in err
@@ -3554,7 +3560,7 @@ def test_a_failing_x86_64_request_fails_the_smoke_test(
     monkeypatch.setattr(package_app, "rosetta_available", lambda: True)
 
     with pytest.raises(RuntimeError, match=r"capabilities \(x86_64\) smoke test failed"):
-        package_app.smoke_test(tmp_path / "TimeCapsuleSMB.app", ("arm64", "x86_64"))
+        package_app.smoke_test(tmp_path / "Time Capsule Updater.app", ("arm64", "x86_64"))
     assert commands[-1][:2] == ["arch", "-x86_64"]
 
 
@@ -3988,7 +3994,7 @@ def test_bundled_python_check_loads_the_compiled_modules_the_app_runs(
 ) -> None:
     package_app = load_package_app_module()
     use_this_python_as_bundled(monkeypatch, package_app, tmp_path)
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
     site_packages = app / "Contents" / "Resources" / "Python" / "site-packages"
     write_fake_bundled_packages(site_packages)
 
@@ -4006,7 +4012,7 @@ def test_check_app_launches_the_apps_code_without_building(
     tmp_path: Path,
 ) -> None:
     package_app = load_package_app_module()
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
     calls: list[tuple[str, Path]] = []
     monkeypatch.setattr(package_app, "assert_python_entitlements", lambda path: calls.append(("entitlements", path)))
     monkeypatch.setattr(package_app, "validate_app_resources", lambda path: calls.append(("app", path)))
@@ -4038,7 +4044,7 @@ def test_check_app_fails_when_the_app_does_not_launch(
     monkeypatch.setattr(package_app, "validate_app_resources", crashed)
     monkeypatch.setattr(package_app, "smoke_test", lambda path, architectures: pytest.fail("the helper ran after the app failed"))
 
-    assert package_app.main(["--check-app", str(tmp_path / "TimeCapsuleSMB.app")]) == 1
+    assert package_app.main(["--check-app", str(tmp_path / "Time Capsule Updater.app")]) == 1
     assert "Library not loaded" in capsys.readouterr().err
 
 
@@ -4050,7 +4056,7 @@ def test_app_launch_and_python_imports_run_under_the_architecture_given(
 ) -> None:
     package_app = load_package_app_module()
     monkeypatch.setattr(package_app, "PACKAGE_ROOT", tmp_path)
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
     commands: list[list[str]] = []
 
     def fake_run(cmd: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
@@ -4075,7 +4081,7 @@ def test_a_failure_under_x86_64_names_the_architecture(monkeypatch: pytest.Monke
         "run",
         lambda cmd, **kwargs: subprocess.CompletedProcess(cmd, 1, stdout="", stderr="dyld: Library not loaded"),
     )
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
 
     with pytest.raises(RuntimeError, match=r"resource validation failed \(x86_64\)"):
         package_app.validate_app_resources(app, architecture="x86_64")
@@ -4091,7 +4097,7 @@ def test_a_bundled_file_naming_the_checkout_fails_validation(
     runner = tmp_path / "Users" / "runner"
     checkout = runner / "work" / "TimeCapsuleSMB"
     monkeypatch.setattr(package_app, "REPO_ROOT", checkout)
-    app = tmp_path / "TimeCapsuleSMB.app"
+    app = tmp_path / "Time Capsule Updater.app"
     binary = app / "Contents" / "MacOS" / "TimeCapsuleSMB"
     binary.parent.mkdir(parents=True)
     binary.write_bytes(b"\xcf\xfa\xed\xfe\0SO " + str(checkout / "Sources").encode() + b"\0")

@@ -1,182 +1,248 @@
 import AppKit
 import SwiftUI
 
+/// The everyday view is a small collection of devices, like AirPort Utility.
+/// Configuration and diagnostics are reached deliberately from each device.
 struct DeviceListOverviewView: View {
-    let appStore: AppStore
+    @ObservedObject var appStore: AppStore
     @ObservedObject var deviceRegistry: DeviceRegistryStore
     @ObservedObject var deviceDiscovery: DeviceDiscoveryStore
     @ObservedObject var backend: BackendClient
-    /// False while an add runs: Add Device keeps that add on screen until it ends.
+    var dashboardStore: DashboardStore? = nil
+    var addManually: (() -> Void)? = nil
+    var isOpening = false
     let canAddDevice: Bool
     let addDiscoveredDevice: (DiscoveredDevice) -> Void
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                savedDevicesSection
-                discoverySection
+        VStack(spacing: 0) {
+            HStack {
+                otherDevicesMenu
+                Spacer()
+                if isOpening {
+                    Text(L10n.string("utility.readiness.opening"))
+                        .font(UtilityStyle.secondary).foregroundStyle(.secondary)
+                } else if deviceDiscovery.nearbyState == .discovering {
+                    ProgressView().controlSize(.small)
+                }
             }
-            .padding()
-            .frame(maxWidth: .infinity, alignment: .topLeading)
-        }
-    }
-
-    @ViewBuilder
-    private var savedDevicesSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text(deviceRegistry.profiles.isEmpty
-                ? L10n.string("overview.empty.title")
-                : L10n.string("overview.saved_devices.title"))
-            .font(.title2.weight(.semibold))
+            .padding(.horizontal, 20).padding(.top, 16).padding(.bottom, 8)
 
             if deviceRegistry.profiles.isEmpty {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text(L10n.string("overview.empty.message"))
-                        .foregroundStyle(.secondary)
-                    Button {
-                        appStore.showAddDevice()
-                    } label: {
-                        Label(L10n.string("sidebar.add_airport_device"), systemImage: "plus.circle")
-                    }
-                    .buttonStyle(.borderedProminent)
-                }
+                welcome
             } else {
-                ForEach(deviceRegistry.profiles) { profile in
-                    let summary = appStore.dashboardSummary(for: profile)
-                    Button {
-                        appStore.select(profile)
-                    } label: {
-                        HStack {
-                            VStack(alignment: .leading) {
-                                Text(profile.title)
-                                    .font(.body.weight(.medium))
-                                Text(profile.addressSummary.isEmpty ? profile.displayTarget : profile.addressSummary)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                ScrollView {
+                    VStack(spacing: 10) {
+                        VStack(spacing: 12) {
+                            if let image = NSImage(named: NSImage.computerName) {
+                                Image(nsImage: image).resizable().scaledToFit().frame(width: 240, height: 240)
+                                    .frame(width: 240, height: 140).clipped()
+                            } else {
+                                Image(systemName: "laptopcomputer").font(.system(size: 108))
                             }
-                            Spacer()
-                            Label(summary.displayStatus.title, systemImage: summary.displayStatus.systemImage)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                            Text(L10n.string("simple.this_mac")).font(UtilityStyle.deviceName)
                         }
+                        RoundedRectangle(cornerRadius: 1)
+                            .fill(.secondary.opacity(0.35))
+                            .frame(width: 2, height: 20)
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 280, maximum: 320), spacing: 28)], spacing: 24) {
+                            ForEach(deviceRegistry.profiles) { profile in
+                                deviceButton(profile)
+                            }
+                        }
+                        .frame(maxWidth: max(320, CGFloat(deviceRegistry.profiles.count) * 320))
                     }
-                    .buttonStyle(.plain)
-                    Divider()
+                    .padding(.horizontal, 32)
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity)
                 }
             }
+            discoveryNotice
         }
+        .background(LinearGradient(
+            colors: colorScheme == .dark
+                ? [Color(red: 0.18, green: 0.20, blue: 0.24), Color(red: 0.42, green: 0.45, blue: 0.49)]
+                : [Color(red: 0.94, green: 0.95, blue: 0.96), Color(red: 0.81, green: 0.84, blue: 0.87)],
+            startPoint: .top, endPoint: .bottom
+        ))
     }
 
-    private var discoverySection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text(L10n.string("overview.discovery.title"))
-                    .font(.headline)
-                Spacer()
-                Text(deviceDiscovery.nearbyState.title)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Button {
-                    deviceDiscovery.refresh()
-                } label: {
-                    Image(systemName: "arrow.clockwise")
-                }
-                .buttonStyle(.borderless)
-                .disabled(backend.isRunning)
-                .help(L10n.string("overview.discovery.refresh"))
-            }
-
-            if let warning = deviceDiscovery.warning {
-                Text(warning).foregroundStyle(.orange)
-            }
-            discoveryContent
+    private var welcome: some View {
+        VStack(spacing: 18) {
+            Spacer()
+            AirPortDeviceIcon().frame(width: 96, height: 120)
+            Text(L10n.string("simple.welcome.title"))
+                .font(UtilityStyle.title)
+            Button(L10n.string("simple.add_device")) { appStore.showAddDevice() }
+                .keyboardShortcut(.defaultAction)
+                .padding(.top, 6)
+            Spacer()
         }
+        .padding(32)
+        .frame(maxWidth: .infinity)
+    }
+
+    private func deviceButton(_ profile: DeviceProfile) -> some View {
+        let summary = appStore.dashboardSummary(for: profile)
+        return VStack(spacing: 10) {
+                AirPortDeviceIcon(isTower: profile.usesTowerArtwork)
+                    .frame(width: 132, height: 144)
+                    .scaleEffect(1.15)
+                HStack(spacing: 7) {
+                    DeviceStatusLight(status: summary.displayStatus)
+                    Text(profile.title).font(UtilityStyle.deviceName).multilineTextAlignment(.center)
+                }
+                Text(summary.displayStatus.title)
+                    .font(UtilityStyle.body)
+                    .foregroundStyle(.secondary)
+                HStack(spacing: 10) {
+                    Button(L10n.string("simple.mount")) {
+                        dashboardStore?.session(for: profile).performSecondaryAction(.openFinder, profile: profile)
+                    }
+                    .disabled(!DashboardActionPolicy.isEnabled(.openFinder, for: summary))
+                    Button(L10n.string("simple.manage")) { appStore.select(profile) }
+                }.padding(.top, 4)
+        }
+        .padding(8).frame(maxWidth: .infinity)
+        .accessibilityElement(children: .contain)
+        .task { await dashboardStore?.session(for: profile).refreshDeviceStatus(profile: profile) }
+    }
+
+    private var otherDevicesMenu: some View {
+        Menu {
+            NearbyAirPortMenuItems(
+                devices: deviceDiscovery.nearbyUnsavedDevices,
+                canAddDevice: canAddDevice,
+                isRefreshing: backend.isRunning,
+                add: addDiscoveredDevice,
+                addManually: { if let addManually { addManually() } else { appStore.showAddDevice() } },
+                refresh: { deviceDiscovery.refresh() }
+            )
+        } label: {
+            Text(L10n.string("simple.other_devices"))
+        }
+        .menuStyle(.borderedButton)
+        .fixedSize()
     }
 
     @ViewBuilder
-    private var discoveryContent: some View {
-        switch deviceDiscovery.nearbyState {
-        case .idle, .waitingForReadiness:
-            Text(L10n.string("overview.discovery.waiting"))
-                .foregroundStyle(.secondary)
-        case .checkingLocalNetwork:
-            ProgressView(L10n.string("add_device.progress.local_network.message"))
-        case .discovering:
-            ProgressView(L10n.string("overview.discovery.discovering"))
-        case .paused:
-            Text(L10n.string("overview.discovery.paused"))
-                .foregroundStyle(.secondary)
-        case .readinessBlocked:
-            Text(L10n.string("overview.discovery.readiness_blocked"))
-                .foregroundStyle(.secondary)
-        case .failed:
-            VStack(alignment: .leading, spacing: 6) {
-                if let error = deviceDiscovery.error {
-                    // Refresh below reruns discovery, whatever the error; the box has no Retry.
-                    ErrorRecoveryView(error: error) { kind in
-                        guard kind == .openSystemSettings, let url = LocalNetworkRecovery.settingsURL else {
-                            return nil
-                        }
-                        return { NSWorkspace.shared.open(url) }
-                    }
-                } else {
-                    Text(L10n.string("overview.discovery.failed"))
-                        .foregroundStyle(.red)
-                }
-                Button(L10n.string("overview.discovery.refresh")) {
-                    deviceDiscovery.refresh()
-                }
+    private var discoveryNotice: some View {
+        if let error = deviceDiscovery.error, deviceDiscovery.nearbyState == .failed {
+            ErrorRecoveryView(error: error) { kind in
+                guard kind == .openSystemSettings, let url = LocalNetworkRecovery.settingsURL else { return nil }
+                return { NSWorkspace.shared.open(url) }
             }
-        case .empty:
-            Text(L10n.string("overview.discovery.empty"))
-                .foregroundStyle(.secondary)
-        case .ready:
-            VStack(alignment: .leading, spacing: 0) {
-                ForEach(deviceDiscovery.nearbyUnsavedDevices) { device in
-                    OverviewDiscoveredDeviceRow(device: device) {
-                        addDiscoveredDevice(device)
-                    }
-                    .disabled(!canAddDevice)
-                    Divider()
-                }
-                ForEach(deviceDiscovery.nearbySavedDevices) { device in
-                    OverviewDiscoveredDeviceRow(device: device, add: nil)
-                    Divider()
-                }
-            }
+            .padding(.horizontal, 24)
+            .padding(.bottom, 16)
+        } else if let warning = deviceDiscovery.warning {
+            Text(warning).font(UtilityStyle.secondary).foregroundStyle(.orange).padding(.horizontal, 24)
         }
     }
 }
 
-private struct OverviewDiscoveredDeviceRow: View {
-    let device: DiscoveredDevice
-    /// nil for a saved device, whose row offers no Add button.
-    let add: (() -> Void)?
+struct NearbyAirPortMenuItems: View {
+    let devices: [DiscoveredDevice]
+    let canAddDevice: Bool
+    let isRefreshing: Bool
+    let add: (DiscoveredDevice) -> Void
+    let addManually: () -> Void
+    let refresh: () -> Void
 
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
-            Image(systemName: "antenna.radiowaves.left.and.right")
-                .foregroundStyle(.secondary)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(device.displayName)
-                    .font(.body.weight(.medium))
-                HStack(spacing: 6) {
-                    Text(device.addressSummary.isEmpty ? device.connectionTarget : device.addressSummary)
-                    if !device.discoveryModelText.isEmpty {
-                        Text(device.discoveryModelText)
-                    }
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
-            Spacer()
-            Text(add == nil ? L10n.string("overview.discovery.saved") : L10n.string("overview.discovery.unsaved"))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            if let add {
-                Button(L10n.string("overview.discovery.add"), action: add)
+        ForEach(devices) { device in
+            Button(device.displayName) { add(device) }
+                .disabled(!canAddDevice || device.isUnsupportedModel)
+        }
+        if devices.isEmpty { Text(L10n.string("overview.discovery.empty")) }
+        Divider()
+        Button(L10n.string("simple.add_by_address"), action: addManually).disabled(!canAddDevice)
+        Button(L10n.string("overview.discovery.refresh"), action: refresh).disabled(isRefreshing)
+    }
+}
+
+struct AirPortDeviceIcon: View {
+    var isTower = true
+
+    var body: some View {
+        Group {
+            if let image = AirPortArtwork.image(isTower: isTower) {
+                Image(nsImage: image).resizable().scaledToFit()
+            } else {
+                Image(systemName: isTower ? "airport.extreme.tower" : "airport.extreme")
+                    .resizable().scaledToFit().foregroundStyle(.secondary)
             }
         }
-        .padding(.vertical, 8)
+        .accessibilityHidden(true)
+    }
+}
+
+/// Use system-provided hardware artwork when available. It is never copied
+/// into our distribution; systems without AirPort Utility use SF Symbols.
+@MainActor
+private enum AirPortArtwork {
+    private static let bundle = Bundle(path: "/System/Applications/Utilities/AirPort Utility.app")
+    private static let tower = load("AirPort-8-3D-cropped~mac")
+    private static let flat = load("TimeCapsule-3D-cropped~mac")
+    static func image(isTower: Bool) -> NSImage? { isTower ? tower : flat }
+    private static func load(_ name: String) -> NSImage? {
+        bundle?.url(forResource: name, withExtension: "tiff").flatMap { NSImage(contentsOf: $0) }
+    }
+}
+
+extension DeviceProfile {
+    var usesTowerArtwork: Bool { syap == "119" || syap == "120" || payloadFamily == "netbsd6_samba4" }
+}
+
+struct DeviceStatusLight: View {
+    let status: DeviceDisplayStatus
+    private var color: Color {
+        switch status {
+        case .healthy: return .green
+        case .warning, .activationNeeded: return .orange
+        case .failed, .passwordInvalid, .keychainUnavailable, .unsupported: return .red
+        case .installing, .checking, .maintaining: return .accentColor
+        default: return .secondary
+        }
+    }
+    var body: some View {
+        Circle().fill(color).frame(width: 9, height: 9).accessibilityHidden(true)
+    }
+}
+
+struct DeviceQuickInfoView: View {
+    let profile: DeviceProfile
+    let summary: DeviceDashboardSummary
+    let openDisk: () -> Void
+    let edit: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text(profile.title).font(UtilityStyle.heading)
+                    .fixedSize(horizontal: false, vertical: true)
+                HStack(spacing: 7) {
+                    DeviceStatusLight(status: summary.displayStatus)
+                    Text(summary.displayStatus.title).foregroundStyle(.secondary)
+                }
+            }
+            Divider()
+            HStack(spacing: 12) {
+                Text(L10n.string("simple.address")).foregroundStyle(.secondary)
+                Spacer(minLength: 0)
+                Text(DeviceEndpointPolicy.hostComponent(profile.connectionTarget) ?? profile.displayTarget)
+                    .textSelection(.enabled).monospacedDigit()
+            }
+            HStack(spacing: 8) {
+                Button(L10n.string("simple.mount"), action: openDisk)
+                    .disabled(!DashboardActionPolicy.isEnabled(.openFinder, for: summary))
+                Spacer(minLength: 8)
+                Button(L10n.string("simple.manage"), action: edit)
+                    .keyboardShortcut(.defaultAction)
+            }
+        }
+        .font(UtilityStyle.body).controlSize(.regular)
+        .padding(20)
+        .frame(width: 300)
     }
 }

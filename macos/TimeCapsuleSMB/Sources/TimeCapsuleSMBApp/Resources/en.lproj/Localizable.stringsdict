@@ -301,15 +301,15 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>lld</string>
 			<key>one</key>
-			<string>%lld ._ file holds entries TimeCapsuleSMB does not convert. Its supported metadata was migrated, and the file was kept.</string>
+			<string>%lld ._ file holds entries Time Capsule Updater does not convert. Its supported metadata was migrated, and the file was kept.</string>
 			<key>other</key>
-			<string>%lld ._ files hold entries TimeCapsuleSMB does not convert. Their supported metadata was migrated, and the files were kept.</string>
+			<string>%lld ._ files hold entries Time Capsule Updater does not convert. Their supported metadata was migrated, and the files were kept.</string>
 		</dict>
 	</dict>
 	<key>bundle_issue.distribution_artifacts_missing_count.message</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
-		<string>The bundled TimeCapsuleSMB distribution is missing %#@files@.</string>
+		<string>The bundled Time Capsule Updater distribution is missing %#@files@.</string>
 		<key>files</key>
 		<dict>
 			<key>NSStringFormatSpecTypeKey</key>

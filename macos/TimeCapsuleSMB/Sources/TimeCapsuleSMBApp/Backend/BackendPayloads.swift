@@ -88,6 +88,8 @@ struct ReachabilityPayload: Decodable, Equatable {
     var installedVersionCode: Int? = nil
     var installState: String? = nil
     var appReleaseTag: String? = nil
+    var firmwareVersion: String? = nil
+    var serialNumber: String? = nil
 
     enum CodingKeys: String, CodingKey {
         case schemaVersion = "schema_version"
@@ -103,6 +105,8 @@ struct ReachabilityPayload: Decodable, Equatable {
         case installedVersionCode = "installed_version_code"
         case installState = "install_state"
         case appReleaseTag = "app_release_tag"
+        case firmwareVersion = "firmware_version"
+        case serialNumber = "serial_number"
     }
 }
 
@@ -465,6 +469,7 @@ struct DoctorPayload: Decodable, Equatable {
     /// ("computer" and "device"), as the helper worked them out.
     var status: DoctorSectionStatus? = nil
     var sections: [String: DoctorSection]? = nil
+    var diskHealth: DiskHealthReport? = nil
 
     enum CodingKeys: String, CodingKey {
         case schemaVersion = "schema_version"
@@ -478,6 +483,7 @@ struct DoctorPayload: Decodable, Equatable {
         case summaryArgs = "summary_args"
         case status
         case sections
+        case diskHealth = "disk_health"
     }
 }
 

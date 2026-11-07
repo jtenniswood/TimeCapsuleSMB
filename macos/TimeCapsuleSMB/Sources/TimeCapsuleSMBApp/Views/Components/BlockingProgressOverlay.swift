@@ -11,39 +11,30 @@ struct BlockingProgressOverlay<Progress: BlockingProgressPresenting>: View {
 
     var body: some View {
         ZStack {
-            if !allowsBackgroundInteraction {
-                Color.clear
-                    .contentShape(Rectangle())
-                    .ignoresSafeArea()
+            if !allowsBackgroundInteraction { Color.clear.contentShape(Rectangle()).ignoresSafeArea() }
+            VStack(spacing: 16) {
+                ProgressView().controlSize(.regular)
+                Text(progress.title).font(UtilityStyle.body)
             }
-
-            VStack(spacing: 12) {
-                ProgressView()
-                    .controlSize(.large)
-                Text(progress.title)
-                    .font(.headline)
-                Text(progress.message)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text(progress.detail ?? "")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.center)
-                    .frame(minHeight: 28, alignment: .top)
-                    .opacity(progress.detail?.isEmpty == false ? 1 : 0)
-            }
-            .padding(22)
-            .frame(width: 340)
-            .frame(minHeight: 176)
-            .background(.regularMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            .shadow(radius: 18)
+            .padding(24)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .allowsHitTesting(!allowsBackgroundInteraction)
-        .transition(.opacity)
+    }
+}
+
+/// The transcript stays in Details; progress has one stable, readable line.
+struct InlineOperationProgress<Progress: BlockingProgressPresenting>: View {
+    let progress: Progress
+    var title: String? = nil
+
+    var body: some View {
+        HStack(spacing: 12) {
+            ProgressView().controlSize(.small)
+            Text(title ?? progress.title)
+        }
+        .font(UtilityStyle.body)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .help(progress.message)
     }
 }

@@ -144,9 +144,11 @@ struct AccessibleElement: Equatable {
 /// words and enabled controls on screen instead of comparing pixels.
 @MainActor
 func accessibleElements<V: View>(_ view: V, size: CGSize = CGSize(width: 1200, height: 800)) -> [AccessibleElement] {
-    let host = NSHostingView(rootView: view)
-    host.frame = CGRect(origin: .zero, size: size)
-    return accessibleElements(in: host)
+    let window = NSWindow(contentRect: CGRect(origin: .zero, size: size), styleMask: [.titled], backing: .buffered, defer: false)
+    window.isReleasedWhenClosed = false
+    window.contentView = NSHostingView(rootView: view)
+    defer { window.close() }
+    return accessibleElements(in: window.contentView!)
 }
 
 /// The texts and controls a view already on screen draws now, such as a
@@ -167,7 +169,7 @@ func accessibleElements(in host: NSView) -> [AccessibleElement] {
 @discardableResult
 func pressAccessibleControl(in host: NSView, labeled label: String) -> Bool {
     withAccessibilityTree(of: host) { nodes in
-        guard let node = nodes.first(where: { ($0.accessibilityLabel?() ?? nil) == label }) else { return false }
+        guard let node = nodes.first(where: { accessibleText(of: $0) == label }) else { return false }
         return node.accessibilityPerformPress?() ?? false
     }
 }
@@ -201,7 +203,7 @@ private func withAccessibilityTree<T>(of host: NSView, _ body: ([AnyObject]) -> 
             collect(child as AnyObject)
         }
     }
-    collect(host)
+    if let window = host.window { collect(window) } else { collect(host) }
     return body(nodes)
 }
 
@@ -211,8 +213,9 @@ private func withAccessibilityTree<T>(of host: NSView, _ body: ([AnyObject]) -> 
 @MainActor
 func devicePageTexts<V: View>(_ view: V, file: StaticString = #filePath, line: UInt = #line) -> [String] {
     let texts = accessibleElements(view).map(\.text)
-    let missingTabs = DeviceDashboardTab.allCases.map(\.title).filter { !texts.contains($0) }
-    XCTAssertEqual(missingTabs, [], "The read shows no device page", file: file, line: line)
+    let supportLabels = ["support.smb.enabled", "support.smb.disabled", "support.smb.checking",
+                         "support.smb.update_available", "simple.sharing.title"].map { L10n.string($0) }
+    XCTAssertTrue(supportLabels.contains(where: texts.contains), "The read shows no support panel", file: file, line: line)
     return texts
 }
 
@@ -222,7 +225,8 @@ private func accessibleText(of node: AnyObject) -> String? {
         return label
     }
     let value = (node.accessibilityValue as (() -> Any?)?)?() ?? nil
-    return (value as? String).flatMap { $0.isEmpty ? nil : $0 }
+    if let value = value as? String, !value.isEmpty { return value }
+    return (node.accessibilityTitle?() ?? nil).flatMap { $0.isEmpty ? nil : $0 }
 }
 
 private enum ViewRenderError: Error {

@@ -38,7 +38,8 @@ sys.path.insert(0, str(SRC_ROOT))
 
 from timecapsulesmb.core.release import CLI_VERSION, CLI_VERSION_CODE  # noqa: E402
 
-APP_NAME = "TimeCapsuleSMB"
+APP_NAME = "Time Capsule Updater"
+ARCHIVE_NAME = "Time-Capsule-Updater"
 PRODUCT_NAME = "TimeCapsuleSMB"
 HELPER_PRODUCT_NAME = "tcapsule"
 APP_VERSION = CLI_VERSION
@@ -419,7 +420,7 @@ def write_info_plist(contents_dir: Path, *, languages: list[str], icon_name: str
         "LSMinimumSystemVersion": MINIMUM_MACOS,
         "NSBonjourServices": BONJOUR_SERVICE_TYPES,
         "NSHighResolutionCapable": True,
-        "NSLocalNetworkUsageDescription": "TimeCapsuleSMB discovers and connects to Apple AirPort devices on your local network.",
+        "NSLocalNetworkUsageDescription": "Time Capsule Updater discovers and connects to Apple AirPort devices on your local network.",
         "SUFeedURL": SPARKLE_FEED_URL,
         "SUPublicEDKey": SPARKLE_PUBLIC_ED_KEY,
         # On by default without Sparkle's second-launch prompt; the Settings
@@ -2270,7 +2271,7 @@ def notarize_dmg(dmg_path: Path, *, profile: str, timeout: str) -> str:
 
 
 def notarization_archive_path(output_dir: Path) -> Path:
-    return output_dir / f"{APP_NAME}-notary.zip"
+    return output_dir / f"{ARCHIVE_NAME}-notary.zip"
 
 
 @timed_step("Creating notarization archive")
@@ -2441,12 +2442,12 @@ def build_app_package(args: argparse.Namespace) -> PackageResult:
         notarization_archive = notarization_archive_path(output_dir)
     zip_path: Path | None = None
     if getattr(args, "zip", False) or getattr(args, "zip_output", None):
-        zip_path = (args.zip_output or (output_dir / f"{APP_NAME}.app.zip")).resolve()
+        zip_path = (args.zip_output or (output_dir / f"{ARCHIVE_NAME}.app.zip")).resolve()
         create_app_zip(app, zip_path)
     dmg_path: Path | None = None
     if getattr(args, "dmg", False) or getattr(args, "dmg_output", None):
         # From the stapled app, so the copy people drag out carries its ticket.
-        dmg_path = (args.dmg_output or (output_dir / f"{APP_NAME}.dmg")).resolve()
+        dmg_path = (args.dmg_output or (output_dir / f"{ARCHIVE_NAME}.dmg")).resolve()
         create_app_dmg(app, dmg_path)
         if args.codesign_identity:
             codesign_dmg(dmg_path, args.codesign_identity)
@@ -2456,8 +2457,8 @@ def build_app_package(args: argparse.Namespace) -> PackageResult:
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Build a self-contained TimeCapsuleSMB.app bundle.")
-    parser.add_argument("--output", type=Path, default=PACKAGE_ROOT / "dist", help="Directory that will receive TimeCapsuleSMB.app.")
+    parser = argparse.ArgumentParser(description="Build a self-contained Time Capsule Updater.app bundle.")
+    parser.add_argument("--output", type=Path, default=PACKAGE_ROOT / "dist", help="Directory that will receive Time Capsule Updater.app.")
     parser.add_argument("--configuration", choices=("debug", "release"), default="release", help="Swift build configuration.")
     parser.add_argument(
         "--arch",
@@ -2501,19 +2502,19 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         default=os.getenv("TCAPSULE_NOTARY_TIMEOUT", DEFAULT_NOTARY_TIMEOUT),
         help=f"Maximum time to wait for Apple notarization. Defaults to TCAPSULE_NOTARY_TIMEOUT or {DEFAULT_NOTARY_TIMEOUT}.",
     )
-    parser.add_argument("--zip", action="store_true", help="Create and validate TimeCapsuleSMB.app.zip next to the app bundle.")
+    parser.add_argument("--zip", action="store_true", help="Create and validate Time-Capsule-Updater.app.zip next to the app bundle.")
     parser.add_argument("--zip-output", type=Path, help="Zip output path; implies --zip.")
     parser.add_argument(
         "--dmg",
         action="store_true",
-        help="Create and validate TimeCapsuleSMB.dmg next to the app bundle; signed with "
+        help="Create and validate Time-Capsule-Updater.dmg next to the app bundle; signed with "
         "--codesign-identity and notarized with --notarize, as the app is.",
     )
     parser.add_argument("--dmg-output", type=Path, help="Disk image output path; implies --dmg.")
     parser.add_argument(
         "--check-app",
         type=Path,
-        help="Build nothing: launch an existing TimeCapsuleSMB.app's code on this Mac (its app, Python and helper checks).",
+        help="Build nothing: launch an existing Time Capsule Updater.app's code on this Mac (its app, Python and helper checks).",
     )
     return parser.parse_args(argv)
 

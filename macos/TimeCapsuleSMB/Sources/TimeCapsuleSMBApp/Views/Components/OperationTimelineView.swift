@@ -22,13 +22,13 @@ struct OperationTimelineListView: View {
         VStack(alignment: .leading, spacing: 8) {
             if let title {
                 Text(title)
-                    .font(.headline)
+                    .font(UtilityStyle.heading)
             }
 
             if items.isEmpty {
                 if let emptyMessage {
                     Text(emptyMessage)
-                        .font(.caption)
+                        .font(UtilityStyle.secondary)
                         .foregroundStyle(.secondary)
                         .transition(.opacity)
                 }
@@ -66,25 +66,25 @@ struct OperationTimelineRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 AnimatedProgressText(message: item.title, isRunning: item.state == .running && !hasDetail)
-                    .font(.body.weight(.medium))
+                    .font(UtilityStyle.body)
                     .foregroundStyle(.primary)
                 if let detail = item.detail, !detail.isEmpty {
                     AnimatedProgressText(message: detail, isRunning: item.state == .running)
-                        .font(.caption)
+                        .font(UtilityStyle.secondary)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 if let start = item.elapsedSince, item.state == .running {
                     TimelineView(.periodic(from: start, by: 15)) { context in
                         Text(OperationTimelineBuilder.elapsedText(since: start, now: context.date))
-                            .font(.caption)
+                            .font(UtilityStyle.secondary)
                             .foregroundStyle(.secondary)
                             .monospacedDigit()
                     }
                 }
                 if let note = item.note, !note.isEmpty {
                     Text(note)
-                        .font(.caption)
+                        .font(UtilityStyle.secondary)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -93,9 +93,6 @@ struct OperationTimelineRow: View {
             Spacer(minLength: 0)
         }
         .padding(.vertical, 5)
-        .padding(.horizontal, showsBackground ? 6 : 0)
-        .background(background)
-        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
         .contentShape(Rectangle())
         .animation(reduceMotion ? nil : .snappy(duration: 0.18), value: item.state)
         .accessibilityElement(children: .combine)
@@ -105,14 +102,4 @@ struct OperationTimelineRow: View {
         item.detail?.isEmpty == false
     }
 
-    @ViewBuilder
-    private var background: some View {
-        if showsBackground && item.state == .running {
-            OperationTimelineVisualStyle.color(for: item.state).opacity(0.10)
-        } else if showsBackground && item.state == .failed {
-            OperationTimelineVisualStyle.color(for: item.state).opacity(0.08)
-        } else {
-            Color.clear
-        }
-    }
 }

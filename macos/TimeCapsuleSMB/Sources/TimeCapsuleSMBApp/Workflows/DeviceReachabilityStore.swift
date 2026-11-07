@@ -7,6 +7,11 @@ struct DeviceReachabilitySnapshot: Equatable {
     /// the device before it.
     let refreshedAt: Date
     let payload: ReachabilityPayload
+
+    func reflectsLatestInstall(for profile: DeviceProfile) -> Bool {
+        guard let deploy = profile.lastDeployState else { return true }
+        return refreshedAt >= (deploy.finishedAt ?? deploy.startedAt)
+    }
 }
 
 /// One snapshot per device, fed by two lanes: Refresh Status's ordinary
@@ -54,6 +59,7 @@ final class DeviceReachabilityStore: ObservableObject {
             return
         }
         if let snapshot = snapshots[profile.id],
+           snapshot.reflectsLatestInstall(for: profile),
            now().timeIntervalSince(snapshot.refreshedAt) < Self.automaticRefreshInterval {
             return
         }
@@ -117,6 +123,11 @@ final class DeviceReachabilityStore: ObservableObject {
 
     func currentStage(for profile: DeviceProfile) -> OperationStageState? {
         currentStages[profile.id]
+    }
+
+    func isRefreshing(profile: DeviceProfile) -> Bool {
+        isRunning(profile: profile)
+            || coordinator.lane(for: .deviceWorkflow(profile.id, .reachabilityStatus)).isBusy
     }
 
     /// Whether Refresh Status runs; the background check gives way to the

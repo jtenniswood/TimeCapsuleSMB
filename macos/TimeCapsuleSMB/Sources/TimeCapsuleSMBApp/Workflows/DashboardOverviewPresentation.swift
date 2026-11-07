@@ -93,9 +93,7 @@ struct DeviceDashboardHeaderPresentation: Equatable {
     /// which then reads as not checked until the next check.
     static func currentVersionPayload(_ snapshot: DeviceReachabilitySnapshot?, profile: DeviceProfile) -> ReachabilityPayload? {
         guard let snapshot else { return nil }
-        if let deploy = profile.lastDeployState, deploy.startedAt > snapshot.refreshedAt {
-            return nil
-        }
+        guard snapshot.reflectsLatestInstall(for: profile) else { return nil }
         return snapshot.payload
     }
 
@@ -114,7 +112,7 @@ struct DeviceDashboardHeaderPresentation: Equatable {
         case "outdated":
             return L10n.format("dashboard.overview.installed_version.outdated", tag, payload?.appReleaseTag ?? unknown)
         case "newer":
-            return L10n.string("dashboard.overview.installed_version.newer")
+            return payload?.installedReleaseTag ?? L10n.string("dashboard.overview.installed_version.newer")
         case "unknown":
             // No version in the device's config: an install from before
             // versions were recorded, or another one.
@@ -128,6 +126,31 @@ struct DeviceDashboardHeaderPresentation: Equatable {
 
     private static func lastInstallValue(for profile: DeviceProfile) -> String {
         profile.lastDeployState?.localizedSummary ?? L10n.string("value.never")
+    }
+
+    static func friendlyModelValue(for profile: DeviceProfile) -> String {
+        let capsuleIDs: Set<String> = ["106", "109", "113", "116", "119"]
+        let extremeIDs: Set<String> = ["104", "105", "108", "114", "117", "120"]
+        let model = profile.model?.lowercased() ?? ""
+        let family: String
+        if capsuleIDs.contains(profile.syap ?? "") || model.contains("timecapsule") || model.contains("time capsule") {
+            family = "Apple Time Capsule"
+        } else if extremeIDs.contains(profile.syap ?? "") || model.contains("extreme") {
+            family = "AirPort Extreme"
+        } else {
+            family = "AirPort"
+        }
+        let generation = generationValue(for: profile).replacingOccurrences(of: " generation", with: " Generation")
+        return generation == L10n.string("value.unknown") ? family : family + ", " + generation
+    }
+
+    static func deviceTooltip(for profile: DeviceProfile, payload: ReachabilityPayload?) -> String {
+        let values = [
+            ("simple.address", DeviceEndpointPolicy.hostComponent(profile.connectionTarget) ?? profile.displayTarget),
+            ("simple.firmware_version", payload?.firmwareVersion),
+            ("simple.serial_number", payload?.serialNumber)
+        ]
+        return values.compactMap { key, value in value.map { L10n.string(key) + ": " + $0 } }.joined(separator: "\n")
     }
 
     private static func generationValue(for profile: DeviceProfile) -> String {

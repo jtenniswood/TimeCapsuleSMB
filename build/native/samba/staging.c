@@ -1,5 +1,6 @@
 #include "staging.h"
 #include "../common/worker.h"
+#include "../service/airport_account.h"
 #include <sys/stat.h>
 #include <dirent.h>
 
@@ -92,7 +93,20 @@ int tc_samba_settings_read(struct tc_samba_settings *settings, const char *hostn
         fputs("settings: device identity unavailable\n", stderr);
         return -1;
     }
-    if (device_nt_hash(settings->nt_hash)) {
+    if (settings->config.airport_sharing) {
+        unsigned flags;
+        if (airport_sharing_flags(&flags)) return -1;
+        settings->config.sharing_enabled = !(flags & 4u);
+        if (!settings->config.sharing_enabled) return 0;
+        if (!(flags & 0x40u)) {
+            if (settings->config.netbsd4) return -1;
+            strcpy(settings->config.smb_airport_account, "*");
+        } else settings->config.smb_airport_account[0] = 0;
+    }
+    int auth_failed = settings->config.smb_airport_account[0]
+        ? airport_accounts_nt_hashes(&settings->config.smb_accounts)
+        : settings->config.airport_sharing ? airport_disk_nt_hash(settings->nt_hash) : device_nt_hash(settings->nt_hash);
+    if (auth_failed) {
         fputs("settings: device authentication unavailable\n", stderr);
         return -1;
     }
@@ -377,7 +391,16 @@ int tc_samba_stage(const struct tc_storage_snapshot *storage, const struct tc_sa
     size_t i;
     if (stage_open(&run, storage, result))
         return -1;
-    if (strlen(settings->nt_hash) != 32 || strspn(settings->nt_hash, "0123456789ABCDEF") != 32)
+    if (config->smb_airport_account[0]) {
+        if (config->smb_accounts.count > TC_AIRPORT_MAX_ACCOUNTS) goto out;
+        for (i = 0; i < config->smb_accounts.count; i++) {
+            const struct airport_account *a = &config->smb_accounts.values[i];
+            if (!a->name[0] || strpbrk(a->name, ":\r\n") || strlen(a->nt_hash) != 32 ||
+                strspn(a->nt_hash, "0123456789ABCDEF") != 32 || a->access < 0 || a->access > 2 ||
+                a->userid < TC_AIRPORT_ACCOUNT_ID_MIN || a->userid > TC_AIRPORT_ACCOUNT_ID_MAX)
+                goto out;
+        }
+    } else if (strlen(settings->nt_hash) != 32 || strspn(settings->nt_hash, "0123456789ABCDEF") != 32)
         goto out;
     for (i = 0; i < sizeof(directories) / sizeof(directories[0]); i++)
         if (tc_make_dir(directories[i], i == 4 ? 0700 : 0755))
@@ -415,14 +438,23 @@ int tc_samba_stage(const struct tc_storage_snapshot *storage, const struct tc_sa
     file = prepare_file(TC_RAM_ROOT "/private/smbpasswd");
     if (!file)
         goto out;
-    fprintf(file, "root:0:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX:%s:[U          ]:LCT-%08lX:\n", settings->nt_hash,
-            (unsigned long)time(NULL));
+    if (config->smb_airport_account[0]) {
+        size_t i;
+        for (i = 0; i < config->smb_accounts.count; i++) {
+            const struct airport_account *account = &config->smb_accounts.values[i];
+            fprintf(file, "%s:%u:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX:%s:[%s]:LCT-%08lX:TCA-%d:\n",
+                    account->name, (unsigned)account->userid, account->nt_hash,
+                    account->access == 2 ? "DU         " : "U          ", (unsigned long)time(NULL), account->access);
+        }
+    } else
+        fprintf(file, "root:0:XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX:%s:[U          ]:LCT-%08lX:\n",
+                settings->nt_hash, (unsigned long)time(NULL));
     if (finish(file))
         goto out;
     file = prepare_file(TC_RAM_ROOT "/private/username.map");
     if (!file)
         goto out;
-    fputs("!root = root\nroot = *\n", file);
+    if (!config->smb_airport_account[0]) fputs("!root = root\nroot = *\n", file);
     if (finish(file))
         goto out;
     failed = 0;

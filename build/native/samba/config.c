@@ -35,7 +35,9 @@ int tc_runtime_config_load(struct tc_runtime_config *config) {
                                   {"DISKD_USE_VOLUME_MOUNT_POLL_SECONDS", "", 0},
                                   {"ATA_IDLE_SECONDS", "", 0},
                                   {"ATA_STANDBY", "", 0},
-                                  {"REQUIRE_SMB_SIGNING", "", 0}};
+                                  {"REQUIRE_SMB_SIGNING", "", 0},
+                                  {"SMB_AIRPORT_ACCOUNT", "", 0},
+                                  {"AIRPORT_SHARING_SETTINGS", "", 0}};
     struct utsname system;
     memset(config, 0, sizeof(*config));
     if (config_read_snapshot(TC_FLASH_CONFIG_PATH, items, sizeof(items) / sizeof(items[0])))
@@ -64,13 +66,20 @@ int tc_runtime_config_load(struct tc_runtime_config *config) {
     config->mount_poll = number(&items[14], 3, 1, 60);
     config->ata_idle = number(&items[15], 300, 0, 86400);
     config->require_signing = boolean(&items[17], 0);
+    config->airport_sharing = boolean(&items[19], 0);
+    config->sharing_enabled = 1;
+    if (strlen(items[18].value) >= sizeof(config->smb_airport_account) ||
+        (strcmp(items[18].value, "*") &&
+         strspn(items[18].value, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.-") !=
+         strlen(items[18].value))) return -1;
+    strcpy(config->smb_airport_account, items[18].value);
     if (items[16].present) {
         if (strlen(items[16].value) >= sizeof(config->ata_standby) ||
             strspn(items[16].value, "0123456789") != strlen(items[16].value))
             return -1;
         strcpy(config->ata_standby, items[16].value);
     }
-    if (config->telemetry < 0 || config->rsync < 0 || config->internal_root < 0 ||
+    if (config->airport_sharing < 0 || config->telemetry < 0 || config->rsync < 0 || config->internal_root < 0 ||
         config->browse_compatibility < 0 || config->any_protocol < 0 || config->require_signing < 0 ||
         config->require_encryption < 0 || config->disable_encryption < 0 || config->netatalk < 0 ||
         config->aio_fork < 0 || config->debug < 0 || config->discovery_debug < 0 || config->advertise_afp < 0 ||
@@ -90,9 +99,15 @@ int tc_samba_render(FILE *file, const struct tc_runtime_config *config,
             "    server string = %s\n"
             "    security = user\n    map to guest = Never\n    restrict anonymous = %d\n"
             "    guest account = nobody\n    ea support = yes\n"
-            "    passdb backend = smbpasswd:" TC_RAM_ROOT "/private/smbpasswd\n"
+            "    passdb backend = %s:" TC_RAM_ROOT "/private/smbpasswd\n"
             "    username map = " TC_RAM_ROOT "/private/username.map\n    dos charset = ASCII\n",
-            identity->netbios, identity->server, config->browse_compatibility ? 0 : 2);
+            identity->netbios, identity->server, config->browse_compatibility ? 0 : 2,
+            config->smb_airport_account[0] ? "tc_airport" : "smbpasswd");
+    if (config->smb_airport_account[0]) {
+        fprintf(file, "    tc:airport account = %s\n", config->smb_airport_account);
+    } else if (config->airport_sharing) {
+        fputs("    tc:airport disk password = yes\n", file);
+    }
     if (config->require_encryption)
         fputs("    server smb encrypt = required\n    server min protocol = SMB3_00\n    server max protocol "
               "= SMB3\n",
@@ -125,6 +140,7 @@ int tc_samba_render(FILE *file, const struct tc_runtime_config *config,
     fprintf(file,
             "    server multi channel support = no\n    load printers = no\n    disable spoolss = yes\n"
             "    dfree command = /mnt/Flash/dfree.sh\n    pid directory = " TC_RAM_ROOT "/var\n"
+            "    ncalrpc dir = " TC_RAM_ROOT "/var/ncalrpc\n"
             "    lock directory = " TC_LOCKS_ROOT "\n    state directory = " TC_RAM_ROOT "/var\n"
             "    cache directory = %s%s\n    private dir = " TC_RAM_ROOT "/private\n"
             "    dbwrap_tdb_max_dead:* = 0\n    log file = %s/logs/log.smbd\n    max log size = %d\n",
@@ -188,10 +204,12 @@ int tc_samba_render(FILE *file, const struct tc_runtime_config *config,
         tc_share_section(section, share->name);
         fprintf(file,
                 "\n[%s]\n    path = %s\n    browseable = yes\n    read only = no\n"
-                "    guest ok = no\n    valid users = root\n    veto files = /.samba4/.tc-xsym.*/\n"
+                "    guest ok = no\n    veto files = /.samba4/.tc-xsym.*/\n"
                 "    delete veto files = yes\n"
                 "    vfs objects = catia fruit streams_xattr acl_xattr xattr_tdb%s\n",
-                section, share->path, config->aio_fork ? " aio_fork" : "");
+                section, share->path,
+                config->aio_fork ? " aio_fork" : "");
+        if (!config->smb_airport_account[0]) fputs("    valid users = root\n", file);
         /* Each helper holds up to an 8 MiB buffer. One Mac used at most two
          * helpers in benchmarks on both device families, and more were no
          * faster; two bound the memory to 16 MiB per client per mounted share. */
@@ -215,9 +233,14 @@ int tc_samba_render(FILE *file, const struct tc_runtime_config *config,
                 "    xattr_tdb:file = %s/private/xattr.tdb\n"
                 "    tc:volume uuid = %s\n"
                 "    tc:volume device = %s\n"
-                "    force user = root\n    force group = wheel\n    create mask = 0666\n"
+                "    create mask = 0666\n"
                 "    directory mask = 0777\n    force create mode = 0666\n    force directory mode = 0777\n",
                 config->netatalk ? "netatalk" : "stream", payload, share->uuid, share->device);
+        /* The account backend already supplies root filesystem credentials.
+         * Forcing a user here would replace the account's distinct NT token,
+         * including the identity that owns durable handles. */
+        if (!config->smb_airport_account[0])
+            fputs("    force user = root\n    force group = wheel\n", file);
     }
     return ferror(file) ? -1 : 0;
 }

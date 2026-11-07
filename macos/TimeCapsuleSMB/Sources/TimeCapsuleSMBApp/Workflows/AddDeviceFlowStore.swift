@@ -80,6 +80,7 @@ final class AddDeviceFlowStore: ObservableObject {
     @Published private(set) var profileToOpen: DeviceProfile?
     @Published private(set) var error: BackendErrorViewModel?
     @Published private(set) var currentStage: OperationStageState?
+    @Published private(set) var showsPasswordStep = false
 
     let coordinator: OperationCoordinator
     let registry: DeviceRegistryStore
@@ -184,11 +185,25 @@ final class AddDeviceFlowStore: ObservableObject {
         ValueParsers.discoveryTimeout(bonjourTimeout)
     }
 
-    var canConfigure: Bool {
-        !isRunning
-            && !password.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-            && currentTarget()?.isEmpty == false
+    /// The assistant advances only once there is a supported connection target.
+    /// The same target validation is shared with the actual Configure action.
+    var canContinueToPassword: Bool {
+        !isAdding && !setupWorkflow.isRunning && currentTarget()?.isEmpty == false
             && !(entryMode == .discover && selectedDevice?.isUnsupportedModel == true)
+    }
+
+    var canConfigure: Bool {
+        canContinueToPassword && !password.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    func continueToPassword() {
+        guard canContinueToPassword else { return }
+        showsPasswordStep = true
+    }
+
+    func returnToDeviceSelection() {
+        guard !isAdding else { return }
+        showsPasswordStep = false
     }
 
     func setEntryMode(_ mode: AddDeviceEntryMode) {
@@ -198,6 +213,7 @@ final class AddDeviceFlowStore: ObservableObject {
         }
         switch mode {
         case .discover:
+            showsPasswordStep = false
             reconnectProfileID = nil
             selectedDeviceID = nil
             manualHost = ""
@@ -211,6 +227,7 @@ final class AddDeviceFlowStore: ObservableObject {
     }
 
     func startManualEntry() {
+        showsPasswordStep = false
         manualHost = manualEntryAddress
         entryMode = .manual
         state = .manualEntry
@@ -243,6 +260,7 @@ final class AddDeviceFlowStore: ObservableObject {
             return
         }
         entryMode = .discover
+        showsPasswordStep = false
         reconnectProfileID = nil
         selectedDeviceID = nil
         manualHost = ""
@@ -254,6 +272,7 @@ final class AddDeviceFlowStore: ObservableObject {
     }
 
     func runConfigure() {
+        showsPasswordStep = true
         let trimmedPassword = password.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedPassword.isEmpty else {
             state = .passwordEntry
@@ -317,6 +336,7 @@ final class AddDeviceFlowStore: ObservableObject {
     /// Starts the page over. The discovery it shows belongs to the whole app,
     /// so a Local Network check or a search in progress keeps running.
     func reset() {
+        showsPasswordStep = false
         setupWorkflow.reset()
         reconnectProfileID = nil
         selectedDeviceID = nil
@@ -353,7 +373,10 @@ final class AddDeviceFlowStore: ObservableObject {
             }
             return { [weak self] in self?.urlOpener.open(url) }
         case .replacePassword:
-            return { [weak self] in self?.state = .passwordEntry }
+            return { [weak self] in
+                self?.showsPasswordStep = true
+                self?.state = .passwordEntry
+            }
         case .runCheckup, .installSMB, .startSMB, .uninstall, .diskRepair, .wipeDisk, .copyDiagnostics, .diagnostics,
              .openSSHAccess, .generic:
             return nil

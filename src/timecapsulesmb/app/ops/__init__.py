@@ -25,6 +25,7 @@ from timecapsulesmb.app.ops.readiness import (
     version_check_operation,
 )
 from timecapsulesmb.app.ops.set_ssh import set_ssh_operation
+from timecapsulesmb.app.ops.sharing import sharing_operation
 from timecapsulesmb.services.app import OperationResult
 
 
@@ -67,6 +68,7 @@ REBOOT_PARAMS = frozenset({"dry_run", "mount_wait", "no_reboot", "no_wait"})
 
 
 OPERATION_SPECS: tuple[OperationSpec, ...] = (
+    OperationSpec("disk-sharing", sharing_operation, frozenset({"action", "changes"}), keep_awake=True),
     OperationSpec("activate", activate_operation, frozenset({"dry_run"}), telemetry=True, keep_awake=True),
     OperationSpec("capabilities", capabilities_operation),
     OperationSpec(
