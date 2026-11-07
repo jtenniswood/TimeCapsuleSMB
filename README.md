@@ -50,7 +50,7 @@ Also, if you are an expert and want to DIY the install, you can copy the binary 
 
 0. ***Turn off any VPN/Firewall/etc software*** or else it will have problems connecting to the device! Also, ***connect over ethernet, not Wi-Fi,*** if you are connected directly to the device. A direct Wi-Fi connection will disconnect you every time the device reboots.
 1. Download the latest release of the app from here: https://github.com/jamesyc/TimeCapsuleSMB/releases
-2. Download `TimeCapsuleSMB.dmg`, open it, drag TimeCapsuleSMB to Applications, and open it from there. The app offers new versions itself; the CLI prints a line when a newer release exists.
+2. Download `Time-Capsule-Updater.dmg`, open it, drag Time Capsule Updater to Applications, and open it from there. The app offers new versions itself; the CLI prints a line when a newer release exists.
     - With Homebrew, `brew install --cask jamesyc/tap/timecapsulesmb` does the same.
 3. Give TimeCapsuleSMB *Local Network* access: in System Settings → Privacy & Security → Local Network, turn TimeCapsuleSMB on. If it is already on, turn it off and on again. Then quit and reopen the app.
 4. Click "Add Device" on the left sidebar, and select your device. 

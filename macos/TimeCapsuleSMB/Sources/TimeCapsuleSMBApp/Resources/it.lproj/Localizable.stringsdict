@@ -337,11 +337,11 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>lld</string>
 			<key>many</key>
-			<string>%lld di file ._ contengono voci che TimeCapsuleSMB non converte. I loro metadati supportati sono stati migrati e i file sono stati conservati.</string>
+			<string>%lld di file ._ contengono voci che Time Capsule Updater non converte. I loro metadati supportati sono stati migrati e i file sono stati conservati.</string>
 			<key>one</key>
-			<string>%lld file ._ contiene voci che TimeCapsuleSMB non converte. I suoi metadati supportati sono stati migrati e il file è stato conservato.</string>
+			<string>%lld file ._ contiene voci che Time Capsule Updater non converte. I suoi metadati supportati sono stati migrati e il file è stato conservato.</string>
 			<key>other</key>
-			<string>%lld file ._ contengono voci che TimeCapsuleSMB non converte. I loro metadati supportati sono stati migrati e i file sono stati conservati.</string>
+			<string>%lld file ._ contengono voci che Time Capsule Updater non converte. I loro metadati supportati sono stati migrati e i file sono stati conservati.</string>
 		</dict>
 	</dict>
 	<key>bundle_issue.distribution_artifacts_missing_count.message</key>
@@ -355,11 +355,11 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>lld</string>
 			<key>many</key>
-			<string>Nel pacchetto incluso con TimeCapsuleSMB mancano %lld di file di installazione.</string>
+			<string>Nel pacchetto incluso con Time Capsule Updater mancano %lld di file di installazione.</string>
 			<key>one</key>
-			<string>Nel pacchetto incluso con TimeCapsuleSMB manca %lld file di installazione.</string>
+			<string>Nel pacchetto incluso con Time Capsule Updater manca %lld file di installazione.</string>
 			<key>other</key>
-			<string>Nel pacchetto incluso con TimeCapsuleSMB mancano %lld file di installazione.</string>
+			<string>Nel pacchetto incluso con Time Capsule Updater mancano %lld file di installazione.</string>
 		</dict>
 	</dict>
 </dict>

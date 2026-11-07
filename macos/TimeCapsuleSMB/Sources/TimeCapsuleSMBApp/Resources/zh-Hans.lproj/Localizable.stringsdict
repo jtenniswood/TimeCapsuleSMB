@@ -104,12 +104,12 @@
 	<key>backend.summary.migration.skipped_unsupported</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
-		<string>%lld 个 ._ 文件包含 TimeCapsuleSMB 不转换的条目。其中受支持的元数据已迁移，文件已保留。</string>
+		<string>%lld 个 ._ 文件包含 Time Capsule Updater 不转换的条目。其中受支持的元数据已迁移，文件已保留。</string>
 	</dict>
 	<key>bundle_issue.distribution_artifacts_missing_count.message</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
-		<string>TimeCapsuleSMB 随附分发包缺少 %lld 个安装文件。</string>
+		<string>Time Capsule Updater 随附分发包缺少 %lld 个安装文件。</string>
 	</dict>
 </dict>
 </plist>

@@ -403,13 +403,13 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>lld</string>
 			<key>few</key>
-			<string>%lld файла ._ содержат записи, которые TimeCapsuleSMB не преобразует. Поддерживаемые метаданные из них перенесены, а сами файлы сохранены.</string>
+			<string>%lld файла ._ содержат записи, которые Time Capsule Updater не преобразует. Поддерживаемые метаданные из них перенесены, а сами файлы сохранены.</string>
 			<key>many</key>
-			<string>%lld файлов ._ содержат записи, которые TimeCapsuleSMB не преобразует. Поддерживаемые метаданные из них перенесены, а сами файлы сохранены.</string>
+			<string>%lld файлов ._ содержат записи, которые Time Capsule Updater не преобразует. Поддерживаемые метаданные из них перенесены, а сами файлы сохранены.</string>
 			<key>one</key>
-			<string>%lld файл ._ содержит записи, которые TimeCapsuleSMB не преобразует. Поддерживаемые метаданные из него перенесены, а сам файл сохранен.</string>
+			<string>%lld файл ._ содержит записи, которые Time Capsule Updater не преобразует. Поддерживаемые метаданные из него перенесены, а сам файл сохранен.</string>
 			<key>other</key>
-			<string>%lld файла ._ содержат записи, которые TimeCapsuleSMB не преобразует. Поддерживаемые метаданные из них перенесены, а сами файлы сохранены.</string>
+			<string>%lld файла ._ содержат записи, которые Time Capsule Updater не преобразует. Поддерживаемые метаданные из них перенесены, а сами файлы сохранены.</string>
 		</dict>
 	</dict>
 	<key>bundle_issue.distribution_artifacts_missing_count.message</key>
@@ -423,13 +423,13 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>lld</string>
 			<key>few</key>
-			<string>В комплекте TimeCapsuleSMB отсутствуют %lld файла установки.</string>
+			<string>В комплекте Time Capsule Updater отсутствуют %lld файла установки.</string>
 			<key>many</key>
-			<string>В комплекте TimeCapsuleSMB отсутствуют %lld файлов установки.</string>
+			<string>В комплекте Time Capsule Updater отсутствуют %lld файлов установки.</string>
 			<key>one</key>
-			<string>В комплекте TimeCapsuleSMB отсутствует %lld файл установки.</string>
+			<string>В комплекте Time Capsule Updater отсутствует %lld файл установки.</string>
 			<key>other</key>
-			<string>В комплекте TimeCapsuleSMB отсутствуют %lld файла установки.</string>
+			<string>В комплекте Time Capsule Updater отсутствуют %lld файла установки.</string>
 		</dict>
 	</dict>
 </dict>

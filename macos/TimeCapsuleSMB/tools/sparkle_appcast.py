@@ -42,13 +42,13 @@ from xml.etree import ElementTree
 TOOLS_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(TOOLS_DIR))
 
-from package_app import APP_NAME, DEFAULT_ARCHITECTURES, PRODUCT_NAME, swift_scratch_path  # noqa: E402
+from package_app import APP_NAME, ARCHIVE_NAME, DEFAULT_ARCHITECTURES, PRODUCT_NAME, swift_scratch_path  # noqa: E402
 from timecapsulesmb.core.release import CRITICAL_BELOW_VERSION_CODE  # noqa: E402
 
 
 SPARKLE_NAMESPACE = "http://www.andymatuschak.org/xml-namespaces/sparkle"
 REPOSITORY_URL = "https://github.com/jamesyc/TimeCapsuleSMB"
-ZIP_NAME = f"{APP_NAME}.app.zip"
+ZIP_NAME = f"{ARCHIVE_NAME}.app.zip"
 RELEASE_NOTES_NAME = "release-notes.md"
 # Where ditto -c -k --keepParent puts the app's Info.plist in the zip.
 ZIPPED_INFO_PLIST = f"{APP_NAME}.app/Contents/Info.plist"
@@ -210,7 +210,7 @@ def appcast_xml(
 
     rss = ElementTree.Element("rss", {"version": "2.0"})
     channel = ElementTree.SubElement(rss, "channel")
-    ElementTree.SubElement(channel, "title").text = "TimeCapsuleSMB"
+    ElementTree.SubElement(channel, "title").text = APP_NAME
     item = ElementTree.SubElement(channel, "item")
     ElementTree.SubElement(item, "title").text = info["CFBundleShortVersionString"]
     ElementTree.SubElement(item, "pubDate").text = format_datetime(published)
@@ -236,7 +236,7 @@ def appcast_xml(
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Write the Sparkle appcast for a packaged TimeCapsuleSMB release.")
-    parser.add_argument("--zip", type=Path, required=True, help="The release's TimeCapsuleSMB.app.zip.")
+    parser.add_argument("--zip", type=Path, required=True, help="The release's Time-Capsule-Updater.app.zip.")
     parser.add_argument("--tag", required=True, help="The release tag, such as v3.8.0.")
     parser.add_argument("--out", type=Path, required=True, help="Where to write appcast.xml.")
     parser.add_argument("--ed-key-file", required=True,

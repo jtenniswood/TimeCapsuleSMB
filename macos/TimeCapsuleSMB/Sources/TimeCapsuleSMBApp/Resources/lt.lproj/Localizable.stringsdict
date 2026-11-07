@@ -373,19 +373,19 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>lld</string>
 			<key>few</key>
-			<string>%lld ._ failai turi įrašų, kurių TimeCapsuleSMB nekonvertuoja. Jų palaikomi metaduomenys perkelti, o failai išsaugoti.</string>
+			<string>%lld ._ failai turi įrašų, kurių Time Capsule Updater nekonvertuoja. Jų palaikomi metaduomenys perkelti, o failai išsaugoti.</string>
 			<key>many</key>
-			<string>%lld ._ failo turi įrašų, kurių TimeCapsuleSMB nekonvertuoja. Jų palaikomi metaduomenys perkelti, o failai išsaugoti.</string>
+			<string>%lld ._ failo turi įrašų, kurių Time Capsule Updater nekonvertuoja. Jų palaikomi metaduomenys perkelti, o failai išsaugoti.</string>
 			<key>one</key>
-			<string>%lld ._ failas turi įrašų, kurių TimeCapsuleSMB nekonvertuoja. Jo palaikomi metaduomenys perkelti, o failas išsaugotas.</string>
+			<string>%lld ._ failas turi įrašų, kurių Time Capsule Updater nekonvertuoja. Jo palaikomi metaduomenys perkelti, o failas išsaugotas.</string>
 			<key>other</key>
-			<string>%lld ._ failų turi įrašų, kurių TimeCapsuleSMB nekonvertuoja. Jų palaikomi metaduomenys perkelti, o failai išsaugoti.</string>
+			<string>%lld ._ failų turi įrašų, kurių Time Capsule Updater nekonvertuoja. Jų palaikomi metaduomenys perkelti, o failai išsaugoti.</string>
 		</dict>
 	</dict>
 	<key>bundle_issue.distribution_artifacts_missing_count.message</key>
 	<dict>
 		<key>NSStringLocalizedFormatKey</key>
-		<string>Su programa pateiktame TimeCapsuleSMB platinime trūksta %#@files@.</string>
+		<string>Su programa pateiktame Time Capsule Updater platinime trūksta %#@files@.</string>
 		<key>files</key>
 		<dict>
 			<key>NSStringFormatSpecTypeKey</key>

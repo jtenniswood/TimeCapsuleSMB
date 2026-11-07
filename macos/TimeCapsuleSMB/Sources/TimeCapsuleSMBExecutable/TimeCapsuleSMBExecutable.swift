@@ -32,7 +32,7 @@ struct TimeCapsuleSMBExecutable: App {
     }
 
     var body: some Scene {
-        Window("TimeCapsuleSMB", id: "main") {
+        Window("Time Capsule Updater", id: "main") {
             ContentView(application: application)
         }
         .defaultSize(width: 800, height: 600)

@@ -76,7 +76,7 @@ struct DiagnosticsExportBuilder {
 
     func build(context: DiagnosticsExportContext) -> String {
         var lines: [String] = []
-        lines.append("TimeCapsuleSMB Diagnostics")
+        lines.append("Time Capsule Updater Diagnostics")
         lines.append("Generated: \(format(date: context.generatedAt))")
         lines.append("")
 

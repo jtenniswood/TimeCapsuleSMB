@@ -373,13 +373,13 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>lld</string>
 			<key>many</key>
-			<string>%lld de arquivos ._ contêm entradas que o TimeCapsuleSMB não converte. Seus metadados compatíveis foram migrados, e os arquivos foram mantidos.</string>
+			<string>%lld de arquivos ._ contêm entradas que o Time Capsule Updater não converte. Seus metadados compatíveis foram migrados, e os arquivos foram mantidos.</string>
 			<key>one</key>
-			<string>%lld arquivo ._ contém entradas que o TimeCapsuleSMB não converte. Seus metadados compatíveis foram migrados, e o arquivo foi mantido.</string>
+			<string>%lld arquivo ._ contém entradas que o Time Capsule Updater não converte. Seus metadados compatíveis foram migrados, e o arquivo foi mantido.</string>
 			<key>other</key>
-			<string>%lld arquivos ._ contêm entradas que o TimeCapsuleSMB não converte. Seus metadados compatíveis foram migrados, e os arquivos foram mantidos.</string>
+			<string>%lld arquivos ._ contêm entradas que o Time Capsule Updater não converte. Seus metadados compatíveis foram migrados, e os arquivos foram mantidos.</string>
 			<key>zero</key>
-			<string>%lld arquivos ._ contêm entradas que o TimeCapsuleSMB não converte. Seus metadados compatíveis foram migrados, e os arquivos foram mantidos.</string>
+			<string>%lld arquivos ._ contêm entradas que o Time Capsule Updater não converte. Seus metadados compatíveis foram migrados, e os arquivos foram mantidos.</string>
 		</dict>
 	</dict>
 	<key>bundle_issue.distribution_artifacts_missing_count.message</key>
@@ -393,13 +393,13 @@
 			<key>NSStringFormatValueTypeKey</key>
 			<string>lld</string>
 			<key>many</key>
-			<string>Faltam %lld de arquivos de instalação no pacote incluído com TimeCapsuleSMB.</string>
+			<string>Faltam %lld de arquivos de instalação no pacote incluído com Time Capsule Updater.</string>
 			<key>one</key>
-			<string>Falta %lld arquivo de instalação no pacote incluído com TimeCapsuleSMB.</string>
+			<string>Falta %lld arquivo de instalação no pacote incluído com Time Capsule Updater.</string>
 			<key>other</key>
-			<string>Faltam %lld arquivos de instalação no pacote incluído com TimeCapsuleSMB.</string>
+			<string>Faltam %lld arquivos de instalação no pacote incluído com Time Capsule Updater.</string>
 			<key>zero</key>
-			<string>Faltam %lld arquivos de instalação no pacote incluído com TimeCapsuleSMB.</string>
+			<string>Faltam %lld arquivos de instalação no pacote incluído com Time Capsule Updater.</string>
 		</dict>
 	</dict>
 </dict>
