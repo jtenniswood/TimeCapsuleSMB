@@ -117,7 +117,7 @@ final class DiskHealthReportTests: XCTestCase {
 
     func testRendersReportedAndUnavailableDiskHealth() throws {
         let bitmap = try renderView(
-            DiskHealthView(report: report(), checkedAt: Date(timeIntervalSince1970: 1234)),
+            DiskHealthView(report: report()),
             size: CGSize(width: 800, height: 500)
         )
         XCTAssertGreaterThan(bitmap.pixelsWide, 0)

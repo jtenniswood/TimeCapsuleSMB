@@ -3,7 +3,6 @@ import SwiftUI
 
 struct DiskHealthView: View {
     let report: DiskHealthReport?
-    let checkedAt: Date?
     var deviceBusy = false
     var repair: ((DiskHealthDisk) -> Void)? = nil
     var erase: ((DiskHealthDisk) -> Void)? = nil
@@ -33,11 +32,6 @@ struct DiskHealthView: View {
             } else {
                 Text(L10n.string(report == nil || report?.error == "not_checked" ? "utility.status.unchecked" : "utility.disk.unavailable"))
                     .font(UtilityStyle.body)
-                    .foregroundStyle(.secondary)
-            }
-            if let checkedAt {
-                Text(L10n.format("disk_health.checked_at", checkedAt.formatted(date: .abbreviated, time: .shortened)))
-                    .font(UtilityStyle.secondary)
                     .foregroundStyle(.secondary)
             }
         }

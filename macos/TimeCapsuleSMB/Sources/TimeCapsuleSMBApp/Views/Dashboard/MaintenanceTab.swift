@@ -19,7 +19,7 @@ struct MaintenanceTab: View {
                     }
                 }
                 .disabled(busy)
-                DiskHealthView(report: profile.lastCheckup?.diskHealth, checkedAt: profile.lastCheckup?.checkedAt,
+                DiskHealthView(report: profile.lastCheckup?.diskHealth,
                     deviceBusy: busy, repair: { disk in
                         session.maintenanceStore.fsckStore.prepareForDisk(disk)
                         open(.fsck)

@@ -122,7 +122,7 @@ final class NavigationRefreshTests: XCTestCase {
     func testDiskWarningAndDetailedReadingsAreVisibleImmediately() throws {
         let disk = DiskHealthDisk(device: "wd0", label: "Disk 1", builtin: true, smartStatus: "failing", partitions: [],
                                   details: DiskSmartDetails(state: "available", attributes: []))
-        let texts = accessibleElements(DiskHealthView(report: DiskHealthReport(error: nil, disks: [disk]), checkedAt: nil)).map(\.text)
+        let texts = accessibleElements(DiskHealthView(report: DiskHealthReport(error: nil, disks: [disk]))).map(\.text)
         XCTAssertTrue(texts.contains(L10n.string("utility.disk.failure_advice")))
         XCTAssertTrue(texts.contains(L10n.string("disk_health.attributes")))
         XCTAssertTrue(texts.contains(L10n.string("disk_health.power_on_hours")))
