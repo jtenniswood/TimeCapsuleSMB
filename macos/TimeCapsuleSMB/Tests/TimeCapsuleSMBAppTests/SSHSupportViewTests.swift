@@ -4,7 +4,7 @@ import XCTest
 
 @MainActor
 final class SSHSupportViewTests: XCTestCase {
-    func testEnabledConnectionHelpHasANativeTooltipAtTheTrailingEdge() async throws {
+    func testEnabledConnectionHelpOpensOnHoverAndClickAtTheTrailingEdge() async throws {
         let fixture = try await AppViewFixture(runner: StoreTestRunner(responses: []))
         let profile = try await fixture.saveProfile(id: "ssh-help")
         let session = fixture.dashboardSession(for: profile)
@@ -17,18 +17,59 @@ final class SSHSupportViewTests: XCTestCase {
         await runQueuedStoreUpdates()
         host.contentView.layoutSubtreeIfNeeded()
 
-        func nativeTooltip(in view: NSView) -> NSImageView? {
-            if let image = view as? NSImageView, image.toolTip != nil { return image }
-            return view.subviews.lazy.compactMap { nativeTooltip(in: $0) }.first
+        func infoButton(in view: NSView) -> SSHConnectionInfoControl? {
+            if let button = view as? SSHConnectionInfoControl { return button }
+            return view.subviews.lazy.compactMap { infoButton(in: $0) }.first
         }
-        let icon = try XCTUnwrap(nativeTooltip(in: host.contentView))
+        let button = try XCTUnwrap(infoButton(in: host.contentView))
+        defer { button.closeHelp() }
         let command = try XCTUnwrap(DeviceEndpointPolicy.terminalSSHCommand(profile.host))
-        XCTAssertEqual(icon.toolTip, L10n.format("support.ssh.connection_help", command))
-        XCTAssertEqual(icon.accessibilityHelp(), icon.toolTip)
-        XCTAssertGreaterThanOrEqual(icon.visibleRect.width, 20)
-        XCTAssertGreaterThanOrEqual(icon.visibleRect.height, 20)
-        let rect = icon.convert(icon.bounds, to: host.contentView)
+        let help = L10n.format("support.ssh.connection_help", command)
+        XCTAssertEqual(button.accessibilityHelp(), help)
+        XCTAssertGreaterThanOrEqual(button.visibleRect.width, 24)
+        XCTAssertGreaterThanOrEqual(button.visibleRect.height, 24)
+        let rect = button.convert(button.bounds, to: host.contentView)
         XCTAssertEqual(rect.maxX, host.contentView.bounds.maxX, accuracy: 1)
+
+        host.contentView.window?.makeKeyAndOrderFront(nil)
+        func shownHelp() -> NSView? {
+            NSApp.windows.filter(\.isVisible).compactMap(\.contentView).first {
+                accessibleElements(in: $0).contains { $0.text.contains(command) }
+            }
+        }
+        func hover(_ type: NSEvent.EventType, in view: NSView? = nil) throws {
+            let view = view ?? button
+            let event = try XCTUnwrap(NSEvent.enterExitEvent(with: type, location: .zero,
+                modifierFlags: [], timestamp: 0, windowNumber: view.window!.windowNumber,
+                context: nil, eventNumber: 0, trackingNumber: 0, userData: nil))
+            if type == .mouseEntered { view.mouseEntered(with: event) }
+            else { view.mouseExited(with: event) }
+        }
+        try hover(.mouseEntered)
+        await runQueuedStoreUpdates()
+        XCTAssertNotNil(shownHelp(), "Hover must display the instructions, not just register tooltip text")
+        try hover(.mouseExited)
+        try await waitUntilStoreState { shownHelp() == nil }
+
+        try hover(.mouseEntered)
+        await runQueuedStoreUpdates()
+        let instructions = try XCTUnwrap(shownHelp())
+        try hover(.mouseExited)
+        try hover(.mouseEntered, in: instructions)
+        try await Task.sleep(for: .milliseconds(400))
+        XCTAssertNotNil(shownHelp(), "Moving into the instructions must keep them open")
+        try hover(.mouseExited, in: instructions)
+        try await waitUntilStoreState { shownHelp() == nil }
+
+        XCTAssertTrue(pressAccessibleControl(in: host.contentView, labeled: L10n.string("support.ssh.connection_info")))
+        await runQueuedStoreUpdates()
+        XCTAssertNotNil(shownHelp(), "The info button must open the instructions")
+        try hover(.mouseExited)
+        try await Task.sleep(for: .milliseconds(400))
+        XCTAssertNotNil(shownHelp(), "Clicked instructions stay open so the command can be selected")
+        button.performClick(nil)
+        await runQueuedStoreUpdates()
+        XCTAssertNil(shownHelp())
     }
 
     func testEnableTargetsTheSelectedDeviceAndWaitsForConfirmation() async throws {
