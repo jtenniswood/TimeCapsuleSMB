@@ -1,43 +1,6 @@
 import AppKit
 import SwiftUI
 
-struct MaintenanceTab: View {
-    let profile: DeviceProfile
-    @ObservedObject var session: DeviceDashboardSession
-    let showDiagnostics: () -> Void
-    let diagnosticsText: () -> String
-
-    var body: some View {
-        let busy = session.appStore.operationCoordinator.isDeviceBusy(profile)
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
-                HStack(spacing: 8) {
-                    Spacer()
-                    Button(L10n.string("simple.disk.refresh")) {
-                        session.runCheckup(profile: profile)
-                        if session.selectedTab == .checkup { session.selectedTab = .maintenance }
-                    }
-                }
-                .disabled(busy)
-                DiskHealthView(report: profile.lastCheckup?.diskHealth,
-                    deviceBusy: busy, repair: { disk in
-                        session.maintenanceStore.fsckStore.prepareForDisk(disk)
-                        open(.fsck)
-                    }, erase: { _ in open(.wipeDisk) })
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .sheet(isPresented: $session.maintenanceUtilitiesExpanded) {
-            MaintenanceToolSheet(profile: profile, session: session, showDiagnostics: showDiagnostics, diagnosticsText: diagnosticsText)
-        }
-    }
-
-    private func open(_ workflow: MaintenanceWorkflow) {
-        session.maintenanceStore.selectedWorkflow = workflow
-        session.maintenanceUtilitiesExpanded = true
-    }
-}
-
 /// Each tool opens in its own native sheet; no unrelated utility picker.
 struct MaintenanceToolSheet: View {
     let profile: DeviceProfile

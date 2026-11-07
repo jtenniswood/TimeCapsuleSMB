@@ -8,14 +8,9 @@ enum DeviceDashboardTab: String, CaseIterable, Equatable, Identifiable {
     case settings
 
     // Keep old workflow destinations usable without exposing removed panes.
-    static let allCases: [Self] = [.overview, .maintenance]
+    static let allCases: [Self] = [.overview]
 
-    var visibleTab: Self {
-        switch self {
-        case .checkup, .install, .settings: return .overview
-        default: return self
-        }
-    }
+    var visibleTab: Self { .overview }
 
     var id: String { rawValue }
 

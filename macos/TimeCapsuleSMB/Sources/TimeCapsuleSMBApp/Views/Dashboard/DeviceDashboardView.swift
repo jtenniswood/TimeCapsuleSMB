@@ -14,24 +14,27 @@ struct DeviceDashboardView: View {
     let showDiagnostics: () -> Void
 
     var body: some View {
-        UtilityTabs(tabs: DeviceDashboardTab.allCases.map { (id: $0, title: $0.title) }, selection: Binding(
-            get: { session.selectedTab.visibleTab }, set: { session.selectedTab = $0 })) { tab in
-                VStack(alignment: .leading, spacing: 16) {
-                    if justSaved { DashboardSavedNoticeView(deviceName: profile.title) }
-                    if let notice = session.staleEndpointNotice(for: profile) {
-                        DashboardStaleEndpointNoticeView(notice: notice) {
-                            session.updateConfiguredAddressFromDiscovery(profile: profile)
-                        }
+        GroupBox {
+            VStack(alignment: .leading, spacing: 16) {
+                if justSaved { DashboardSavedNoticeView(deviceName: profile.title) }
+                if let notice = session.staleEndpointNotice(for: profile) {
+                    DashboardStaleEndpointNoticeView(notice: notice) {
+                        session.updateConfiguredAddressFromDiscovery(profile: profile)
                     }
-                    if let notice = session.sshAccessNotice(for: profile) {
-                        DashboardSSHAccessNoticeView(notice: notice,
-                                                   open: { session.openSSHAccess(profile: profile) },
-                                                   enable: { session.enableSSHAccess(profile: profile) })
-                    }
-                    tabContent(tab)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 }
-                .padding(UtilityStyle.panePadding)
+                if let notice = session.sshAccessNotice(for: profile) {
+                    DashboardSSHAccessNoticeView(notice: notice,
+                                               open: { session.openSSHAccess(profile: profile) },
+                                               enable: { session.enableSSHAccess(profile: profile) })
+                }
+                OverviewTab(profile: profile, session: session, reachabilityStore: reachabilityStore,
+                            showDiagnostics: showDiagnostics, diagnosticsText: diagnosticsText)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            }
+            .padding(UtilityStyle.panePadding)
+        }
+        .sheet(isPresented: $session.maintenanceUtilitiesExpanded) {
+            MaintenanceToolSheet(profile: profile, session: session, showDiagnostics: showDiagnostics, diagnosticsText: diagnosticsText)
         }
         .font(UtilityStyle.body)
         .padding(.horizontal, 20)
@@ -49,17 +52,6 @@ struct DeviceDashboardView: View {
             Button(L10n.string("action.ok"), role: .cancel) {}
         } message: {
             Text(L10n.string("flash.manual_power_cycle.message"))
-        }
-    }
-
-    @ViewBuilder
-    private func tabContent(_ tab: DeviceDashboardTab) -> some View {
-        switch tab {
-        case .overview, .checkup, .install, .settings:
-            OverviewTab(profile: profile, session: session, reachabilityStore: reachabilityStore,
-                        showDiagnostics: showDiagnostics, diagnosticsText: diagnosticsText)
-        case .maintenance:
-            MaintenanceTab(profile: profile, session: session, showDiagnostics: showDiagnostics, diagnosticsText: diagnosticsText)
         }
     }
 

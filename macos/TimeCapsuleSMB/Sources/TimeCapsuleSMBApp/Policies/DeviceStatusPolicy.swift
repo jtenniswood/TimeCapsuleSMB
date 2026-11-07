@@ -38,7 +38,7 @@ enum DeviceDisplayStatus: String, CaseIterable, Equatable, Identifiable {
         case .readyToInstall:
             return L10n.string("utility.status.setup")
         case .healthy:
-            return L10n.string("utility.status.working")
+            return L10n.string("simple.device.connected")
         case .warning:
             return L10n.string("utility.status.attention")
         case .failed:

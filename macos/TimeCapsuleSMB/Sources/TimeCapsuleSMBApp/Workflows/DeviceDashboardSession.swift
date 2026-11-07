@@ -437,10 +437,8 @@ final class DeviceDashboardSession: ObservableObject, Identifiable {
             return { [weak self] in self?.showMaintenance(.activate) }
         case .uninstall:
             return { [weak self] in self?.showMaintenance(.uninstall) }
-        case .diskRepair:
-            return { [weak self] in self?.showMaintenance(.fsck) }
-        case .wipeDisk:
-            return { [weak self] in self?.showMaintenance(.wipeDisk) }
+        case .diskRepair, .wipeDisk:
+            return nil
         case .replacePassword:
             return { [weak self] in self?.showPasswordReplacement() }
         case .openSystemSettings:

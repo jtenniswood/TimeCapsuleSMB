@@ -56,14 +56,9 @@ final class DeviceStatusPolicyTests: XCTestCase {
         ])
     }
 
-    func testDashboardTabTitlesAreLocalized() {
-        XCTAssertEqual(DeviceDashboardTab.allCases.map(\.title), [
-            "Overview",
-            "Install / Update",
-            "Checkup",
-            "Maintenance",
-            "Settings"
-        ])
+    func testLegacyDestinationsUseTheSingleDeviceOverview() {
+        XCTAssertEqual(DeviceDashboardTab.allCases, [.overview])
+        XCTAssertEqual(DeviceDashboardTab.maintenance.visibleTab, .overview)
     }
 
     func testPasswordStatesTakePriority() throws {

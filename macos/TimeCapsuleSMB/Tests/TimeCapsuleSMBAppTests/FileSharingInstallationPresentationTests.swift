@@ -39,9 +39,10 @@ final class FileSharingInstallationPresentationTests: XCTestCase {
     }
 
     func testRemovedPanesLeadToOverview() {
-        XCTAssertEqual(DeviceDashboardTab.allCases, [.overview, .maintenance])
+        XCTAssertEqual(DeviceDashboardTab.allCases, [.overview])
         XCTAssertEqual(DeviceDashboardTab.checkup.visibleTab, .overview)
         XCTAssertEqual(DeviceDashboardTab.install.visibleTab, .overview)
         XCTAssertEqual(DeviceDashboardTab.settings.visibleTab, .overview)
+        XCTAssertEqual(DeviceDashboardTab.maintenance.visibleTab, .overview)
     }
 }

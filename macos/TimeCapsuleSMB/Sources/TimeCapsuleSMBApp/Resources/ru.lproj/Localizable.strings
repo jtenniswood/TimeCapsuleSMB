@@ -1658,7 +1658,7 @@
 
 "simple.software.update_available" = "Доступно обновление";
 "simple.software.current" = "Обновлено";
-"simple.software.installed" = "Установлено";
+"simple.software.installed" = "Обновление установлено";
 "simple.firmware_version" = "Версия прошивки";
 "simple.serial_number" = "Серийный номер";
 "disk_health.space_compact" = "Свободно %@ из %@";
@@ -1666,3 +1666,7 @@
 "simple.mount" = "Подключить";
 
 "simple.manage" = "Управлять";
+
+"disk_health.healthy" = "Исправен";
+
+"simple.device.connected" = "Подключено";

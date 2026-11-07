@@ -3,9 +3,6 @@ import SwiftUI
 
 struct DiskHealthView: View {
     let report: DiskHealthReport?
-    var deviceBusy = false
-    var repair: ((DiskHealthDisk) -> Void)? = nil
-    var erase: ((DiskHealthDisk) -> Void)? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
@@ -18,14 +15,6 @@ struct DiskHealthView: View {
                     GroupBox {
                         VStack(alignment: .leading, spacing: 16) {
                             DiskSmartReadingsView(disk: disk)
-                            if repair != nil || (disk.builtin && erase != nil) {
-                                Divider()
-                                HStack(spacing: 8) {
-                                    if let repair { Button(L10n.string("utility.disk.repair")) { repair(disk) } }
-                                    if disk.builtin, let erase { Button(L10n.string("utility.disk.erase")) { erase(disk) } }
-                                    Spacer()
-                                }.disabled(deviceBusy)
-                            }
                         }.padding(16).frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
@@ -45,7 +34,7 @@ private struct DiskSmartReadingsView: View {
     private var statusKey: String {
         if disk.reportsFailure { return "utility.disk.failing" }
         if disk.needsAttention { return "disk_health.attention" }
-        return disk.smartStatus == "verified" ? "utility.status.working" : "utility.status.unchecked"
+        return disk.smartStatus == "verified" ? "disk_health.healthy" : "utility.status.unchecked"
     }
 
     var body: some View {

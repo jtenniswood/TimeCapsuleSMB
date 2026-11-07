@@ -53,19 +53,14 @@ final class NativeInterfaceTests: XCTestCase {
         XCTAssertFalse(controls.contains { $0.text == L10n.string("sidebar.activity") })
     }
 
-    func testEveryDevicePaneCanBeSelectedAtTheMinimumWindowSize() async throws {
+    func testDeviceOverviewShowsSharingAndDisksWithoutTabsOrDiskActions() async throws {
         let fixture = try await AppViewFixture()
-        let profile = try await fixture.saveProfile(id: "native-tabs")
-        let session = fixture.dashboardSession(for: profile)
+        let profile = try await fixture.saveProfile(id: "single-overview")
         fixture.appStore.select(profile)
-        let host = LiveHostedView(fixture.contentView, size: CGSize(width: 760, height: 580))
-        defer { host.close() }
-        for tab in DeviceDashboardTab.allCases where tab != session.selectedTab {
-            // NSSegmentedControl can return false after dispatching its action.
-            // The selected pane, rather than that return value, is the outcome.
-            _ = pressAccessibleControl(in: host.contentView, labeled: tab.title)
-            await runQueuedStoreUpdates()
-            XCTAssertEqual(session.selectedTab, tab)
+        let texts = devicePageTexts(fixture.contentView)
+        XCTAssertFalse(texts.contains(L10n.string("dashboard.tab.overview")))
+        for key in ["simple.disk.refresh", "utility.disk.repair", "utility.disk.erase"] {
+            XCTAssertFalse(texts.contains(L10n.string(key)))
         }
     }
 

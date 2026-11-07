@@ -1658,7 +1658,7 @@
 
 "simple.software.update_available" = "Yra naujinys";
 "simple.software.current" = "Atnaujinta";
-"simple.software.installed" = "Įdiegta";
+"simple.software.installed" = "Atnaujinimas įdiegtas";
 "simple.firmware_version" = "Programinės aparatinės įrangos versija";
 "simple.serial_number" = "Serijos numeris";
 "disk_health.space_compact" = "Laisva %@ iš %@";
@@ -1666,3 +1666,7 @@
 "simple.mount" = "Prijungti";
 
 "simple.manage" = "Tvarkyti";
+
+"disk_health.healthy" = "Geros būklės";
+
+"simple.device.connected" = "Prisijungta";

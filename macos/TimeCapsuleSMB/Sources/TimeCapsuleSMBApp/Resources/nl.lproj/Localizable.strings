@@ -1658,7 +1658,7 @@
 
 "simple.software.update_available" = "Update beschikbaar";
 "simple.software.current" = "Bijgewerkt";
-"simple.software.installed" = "Geïnstalleerd";
+"simple.software.installed" = "Update geïnstalleerd";
 "simple.firmware_version" = "Firmwareversie";
 "simple.serial_number" = "Serienummer";
 "disk_health.space_compact" = "%@ vrij van %@";
@@ -1666,3 +1666,7 @@
 "simple.mount" = "Koppel";
 
 "simple.manage" = "Beheer";
+
+"disk_health.healthy" = "Gezond";
+
+"simple.device.connected" = "Verbonden";

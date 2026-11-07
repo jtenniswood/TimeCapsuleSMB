@@ -213,8 +213,8 @@ private func withAccessibilityTree<T>(of host: NSView, _ body: ([AnyObject]) -> 
 @MainActor
 func devicePageTexts<V: View>(_ view: V, file: StaticString = #filePath, line: UInt = #line) -> [String] {
     let texts = accessibleElements(view).map(\.text)
-    let missingTabs = DeviceDashboardTab.allCases.map(\.title).filter { !texts.contains($0) }
-    XCTAssertEqual(missingTabs, [], "The read shows no device page", file: file, line: line)
+    let missingSections = ["simple.sharing.title", "simple.tab.disks"].map { L10n.string($0) }.filter { !texts.contains($0) }
+    XCTAssertEqual(missingSections, [], "The read shows no device page", file: file, line: line)
     return texts
 }
 

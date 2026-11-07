@@ -1658,7 +1658,7 @@
 
 "simple.software.update_available" = "Update Available";
 "simple.software.current" = "Up to Date";
-"simple.software.installed" = "Installed";
+"simple.software.installed" = "Update installed";
 "simple.firmware_version" = "Firmware Version";
 "simple.serial_number" = "Serial Number";
 "disk_health.space_compact" = "%@ free of %@";
@@ -1666,3 +1666,7 @@
 "simple.mount" = "Mount";
 
 "simple.manage" = "Manage";
+
+"disk_health.healthy" = "Healthy";
+
+"simple.device.connected" = "Connected";
