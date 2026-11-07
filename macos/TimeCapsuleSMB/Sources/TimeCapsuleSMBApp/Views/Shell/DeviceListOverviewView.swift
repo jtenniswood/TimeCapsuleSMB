@@ -10,6 +10,7 @@ struct DeviceListOverviewView: View {
     @ObservedObject var backend: BackendClient
     var dashboardStore: DashboardStore? = nil
     var addManually: (() -> Void)? = nil
+    var isOpening = false
     let canAddDevice: Bool
     let addDiscoveredDevice: (DiscoveredDevice) -> Void
     @Environment(\.colorScheme) private var colorScheme
@@ -19,7 +20,10 @@ struct DeviceListOverviewView: View {
             HStack {
                 otherDevicesMenu
                 Spacer()
-                if deviceDiscovery.nearbyState == .discovering {
+                if isOpening {
+                    Text(L10n.string("utility.readiness.opening"))
+                        .font(UtilityStyle.secondary).foregroundStyle(.secondary)
+                } else if deviceDiscovery.nearbyState == .discovering {
                     ProgressView().controlSize(.small)
                 }
             }

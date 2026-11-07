@@ -1541,7 +1541,7 @@
 "simple.connection_details" = "连接详情";
 "simple.show_details" = "显示详情";
 "simple.technical_details" = "技术详情";
-"simple.sharing.title" = "文件共享";
+"simple.sharing.title" = "SMB 支持";
 "simple.sharing.message" = "在此 AirPort 上启用现代文件共享。设置过程会复制软件并重新启动设备。你的文件将会保留。";
 "simple.sharing.set_up" = "设置文件共享";
 "simple.sharing.update" = "更新文件共享";
@@ -1670,3 +1670,5 @@
 "disk_health.healthy" = "健康";
 
 "simple.device.connected" = "已连接";
+
+"simple.software.checking_version" = "正在检查版本";

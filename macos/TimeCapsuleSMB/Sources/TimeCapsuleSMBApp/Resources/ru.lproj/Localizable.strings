@@ -1541,7 +1541,7 @@
 "simple.connection_details" = "Сведения о подключении";
 "simple.show_details" = "Показать подробности";
 "simple.technical_details" = "Технические сведения";
-"simple.sharing.title" = "Общий доступ к файлам";
+"simple.sharing.title" = "Поддержка SMB";
 "simple.sharing.message" = "Включите современный общий доступ к файлам на этом AirPort. Настройка скопирует ПО и перезапустит устройство. Файлы сохранятся.";
 "simple.sharing.set_up" = "Настроить общий доступ";
 "simple.sharing.update" = "Обновить общий доступ";
@@ -1670,3 +1670,5 @@
 "disk_health.healthy" = "Исправен";
 
 "simple.device.connected" = "Подключено";
+
+"simple.software.checking_version" = "Проверка версии";

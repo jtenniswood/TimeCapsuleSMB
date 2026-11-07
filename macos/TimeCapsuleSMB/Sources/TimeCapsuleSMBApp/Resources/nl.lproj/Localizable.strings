@@ -1541,7 +1541,7 @@
 "simple.connection_details" = "Verbindingsdetails";
 "simple.show_details" = "Toon details";
 "simple.technical_details" = "Technische details";
-"simple.sharing.title" = "Bestandsdeling";
+"simple.sharing.title" = "SMB-ondersteuning";
 "simple.sharing.message" = "Schakel moderne bestandsdeling in op deze AirPort. De configuratie kopieert de software en herstart het apparaat. Uw bestanden blijven behouden.";
 "simple.sharing.set_up" = "Configureer bestandsdeling";
 "simple.sharing.update" = "Werk bestandsdeling bij";
@@ -1670,3 +1670,5 @@
 "disk_health.healthy" = "Gezond";
 
 "simple.device.connected" = "Verbonden";
+
+"simple.software.checking_version" = "Versie controleren";

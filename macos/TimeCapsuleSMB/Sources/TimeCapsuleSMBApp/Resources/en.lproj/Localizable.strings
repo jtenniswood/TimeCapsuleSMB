@@ -1541,7 +1541,7 @@
 "simple.connection_details" = "Connection Details";
 "simple.show_details" = "Show Details";
 "simple.technical_details" = "Technical Details";
-"simple.sharing.title" = "File Sharing";
+"simple.sharing.title" = "Smb Support";
 "simple.sharing.message" = "Enable modern file sharing on this AirPort. Setup copies the software and restarts the device. Your files stay in place.";
 "simple.sharing.set_up" = "Set Up File Sharing";
 "simple.sharing.update" = "Update File Sharing";
@@ -1670,3 +1670,5 @@
 "disk_health.healthy" = "Healthy";
 
 "simple.device.connected" = "Connected";
+
+"simple.software.checking_version" = "Checking version";

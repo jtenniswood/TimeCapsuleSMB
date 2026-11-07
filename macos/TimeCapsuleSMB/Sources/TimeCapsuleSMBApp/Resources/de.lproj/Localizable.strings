@@ -1541,7 +1541,7 @@
 "simple.connection_details" = "Verbindungsdetails";
 "simple.show_details" = "Details anzeigen";
 "simple.technical_details" = "Technische Details";
-"simple.sharing.title" = "Dateifreigabe";
+"simple.sharing.title" = "SMB-Unterstützung";
 "simple.sharing.message" = "Aktivieren Sie die moderne Dateifreigabe auf diesem AirPort-Gerät. Die Einrichtung kopiert die Software und startet das Gerät neu. Ihre Dateien bleiben erhalten.";
 "simple.sharing.set_up" = "Dateifreigabe einrichten";
 "simple.sharing.update" = "Dateifreigabe aktualisieren";
@@ -1670,3 +1670,5 @@
 "disk_health.healthy" = "In Ordnung";
 
 "simple.device.connected" = "Verbunden";
+
+"simple.software.checking_version" = "Version wird geprüft";

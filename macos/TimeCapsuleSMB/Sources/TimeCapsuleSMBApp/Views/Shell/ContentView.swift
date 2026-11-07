@@ -54,8 +54,10 @@ public struct ContentView: View {
                     presentation.diagnosticsPresented = true
                 }
             } else {
-                AppReadinessBannerView(store: appReadinessStore) {
-                    presentation.diagnosticsPresented = true
+                if appStore.route != .allDevices || !appReadinessStore.state.isOpening {
+                    AppReadinessBannerView(store: appReadinessStore) {
+                        presentation.diagnosticsPresented = true
+                    }
                 }
                 if let message = deviceRegistry.identityErrorMessage {
                     VStack(alignment: .leading, spacing: 6) {
@@ -289,6 +291,7 @@ public struct ContentView: View {
                 backend: appBackend,
                 dashboardStore: dashboardStore,
                 addManually: { addDeviceStore.startManualEntry(); appStore.showAddDevice() },
+                isOpening: appReadinessStore.state.isOpening,
                 canAddDevice: !addDeviceStore.isAdding,
                 addDiscoveredDevice: { device in
                     addDeviceStore.select(device)

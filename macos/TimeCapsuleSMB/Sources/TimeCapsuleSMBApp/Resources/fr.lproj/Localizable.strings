@@ -1541,7 +1541,7 @@
 "simple.connection_details" = "Détails de la connexion";
 "simple.show_details" = "Afficher les détails";
 "simple.technical_details" = "Détails techniques";
-"simple.sharing.title" = "Partage de fichiers";
+"simple.sharing.title" = "Prise en charge SMB";
 "simple.sharing.message" = "Activez le partage de fichiers moderne sur cet AirPort. La configuration copie le logiciel et redémarre l’appareil. Vos fichiers sont conservés.";
 "simple.sharing.set_up" = "Configurer le partage de fichiers";
 "simple.sharing.update" = "Mettre à jour le partage";
@@ -1670,3 +1670,5 @@
 "disk_health.healthy" = "En bon état";
 
 "simple.device.connected" = "Connecté";
+
+"simple.software.checking_version" = "Vérification de la version";

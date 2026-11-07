@@ -1541,7 +1541,7 @@
 "simple.connection_details" = "Ryšio informacija";
 "simple.show_details" = "Rodyti išsamią informaciją";
 "simple.technical_details" = "Techninė informacija";
-"simple.sharing.title" = "Failų bendrinimas";
+"simple.sharing.title" = "SMB palaikymas";
 "simple.sharing.message" = "Įjunkite modernų failų bendrinimą šiame AirPort. Sąranka nukopijuos programinę įrangą ir paleis įrenginį iš naujo. Failai bus išsaugoti.";
 "simple.sharing.set_up" = "Nustatyti failų bendrinimą";
 "simple.sharing.update" = "Atnaujinti failų bendrinimą";
@@ -1670,3 +1670,5 @@
 "disk_health.healthy" = "Geros būklės";
 
 "simple.device.connected" = "Prisijungta";
+
+"simple.software.checking_version" = "Tikrinama versija";

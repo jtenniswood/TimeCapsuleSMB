@@ -28,7 +28,7 @@ struct FileSharingInstallationPresentation: Equatable {
         case .updateAvailable: return L10n.string("simple.software.update_available")
         case .upToDate: return L10n.string("simple.software.current")
         case .installed: return L10n.string("simple.software.installed")
-        case .checking: return L10n.string("utility.status.working_on_device")
+        case .checking: return L10n.string("simple.software.checking_version")
         }
     }
 
